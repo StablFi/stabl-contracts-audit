@@ -14,6 +14,7 @@ const {
   getOracleAddresses,
   getAssetAddresses,
   isSmokeTest,
+  isVerificationRequired,
 } = require("../test/helpers.js");
 
 const {
@@ -58,6 +59,7 @@ const deployWithConfirmation = async (
   const { deployerAddr } = await getNamedAccounts();
   if (!args) args = null;
   if (!contract) contract = contractName;
+
   const result = await withConfirmation(
     deploy(contractName, {
       from: deployerAddr,
@@ -71,19 +73,31 @@ const deployWithConfirmation = async (
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
   if (isMainnet) {
     await storeStorageLayoutForContract(hre, contractName);
+    if (isVerificationRequired) {
+      await verifyContract(result, args, contract);
+    }
   }
 
-  // try {
-  //   await hre.run('verify:verify', {
-  //     address: result.address,
-  //     constructorArguments: args,
-  //   })
-  // } catch (error) {
-  //   console.warn("Warning: verification of deployed contract failed.");
-  // }
-  
   log(`Deployed ${contractName}`, result);
   return result;
+};
+
+const verifyContract = async(result, args, _contract) => {
+  if (!args) args = [];
+  console.log("Verifying", _contract, "contract...");
+
+  // if _contract ends with proxy, prepend with proxy path
+  const contract = _contract.endsWith("Proxy") ? "contracts/proxies/Proxies.sol:" + _contract : _contract;
+
+  try {
+    await hre.run('verify:verify', {
+      address: result.address,
+      constructorArguments: args,
+      contract: contract
+    })
+  } catch (error) {
+    console.warn("Warning: verification of deployed contract failed." , error.message);
+  }
 };
 
 const withConfirmation = async (deployOrTransactionPromise) => {
@@ -140,7 +154,6 @@ const executeProposal = async (proposalArgs, description, opts = {}) => {
   const namedAccounts = await hre.getNamedAccounts();
   const deployerAddr = namedAccounts.deployerAddr;
   const guardianAddr = opts.guardianAddr || namedAccounts.guardianAddr;
-  console.log("executeProposal", guardianAddr)
   const sGuardian = hre.ethers.provider.getSigner(guardianAddr);
   const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
 
@@ -202,7 +215,6 @@ const executeProposalOnFork = async (proposalId, executeGasLimit = null) => {
 
   const governor = await ethers.getContract("Governor");
 
-  console.log("GUARDIAN: ", guardianAddr, governor);
   //First enqueue the proposal, then execute it.
   await withConfirmation(
     governor.connect(sGuardian).queue(proposalId, await getTxOpts())
@@ -269,7 +281,7 @@ const sendProposal = async (proposalArgs, description, opts = {}) => {
  * @returns {Object} main object used by hardhat
  */
 function deploymentWithProposal(opts, fn) {
-  const { deployName, dependencies, forceDeploy } = opts;
+  const { deployName, dependencies, forceDeploy, tags } = opts;
   const runDeployment = async (hre) => {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
     const assetAddresses = await getAssetAddresses(hre.deployments);
@@ -287,17 +299,13 @@ function deploymentWithProposal(opts, fn) {
     const propArgs = await proposeArgs(proposal.actions);
     const propOpts = proposal.opts || {};
 
-    if (isMainnet) {
-      // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
-      console.log("Sending proposal to governor...");
-      await sendProposal(propArgs, propDescription, propOpts);
-      console.log("Proposal sent.");
-    } else if (isFork) {
-      // On Fork we can send the proposal then impersonate the guardian to execute it.
-      console.log("Sending and executing proposal...");
-      await executeProposal(propArgs, propDescription, propOpts);
-      console.log("Proposal executed.");
-    } else {
+    // if (isMainnet) {
+    //   // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
+    //   await sendProposal(propArgs, propDescription, propOpts);
+    // } else if (isFork) {
+    //   // On Fork we can send the proposal then impersonate the guardian to execute it.
+    //   await executeProposal(propArgs, propDescription, propOpts);
+    // } else {
       // Hardcoding gas estimate on Rinkeby since it fails for an undetermined reason...
       const gasLimit = isRinkeby ? 1000000 : null;
 
@@ -315,10 +323,10 @@ function deploymentWithProposal(opts, fn) {
         );
         console.log(`... ${signature} completed`);
       }
-    }
+    // }
   };
 
-  const main = async (hre) => {
+const main = async (hre) => {
     console.log(`Running ${deployName} deployment...`);
     if (!hre) {
       hre = require("hardhat");
@@ -329,11 +337,9 @@ function deploymentWithProposal(opts, fn) {
   };
   main.id = deployName;
   main.dependencies = dependencies;
-  if (forceDeploy) {
-    main.skip = () => false;
-  } else {
-    main.skip = () => !(isMainnet || isRinkeby) || isSmokeTest || isFork;
-  }
+  main.skip = () => !forceDeploy;
+  main.tags = tags;
+
   return main;
 }
 

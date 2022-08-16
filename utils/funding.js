@@ -14,8 +14,8 @@ const {
   usdcUnits,
   tusdUnits,
   ognUnits,
+  isFork,
 } = require("../test/helpers");
-const isFork = true;
 /* Used for funding accounts in forked mode. Find the holder that has the most ETH or ERC20 token amounts.
  * param contract: address of ERC20 token. If null the account with the most ETH shall be returned
  *
@@ -80,14 +80,13 @@ const fundAccounts = async () => {
     dai = await ethers.getContract("MockDAI");
     tusd = await ethers.getContract("MockTUSD");
     usdc = await ethers.getContract("MockUSDC");
-    ogn = await ethers.getContract("MockSTABL");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
   }
 
-  if ( parseInt((await usdc.balanceOf(await signers[4].getAddress())).toString()) > 1000000000 ) {
-    console.log("Account ", 4, " already have", (await usdc.balanceOf(await signers[4].getAddress())).toString() ,"usdc. Skipping");
-    return;
-  }
+  // if ( parseInt((await usdc.balanceOf(await signers[4].getAddress())).toString()) > 1000000000 ) {
+  //   console.log("Account ", 4, " already have", (await usdc.balanceOf(await signers[4].getAddress())).toString() ,"usdc. Skipping");
+  //   return;
+  // }
 
   let binanceSigner;
   let MaticWhaleSigner;
@@ -114,13 +113,13 @@ const fundAccounts = async () => {
       to: governorAddr,
       value: utils.parseEther("100"),
     });
-    console.log("Adding 100 Matic to Governor");
+    // console.log("Adding 100 Matic to Governor");
 
   }
 
   for (let i = 0; i < 7; i++) {
     if (isFork) {
-      console.log("Adding 100 MATIC to", await signers[i].getAddress())
+      // console.log("Adding 100 MATIC to", await signers[i].getAddress())
       // Send some MATIC 
       await MaticWhaleSigner.sendTransaction({
         to: await signers[i].getAddress(),
@@ -128,19 +127,19 @@ const fundAccounts = async () => {
       });
 
       let usdcWhale = await findBestMainnetTokenHolder(usdc, hre);
-      console.log("Adding USDC to ", await signers[i].getAddress(), " from ", usdcWhale._address);
+      // console.log("Adding USDC to ", await signers[i].getAddress(), " from ", usdcWhale._address);
       await usdc
         .connect(await findBestMainnetTokenHolder(usdc, hre))
         .transfer(await signers[i].getAddress(), usdcUnits("10000"));
 
       let daiWhale = await findBestMainnetTokenHolder(dai, hre);
-      console.log("Adding DAI to ", await signers[i].getAddress(), " from ", daiWhale._address);
+      // console.log("Adding DAI to ", await signers[i].getAddress(), " from ", daiWhale._address);
       await dai
         .connect(daiWhale)
         .transfer(await signers[i].getAddress(), daiUnits("1000"));
 
       let usdtWhale = await findBestMainnetTokenHolder(usdt, hre);
-      console.log("Adding USDT to ", await signers[i].getAddress(), " from ", usdtWhale._address);
+      // console.log("Adding USDT to ", await signers[i].getAddress(), " from ", usdtWhale._address);
       await usdt
         .connect(await findBestMainnetTokenHolder(usdt, hre))
         .transfer(await signers[i].getAddress(), usdtUnits("1000"));
@@ -155,7 +154,6 @@ const fundAccounts = async () => {
       await usdc.connect(signers[i]).mint(usdcUnits("1000"));
       await usdt.connect(signers[i]).mint(usdtUnits("1000"));
       await tusd.connect(signers[i]).mint(tusdUnits("1000"));
-      await ogn.connect(signers[i]).mint(ognUnits("1000"));
       await nonStandardToken.connect(signers[i]).mint(usdtUnits("1000"));
     }
   }

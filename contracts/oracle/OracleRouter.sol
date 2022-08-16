@@ -24,7 +24,6 @@ abstract contract OracleRouterBase is IOracle {
      * @return uint256 USD price of 1 of the asset, in 8 decimal fixed
      */
     function price(address asset) external view override returns (uint256) {
-        console.log("OracleRouterBase: Getting the address of", asset);
         address _feed = feed(asset);
         //require(_feed != address(0), "Asset not available: Price");
         (, int256 _iprice, , , ) = AggregatorV3Interface(_feed)

@@ -145,9 +145,10 @@ contract VaultCore is VaultStorage, BalancerExchange {
             uint256 backingValue,
             uint256 redeemFee
         ) = _calculateRedeemOutput(_amount);
-        console.log("Redeem output:", output);
-        console.log("Backing value:", backingValue);
-        console.log("Redeem Fee:", redeemFee);
+        // console.log("Redeem output:", output);
+        // console.log("Backing value:", backingValue);
+        // console.log("Redeem Fee:", redeemFee);
+        // console.log("Redeem Total:", output + redeemFee);
         
         uint256 primaryStableDecimals = Helpers.getDecimals(primaryStableAddress);
 
@@ -183,7 +184,7 @@ contract VaultCore is VaultStorage, BalancerExchange {
         uint8  index = 0;
         while((totalAmount <= (output + redeemFee)) && (strategyIndex < strategyWithWeights.length)) {
             uint256 currentStratBal = IStrategy(strategyWithWeights[strategyIndex].strategy).checkBalance();
-            console.log("Current strategy balance:", strategyWithWeights[strategyIndex].strategy, currentStratBal);
+            // console.log("Current strategy balance:", strategyWithWeights[strategyIndex].strategy, currentStratBal);
             if (currentStratBal > 0) {
                 if ( (currentStratBal + totalAmount) > (output + redeemFee) ) {
                     strategiesToWithdrawFrom[index] = strategyWithWeights[strategyIndex].strategy;
@@ -191,16 +192,16 @@ contract VaultCore is VaultStorage, BalancerExchange {
                     totalAmount += currentStratBal - ((currentStratBal + totalAmount) - (output + redeemFee));
                 } else {
                     strategiesToWithdrawFrom[index] = strategyWithWeights[strategyIndex].strategy;
-                    amountsToWithdraw[index] = currentStratBal;
+                    amountsToWithdraw[index] = 0; // 0 means withdraw all
                     totalAmount += currentStratBal;
                 }
                 index++;
             }
-            console.log("Total amount after:", strategyWithWeights[strategyIndex].strategy, totalAmount);
+            // console.log("Total amount after:", strategyWithWeights[strategyIndex].strategy, totalAmount);
 
             strategyIndex++;
         }
-        console.log("Total amount:", totalAmount);
+        // console.log("Total amount:", totalAmount);
         require(totalAmount >= (output + redeemFee), "Not enough funds anywhere to redeem.");
 
         // Withdraw from strategies
@@ -208,8 +209,15 @@ contract VaultCore is VaultStorage, BalancerExchange {
             if (strategiesToWithdrawFrom[i] == address(0)) {
                 break;
             }
-            console.log("VaultCore - Redeem - Withdraw from strategy: ", strategiesToWithdrawFrom[i], amountsToWithdraw[i]);
-            IStrategy(strategiesToWithdrawFrom[i]).withdraw(address(this), primaryStableAddress, amountsToWithdraw[i]);
+            // console.log("VaultCore - Redeem - Balance in strategy: ",IStrategy(strategiesToWithdrawFrom[i]).checkBalance() );
+            if (amountsToWithdraw[i] > 0) {
+                // console.log("VaultCore - Redeem - Withdraw from strategy: ", strategiesToWithdrawFrom[i], amountsToWithdraw[i]);
+                IStrategy(strategiesToWithdrawFrom[i]).withdraw(address(this), primaryStableAddress, amountsToWithdraw[i]);
+            } else {
+                // console.log("VaultCore - Redeem - Withdraw all from strategy: ",IStrategy(strategiesToWithdrawFrom[i]).checkBalance() );
+                IStrategy(strategiesToWithdrawFrom[i]).withdrawAll();
+            }
+            
         }
         require(primaryStable.balanceOf(address(this)) >= (output + redeemFee), "Not enough funds after withdrawl.");
 
@@ -231,13 +239,13 @@ contract VaultCore is VaultStorage, BalancerExchange {
             _amount > 0,
             "Amount should be greater than zero"
         );
-        console.log("Distributing fee:", _amount);
+        // console.log("Distributing fee:", _amount);
         uint256 labsfees = _amount.mul(labsFeeBps*10).div(10000);  // Since, we have already made the 10% of redeem amount, we need to make take labsFeeBps*10 percent of the fee amount
-        console.log("labsFeeBps:", labsFeeBps);
-        console.log("Sending labs fees:", labsfees);
+        // console.log("labsFeeBps:", labsFeeBps);
+        // console.log("Sending labs fees:", labsfees);
         uint256 teamfees =  _amount.mul(teamFeeBps*10).div(10000); 
-        console.log("teamFeeBps:", teamFeeBps);
-        console.log("Sending team fees:", teamfees);
+        // console.log("teamFeeBps:", teamFeeBps);
+        // console.log("Sending team fees:", teamfees);
         IERC20(primaryStableAddress).transfer(
             labsAddress,
             labsfees
@@ -309,7 +317,7 @@ contract VaultCore is VaultStorage, BalancerExchange {
         for (uint256 i = 0; i < allAssets.length; i++) {
             IERC20 asset = IERC20(allAssets[i]);
             uint256 assetBalance = asset.balanceOf(address(this));
-            console.log(allAssets[i], "assetBalance: ", assetBalance);
+            // console.log(allAssets[i], "assetBalance: ", assetBalance);
             // No balance, nothing to do here
             if (assetBalance == 0) continue;
 
@@ -324,7 +332,7 @@ contract VaultCore is VaultStorage, BalancerExchange {
             ];
 
             if (depositStrategyAddr != address(0) && allocateAmount > 0) {
-                console.log("Sending " , allocateAmount , " to " , depositStrategyAddr);
+                // console.log("Sending " , allocateAmount , " to " , depositStrategyAddr);
                 IStrategy strategy = IStrategy(depositStrategyAddr);
                 // Transfer asset to Strategy and call deposit method to
                 // mint or take required action
@@ -355,13 +363,13 @@ contract VaultCore is VaultStorage, BalancerExchange {
         _quickAllocate();
     }
     function _quickAllocate() internal {
-        console.log("quickAllocate -  primaryStableBalance: ", IERC20(primaryStableAddress).balanceOf(address(this)));
+        // console.log("quickAllocate -  primaryStableBalance: ", IERC20(primaryStableAddress).balanceOf(address(this)));
         uint256 index =  block.number  % quickDepositStrategies.length;
         address quickDepositStrategyAddr = quickDepositStrategies[index];
         uint256 allocateAmount = IERC20(primaryStableAddress).balanceOf(address(this));
         if (quickDepositStrategyAddr != address(0)   && allocateAmount > 0 ) {
             IStrategy strategy = IStrategy(quickDepositStrategyAddr);
-            console.log("Quick Depositing " , allocateAmount , " to " , quickDepositStrategyAddr);
+            // console.log("Quick Depositing " , allocateAmount , " to " , quickDepositStrategyAddr);
             IERC20(primaryStableAddress).safeTransfer(address(strategy), allocateAmount);
             strategy.deposit(primaryStableAddress, allocateAmount);
             emit AssetAllocated(
@@ -390,25 +398,26 @@ contract VaultCore is VaultStorage, BalancerExchange {
      */
     function _rebase() internal whenNotRebasePaused {
         uint256 cashSupply = cash.totalSupply();
-        console.log("Total CASH Supply: ", cashSupply);
+        // console.log("Total CASH Supply: ", cashSupply);
         if (cashSupply == 0) {
             return;
         }
-        uint256 vaultValue = _totalValue();
-        console.log("Total Vault Value: ", vaultValue);
+        uint256 primaryStableDecimals = Helpers.getDecimals(primaryStableAddress);
+        uint256 vaultValue = _totalValue().scaleBy(18, primaryStableDecimals);
+        // console.log("Total Vault Value: ", vaultValue);
 
         // Yield fee collection
         address _trusteeAddress = trusteeAddress; // gas savings
-        console.log("Trustee Address: ", _trusteeAddress);
+        // console.log("Trustee Address: ", _trusteeAddress);
         if (_trusteeAddress != address(0) && (vaultValue > cashSupply)) {
-            console.log("Yield fee collection");
+            // console.log("Yield fee collection");
             uint256 yield = vaultValue.sub(cashSupply);
-            console.log("Yield: ", yield);
+            // console.log("Yield: ", yield);
             uint256 fee = yield.mul(trusteeFeeBps).div(10000);
-            console.log("Fee: ", fee);
+            // console.log("Fee: ", fee);
             require(yield > fee, "Fee must not be greater than yield");
             if (fee > 0) {
-                console.log("Minting CASH for fee " , fee , " to " , _trusteeAddress);
+                // console.log("Minting CASH for fee " , fee , " to " , _trusteeAddress);
                 cash.mint(_trusteeAddress, fee);
             }
             emit YieldDistribution(_trusteeAddress, yield, fee);
@@ -417,7 +426,7 @@ contract VaultCore is VaultStorage, BalancerExchange {
         // Only rachet CASH supply upwards
         cashSupply = cash.totalSupply(); // Final check should use latest value
         if (vaultValue > cashSupply) {
-            console.log("Still vault value greater than supply, changing supply of CASH for vaultValue " , vaultValue);
+            // console.log("Still vault value greater than supply, changing supply of CASH for vaultValue " , vaultValue);
             cash.changeSupply(vaultValue);
         }
     }
@@ -442,16 +451,12 @@ contract VaultCore is VaultStorage, BalancerExchange {
 
     /**
      * @dev Internal to calculate total value of all assets held in Vault.
-     * @return value Total value in ETH (1e18)
+     * @return value Total value in ETH (1e6)
      */
     function _totalValueInVault() internal view returns (uint256 value) {
-        for (uint256 y = 0; y < allAssets.length; y++) {
-            IERC20 asset = IERC20(allAssets[y]);
-            uint256 assetDecimals = Helpers.getDecimals(allAssets[y]);
-            uint256 balance = asset.balanceOf(address(this));
-            if (balance > 0) {
-                value = value.add(balance.scaleBy(18, assetDecimals));
-            }
+        uint256 balance = IERC20(primaryStableAddress).balanceOf(address(this));
+        if (balance > 0) {
+            value = value.add(balance);
         }
     }
 
@@ -586,7 +591,7 @@ contract VaultCore is VaultStorage, BalancerExchange {
     function _swapAsset(address tokenFrom, address tokenTo) internal {
         setBalancerVault(balancerVault);
         if ( ( tokenFrom != tokenTo) && (IERC20(tokenFrom).balanceOf(address(this)) > 0) )  {
-            console.log("VaultCore: Swapping from ", tokenFrom, tokenTo);
+            // console.log("VaultCore: Swapping from ", tokenFrom, tokenTo);
             swap(
                 balancerPoolId,
                 IVault.SwapKind.GIVEN_IN,

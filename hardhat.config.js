@@ -216,10 +216,10 @@ module.exports = {
       mainnet: MAINNET_GOVERNOR,
     },
     guardianAddr: {
-      default: 1,
+      default: 0,
       // On mainnet and fork, the guardian is the multi-sig.
       localhost: process.env.FORK === "true" ? MAINNET_MULTISIG : 0,
-      hardhat: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
+      hardhat: process.env.FORK === "true" ? MAINNET_MULTISIG : 0,
       mainnet: MAINNET_MULTISIG,
     },
     adjusterAddr: {
@@ -241,7 +241,8 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
-      rinkeby: process.env.ETHERSCAN_API_KEY
+      rinkeby: process.env.ETHERSCAN_API_KEY,
+      polygon: process.env.POLYGON_API_KEY
     },
     customChains: [
       {
@@ -250,6 +251,14 @@ module.exports = {
         urls: {
           apiURL: "https://api-rinkeby.etherscan.io/api",
           browserURL: "https://rinkeby.etherscan.io"
+        }
+      },
+      {
+        network: "mainnet",
+        chainId: 4,
+        urls: {
+          apiURL: "https://api.polygonscan.com/",
+          browserURL: "https://polygonscan.com"
         }
       }
     ]

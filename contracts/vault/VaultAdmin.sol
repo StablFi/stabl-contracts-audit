@@ -395,7 +395,7 @@ contract VaultAdmin is VaultStorage {
               Startegies Weights
     *************************************/
     
-    function sortWeightsByTarget(StrategyWithWeight[] memory weights, bool ascending) internal pure returns(StrategyWithWeight[] memory) {
+    function sortWeightsByTarget(StrategyWithWeight[] memory weights) internal pure returns(StrategyWithWeight[] memory) {
         uint[] memory targets = new uint[](weights.length);
         for(uint i = 0; i < weights.length; i++) {
             targets[i] = weights[i].targetWeight;
@@ -428,7 +428,7 @@ contract VaultAdmin is VaultStorage {
             totalTarget += strategyWithWeight.targetWeight;
         }
         require(totalTarget == TOTAL_WEIGHT, "Total target should equal to TOTAL_WEIGHT");
-        StrategyWithWeight[] memory sorted = sortWeightsByTarget(_strategyWithWeights, true);
+        StrategyWithWeight[] memory sorted = sortWeightsByTarget(_strategyWithWeights);
         for (uint8 i = 0; i < sorted.length; i++) {
             _addStrategyWithWeightAt(sorted[i], i);
             strategyWithWeightPositions[strategyWithWeights[i].strategy] = i;

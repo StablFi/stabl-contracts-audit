@@ -71,6 +71,7 @@ interface IVault {
 
     function setTrusteeAddress(address _address) external;
 
+
     function trusteeAddress() external view returns (address);
 
     function setTrusteeFeeBps(uint256 _basis) external;
@@ -146,10 +147,10 @@ interface IVault {
 
     function checkBalance() external view returns (uint256);
 
-    function calculateRedeemOutputs(uint256 _amount)
+    function calculateRedeemOutput(uint256 _amount)
         external
         view
-        returns (uint256[] memory);
+        returns (uint256);
 
     function getAssetCount() external view returns (uint256);
 
@@ -172,6 +173,8 @@ interface IVault {
     function setQuickDepositStartegies(address[] calldata _quickDepositStartegies) external;
     
     function setPrimaryStable(address _primaryStable) external;
+    function primaryStableAddress() external view returns (address);
+
 
     function getFeeParams() external view returns  (address, uint256, address, uint256);
     function setFeeParams(address _labsAddress, uint256 _labsFeeBps, address _teamAddress, uint256 _teamFeeBps) external;

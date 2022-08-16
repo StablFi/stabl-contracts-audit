@@ -72,6 +72,7 @@ contracts/harvest/artifacts/Harvester.json
 contracts/strategies/artifacts/DystopiaStrategy_metadata.json
 contracts/strategies/artifacts/DystopiaStrategy.json
 
+contracts/Box.sol
 contracts/**/artifacts/**
 artifacts/**
 *.dbg.json
