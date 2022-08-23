@@ -1,0 +1,74 @@
+{
+	"compiler": {
+		"version": "0.8.7+commit.e28d00a7"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address[]",
+						"name": "holders",
+						"type": "address[]"
+					},
+					{
+						"internalType": "address[]",
+						"name": "cTokens",
+						"type": "address[]"
+					},
+					{
+						"internalType": "bool",
+						"name": "borrowers",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "suppliers",
+						"type": "bool"
+					}
+				],
+				"name": "claimComp",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/contracts/interfaces/IComptroller.sol": "IComptroller"
+		},
+		"evmVersion": "london",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"contracts/contracts/interfaces/IComptroller.sol": {
+			"keccak256": "0xcb5f63c1b60f65f3e7d3240df20f4d5d6b055e945a062ace701b727188e07ef3",
+			"license": "agpl-3.0",
+			"urls": [
+				"bzz-raw://6541f567203ac3e793cd137b3a79b8eb57b266d907e461b368a39442c06716f3",
+				"dweb:/ipfs/QmS14VCepYZbwFpZay7mLtiSLUMPuiqPtixNzxLT7HqwzJ"
+			]
+		}
+	},
+	"version": 1
+}

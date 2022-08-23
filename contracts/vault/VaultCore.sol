@@ -222,8 +222,10 @@ contract VaultCore is VaultStorage, BalancerExchange {
         require(primaryStable.balanceOf(address(this)) >= (output + redeemFee), "Not enough funds after withdrawl.");
 
         primaryStable.safeTransfer(msg.sender, output);
-        _distributeFees(redeemFee);
+
         cash.burn(msg.sender, _amount);
+        
+        // Remaining amount i.e redeem fees will be rebased for all other CASH holders
 
         // Until we can prove that we won't affect the prices of our assets
         // by withdrawing them, this should be here.
@@ -234,27 +236,6 @@ contract VaultCore is VaultStorage, BalancerExchange {
         }
     }
 
-    function _distributeFees(uint256 _amount) internal {
-        require(
-            _amount > 0,
-            "Amount should be greater than zero"
-        );
-        // console.log("Distributing fee:", _amount);
-        uint256 labsfees = _amount.mul(labsFeeBps*10).div(10000);  // Since, we have already made the 10% of redeem amount, we need to make take labsFeeBps*10 percent of the fee amount
-        // console.log("labsFeeBps:", labsFeeBps);
-        // console.log("Sending labs fees:", labsfees);
-        uint256 teamfees =  _amount.mul(teamFeeBps*10).div(10000); 
-        // console.log("teamFeeBps:", teamFeeBps);
-        // console.log("Sending team fees:", teamfees);
-        IERC20(primaryStableAddress).transfer(
-            labsAddress,
-            labsfees
-        );
-        IERC20(primaryStableAddress).transfer(
-            teamAddress,
-            teamfees
-        );
-    }
 
 
     /**
@@ -345,12 +326,6 @@ contract VaultCore is VaultStorage, BalancerExchange {
                 );
             }
         }
-
-        // Trigger OGN Buyback
-        address _trusteeAddress = trusteeAddress; // gas savings
-        if (_trusteeAddress != address(0)) {
-            IBuyback(trusteeAddress).swap();
-        }
     }
 
 
@@ -381,8 +356,6 @@ contract VaultCore is VaultStorage, BalancerExchange {
 
     }
 
-
-
     /**
      * @dev Calculate the total value of assets held by the Vault and all
      *      strategies and update the supply of CASH.
@@ -404,24 +377,6 @@ contract VaultCore is VaultStorage, BalancerExchange {
         }
         uint256 primaryStableDecimals = Helpers.getDecimals(primaryStableAddress);
         uint256 vaultValue = _totalValue().scaleBy(18, primaryStableDecimals);
-        // console.log("Total Vault Value: ", vaultValue);
-
-        // Yield fee collection
-        address _trusteeAddress = trusteeAddress; // gas savings
-        // console.log("Trustee Address: ", _trusteeAddress);
-        if (_trusteeAddress != address(0) && (vaultValue > cashSupply)) {
-            // console.log("Yield fee collection");
-            uint256 yield = vaultValue.sub(cashSupply);
-            // console.log("Yield: ", yield);
-            uint256 fee = yield.mul(trusteeFeeBps).div(10000);
-            // console.log("Fee: ", fee);
-            require(yield > fee, "Fee must not be greater than yield");
-            if (fee > 0) {
-                // console.log("Minting CASH for fee " , fee , " to " , _trusteeAddress);
-                cash.mint(_trusteeAddress, fee);
-            }
-            emit YieldDistribution(_trusteeAddress, yield, fee);
-        }
 
         // Only rachet CASH supply upwards
         cashSupply = cash.totalSupply(); // Final check should use latest value
@@ -523,31 +478,40 @@ contract VaultCore is VaultStorage, BalancerExchange {
         (uint256 output, ,) = _calculateRedeemOutput(_amount);
         return output;
     }
+    /**
+     * @notice Calculate the output for a redeem function
+     */
+    function redeemOutputs(uint256 _amount)
+        external
+        view
+        returns (uint256,uint256,uint256)
+    {
+        return _calculateRedeemOutput(_amount);
+    }
 
     /**
      * @notice Calculate the output for a redeem function
-     * @return output  amount respective to the primary stable
-     * @return totalBalance Total balance of Vault
+     * @param _amount Amount to redeem (1e18)
+     * @return output  amount respective to the primary stable  (1e6)
+     * @return totalBalance Total balance of Vault (1e18)
+     * @return redeemFee redeem fee on _amount (1e6)
      */
     function _calculateRedeemOutput(uint256 _amount)
         internal
         view
         returns (uint256, uint256, uint256)
     {
-
         IOracle oracle = IOracle(priceProvider);
         uint256 primaryStablePrice =  oracle.price(primaryStableAddress).scaleBy(18, 8);
         uint256 primaryStableBalance = _checkBalance();
         uint256 primaryStableDecimals =  Helpers.getDecimals(primaryStableAddress);
-        uint256 totalBalance = 0;
+        uint256 totalBalance = primaryStableBalance.scaleBy(18, primaryStableDecimals);
         uint256 redeemFee = 0;
         // Calculate redeem fee
-        if (labsFeeBps > 0  || teamFeeBps > 0) {
+        if (redeemFeeBps > 0) {
             redeemFee = _amount.mul(redeemFeeBps).div(10000);
             _amount = _amount.sub(redeemFee);
         }
-
-        totalBalance = totalBalance.add(primaryStableBalance.scaleBy(18, primaryStableDecimals));
 
         // Never give out more than one
         // stablecoin per dollar of CASH
@@ -555,14 +519,9 @@ contract VaultCore is VaultStorage, BalancerExchange {
             primaryStablePrice = 1e18;
         }
         
-        // Calculate totalOutputRatio
-        uint256 ratio = primaryStableBalance
-            .scaleBy(18,primaryStableDecimals)
-            .mul(primaryStablePrice)
-            .div(totalBalance);
-
         // Calculate final outputs
-        uint256 factor = _amount.divPrecisely(ratio);
+        uint256 factor = _amount.divPrecisely(primaryStablePrice);
+        // Should return totalBalance in 1e6
         return (primaryStableBalance.mul(factor).div(totalBalance), totalBalance, redeemFee.div(10**(18 - primaryStableDecimals)));
     }
 

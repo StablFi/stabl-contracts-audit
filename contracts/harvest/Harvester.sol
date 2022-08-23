@@ -141,11 +141,11 @@ contract Harvester is Governable {
      * @dev Collect reward tokens from all strategies and distrubte primaryStable
      *      to labs, teams and dripper accounts/contracts.
      */
-    function harvestAndDistribute() external onlyGovernor nonReentrant {
+    function harvestAndDistribute() external onlyVaultOrGovernor nonReentrant {
         _harvest();
         _distribute();
     }
-    function harvestAndDistribute(address _strategy) external onlyGovernor nonReentrant {
+    function harvestAndDistribute(address _strategy) external onlyVaultOrGovernor nonReentrant {
         _harvest(_strategy);
         _distribute();
     }

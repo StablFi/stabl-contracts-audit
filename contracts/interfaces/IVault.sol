@@ -151,7 +151,10 @@ interface IVault {
         external
         view
         returns (uint256);
-
+    function redeemOutputs(uint256 _amount)
+        external
+        view
+        returns (uint256,uint256,uint256);
     function getAssetCount() external view returns (uint256);
 
     function getAllAssets() external view returns (address[] memory);

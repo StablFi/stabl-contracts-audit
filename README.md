@@ -24,13 +24,7 @@ npx kill-port 8545
 
 ### Testing on Fork
 
- 1.  Change environment variable "FORK" to "true" as follows: 
-
-![image](https://user-images.githubusercontent.com/24974673/184888459-77f0026e-7e11-407a-a4b3-dfe5f83148f3.png)
-
-
-
- 
+ 1. Change environment variable "FORK" to "true" as follows: 
  2. Deploy contracts on Polygon Fork
  3. Run the following command in the project directory:
 
@@ -39,9 +33,6 @@ npx kill-port 8545
 ### Testing on in-memory node using Mocks
 
  1. Change environment variable "FORK" to "false" as follows:
-
-![image](https://user-images.githubusercontent.com/24974673/184888413-853d262a-14cf-4a07-9d8e-ce938ea70496.png)
-
  2. Run the following command in the project directory:
 
     npx hardhat test --grep mock

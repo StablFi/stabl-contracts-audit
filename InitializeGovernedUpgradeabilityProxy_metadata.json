@@ -1,0 +1,306 @@
+{
+	"compiler": {
+		"version": "0.8.7+commit.e28d00a7"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "previousGovernor",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "newGovernor",
+						"type": "address"
+					}
+				],
+				"name": "GovernorshipTransferred",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "previousGovernor",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "newGovernor",
+						"type": "address"
+					}
+				],
+				"name": "PendingGovernorshipTransfer",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "implementation",
+						"type": "address"
+					}
+				],
+				"name": "Upgraded",
+				"type": "event"
+			},
+			{
+				"stateMutability": "payable",
+				"type": "fallback"
+			},
+			{
+				"inputs": [],
+				"name": "admin",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "claimGovernance",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "governor",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "implementation",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_logic",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_initGovernor",
+						"type": "address"
+					},
+					{
+						"internalType": "bytes",
+						"name": "_data",
+						"type": "bytes"
+					}
+				],
+				"name": "initialize",
+				"outputs": [],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "isGovernor",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_newGovernor",
+						"type": "address"
+					}
+				],
+				"name": "transferGovernance",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "newImplementation",
+						"type": "address"
+					}
+				],
+				"name": "upgradeTo",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "newImplementation",
+						"type": "address"
+					},
+					{
+						"internalType": "bytes",
+						"name": "data",
+						"type": "bytes"
+					}
+				],
+				"name": "upgradeToAndCall",
+				"outputs": [],
+				"stateMutability": "payable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"author": "Origin Protocol Inc",
+			"details": "This contract combines an upgradeability proxy with our governor system. It is based on an older version of OpenZeppelins BaseUpgradeabilityProxy with Solidity ^0.8.0.",
+			"events": {
+				"Upgraded(address)": {
+					"details": "Emitted when the implementation is upgraded.",
+					"params": {
+						"implementation": "Address of the new implementation."
+					}
+				}
+			},
+			"kind": "dev",
+			"methods": {
+				"admin()": {
+					"returns": {
+						"_0": "The address of the proxy admin/it's also the governor."
+					}
+				},
+				"claimGovernance()": {
+					"details": "Claim Governance of the contract to a new account (`newGovernor`). Can only be called by the new Governor."
+				},
+				"governor()": {
+					"details": "Returns the address of the current Governor."
+				},
+				"implementation()": {
+					"returns": {
+						"_0": "The address of the implementation."
+					}
+				},
+				"initialize(address,address,bytes)": {
+					"details": "Contract initializer with Governor enforcement",
+					"params": {
+						"_data": "Data to send as msg.data to the implementation to initialize the proxied contract. It should include the signature and the parameters of the function to be called, as described in https://solidity.readthedocs.io/en/v0.4.24/abi-spec.html#function-selector-and-argument-encoding. This parameter is optional, if no data is given the initialization call to proxied contract will be skipped.",
+						"_initGovernor": "Address of the initial Governor.",
+						"_logic": "Address of the initial implementation."
+					}
+				},
+				"isGovernor()": {
+					"details": "Returns true if the caller is the current Governor."
+				},
+				"transferGovernance(address)": {
+					"details": "Transfers Governance of the contract to a new account (`newGovernor`). Can only be called by the current Governor. Must be claimed for this to complete",
+					"params": {
+						"_newGovernor": "Address of the new Governor"
+					}
+				},
+				"upgradeTo(address)": {
+					"details": "Upgrade the backing implementation of the proxy. Only the admin can call this function.",
+					"params": {
+						"newImplementation": "Address of the new implementation."
+					}
+				},
+				"upgradeToAndCall(address,bytes)": {
+					"details": "Upgrade the backing implementation of the proxy and call a function on the new implementation. This is useful to initialize the proxied contract.",
+					"params": {
+						"data": "Data to send as msg.data in the low level call. It should include the signature and the parameters of the function to be called, as described in https://solidity.readthedocs.io/en/v0.4.24/abi-spec.html#function-selector-and-argument-encoding.",
+						"newImplementation": "Address of the new implementation."
+					}
+				}
+			},
+			"stateVariables": {
+				"IMPLEMENTATION_SLOT": {
+					"details": "Storage slot with the address of the current implementation. This is the keccak-256 hash of \"eip1967.proxy.implementation\" subtracted by 1, and is validated in the constructor."
+				}
+			},
+			"title": "BaseGovernedUpgradeabilityProxy",
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol": "InitializeGovernedUpgradeabilityProxy"
+		},
+		"evmVersion": "london",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": true,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"@openzeppelin/contracts/utils/Address.sol": {
+			"keccak256": "0x2ccf9d2313a313d41a791505f2b5abfdc62191b5d4334f7f7a82691c088a1c87",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://b3a57d0854b2fdce6ebff933a48dca2445643d1eccfc27f00292e937f26c6a58",
+				"dweb:/ipfs/QmW45rZooS9TqR4YXUbjRbtf2Bpb5ouSarBvfW1LdGprvV"
+			]
+		},
+		"contracts/contracts/governance/Governable.sol": {
+			"keccak256": "0xe5e82e9c9b2611b9cc82e2a047cb7fed850133eecc5a070ee61093c348bcc976",
+			"license": "agpl-3.0",
+			"urls": [
+				"bzz-raw://752df48fe4a3578b2a08f7518a261eb340bc7940ecb3d24929d7c2af1ed24c91",
+				"dweb:/ipfs/QmbHseRzFZqTuoKzavEgWSZveBMPT5hjgcZP2xWUUgaTTU"
+			]
+		},
+		"contracts/contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol": {
+			"keccak256": "0xde4e06400d0b9c7790d842c699b6a3e29f3533f65305b4614774848e98c26bd4",
+			"license": "agpl-3.0",
+			"urls": [
+				"bzz-raw://ccfe203153680eb39c8027ac4a453e357c9db1facd2420d72efa75d1ac2d6c5a",
+				"dweb:/ipfs/QmT2z2jfKyViyWA498f4fRZKtYD9p7ZqBjUGSKZozchEYJ"
+			]
+		}
+	},
+	"version": 1
+}

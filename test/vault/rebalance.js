@@ -316,7 +316,7 @@ describe("Rebalancing @slow" , function () {
   
     });
   }
-  for(var i = 0; i<1; i++){
+  for(var i = 0; i<12; i++){
     rebalance_from(i);
   } 
 

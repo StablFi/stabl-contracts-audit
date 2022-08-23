@@ -159,7 +159,41 @@ describe("Vault Redeem", function () {
     await expect(matt).has.a.balanceOf("0.00", cash);
 
   });
-  
+
+  it("Should correctly provide redeem outputs @fast @mock @redeemtest", async () => {
+    const { cash, vault, usdc, matt, josh, Labs, Team,  dai } = await loadFixture(defaultFixture);
+    console.log("MATT CASH Balance: ", cashUnitsFormat((await cash.balanceOf(matt.address)).toString()))
+    console.log("JOSH CASH Balance: ", cashUnitsFormat((await cash.balanceOf(josh.address)).toString()))
+    console.log("Setting AutoRebasing Threshold to 0")
+    await vault.setRebaseThreshold(0);
+    console.log("Vault Rebase Threshold (CASH): ", cashUnitsFormat(await vault.rebaseThreshold()).toString() );
+    let redeemAmount = cashUnits("10.0");
+    console.log("Redeeming 10 CASH from Matt")
+    await vault.connect(matt).redeem(redeemAmount, 0);
+    console.log("MATT CASH Balance: ", cashUnitsFormat((await cash.balanceOf(matt.address)).toString()))
+    console.log("JOSH CASH Balance: ", cashUnitsFormat((await cash.balanceOf(josh.address)).toString()))
+    
+  });
+
+  it("Should correctly provide redeem outputs @fast @mock @redeemtest", async () => {
+    const { cash, vault, usdc, matt, josh, Labs, Team,  dai } = await loadFixture(defaultFixture);
+    console.log("MATT CASH Balance: ", cashUnitsFormat((await cash.balanceOf(matt.address)).toString()))
+    console.log("JOSH CASH Balance: ", cashUnitsFormat((await cash.balanceOf(josh.address)).toString()))
+    let redeemAmount = cashUnits("10.0");
+    console.log("Vault Redeem Fee Bps: ", (await vault.redeemFeeBps()).toString() );
+    console.log("Vault Redeem Output - What redeemer get (1e6) : ", (await vault.redeemOutputs(redeemAmount))[0].toString() )
+    console.log("Vault REDEEM Output - PrimaryStable (1e18): ", (await vault.redeemOutputs(redeemAmount))[1].toString())
+    console.log("Vault Redeem Output - redeemFee on _amount (1e6): ", (await vault.redeemOutputs(redeemAmount))[2].toString() )
+    console.log("MATT CASH Balance: ", cashUnitsFormat((await cash.balanceOf(matt.address)).toString()))
+    console.log("JOSH CASH Balance: ", cashUnitsFormat((await cash.balanceOf(josh.address)).toString()))
+    expect(await vault.redeemOutputs(redeemAmount)).to.deep.equal([
+      usdcUnits("9.975"),
+      cashUnits("200.0"),
+      usdcUnits("0.025")
+    ]);
+
+  });
+
   // it("Should allow a redeem @fast", async () => {
   //   const { cash, vault, usdc, anna, dai } = await loadFixture(defaultFixture);
   //   await expect(anna).has.a.balanceOf("1000.00", usdc);

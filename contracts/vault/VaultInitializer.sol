@@ -34,7 +34,7 @@ contract VaultInitializer is VaultStorage {
         // Initial allocate threshold of 25,000 CASH
         autoAllocateThreshold = 25000e18;
         // Threshold for rebasing
-        rebaseThreshold = 1000e18;
+        rebaseThreshold = 100e18;
         // Initialize all strategies
         allStrategies = new address[](0);
         // Initialize all quick deposit strategies

@@ -1,0 +1,913 @@
+{
+	"compiler": {
+		"version": "0.8.7+commit.e28d00a7"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "owner",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "spender",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "value",
+						"type": "uint256"
+					}
+				],
+				"name": "Approval",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "previousGovernor",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "newGovernor",
+						"type": "address"
+					}
+				],
+				"name": "GovernorshipTransferred",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "previousGovernor",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "newGovernor",
+						"type": "address"
+					}
+				],
+				"name": "PendingGovernorshipTransfer",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "totalSupply",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "rebasingCredits",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "rebasingCreditsPerToken",
+						"type": "uint256"
+					}
+				],
+				"name": "TotalSupplyUpdatedHighres",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "from",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "to",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "value",
+						"type": "uint256"
+					}
+				],
+				"name": "Transfer",
+				"type": "event"
+			},
+			{
+				"inputs": [],
+				"name": "_totalSupply",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_owner",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_spender",
+						"type": "address"
+					}
+				],
+				"name": "allowance",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_spender",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_value",
+						"type": "uint256"
+					}
+				],
+				"name": "approve",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_account",
+						"type": "address"
+					}
+				],
+				"name": "balanceOf",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "account",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amount",
+						"type": "uint256"
+					}
+				],
+				"name": "burn",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_newTotalSupply",
+						"type": "uint256"
+					}
+				],
+				"name": "changeSupply",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "claimGovernance",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_account",
+						"type": "address"
+					}
+				],
+				"name": "creditsBalanceOf",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_account",
+						"type": "address"
+					}
+				],
+				"name": "creditsBalanceOfHighres",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					},
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "decimals",
+				"outputs": [
+					{
+						"internalType": "uint8",
+						"name": "",
+						"type": "uint8"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_spender",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_subtractedValue",
+						"type": "uint256"
+					}
+				],
+				"name": "decreaseAllowance",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "governor",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_spender",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_addedValue",
+						"type": "uint256"
+					}
+				],
+				"name": "increaseAllowance",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "string",
+						"name": "_nameArg",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "_symbolArg",
+						"type": "string"
+					},
+					{
+						"internalType": "address",
+						"name": "_vaultAddress",
+						"type": "address"
+					}
+				],
+				"name": "initialize",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "isGovernor",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "isUpgraded",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_account",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_amount",
+						"type": "uint256"
+					}
+				],
+				"name": "mint",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "name",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "nonRebasingCreditsPerToken",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "nonRebasingSupply",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "rebaseOptIn",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "rebaseOptOut",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "rebaseState",
+				"outputs": [
+					{
+						"internalType": "enum OUSD.RebaseOptions",
+						"name": "",
+						"type": "uint8"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "rebasingCredits",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "rebasingCreditsHighres",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "rebasingCreditsPerToken",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "rebasingCreditsPerTokenHighres",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "symbol",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "totalSupply",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_to",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_value",
+						"type": "uint256"
+					}
+				],
+				"name": "transfer",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_from",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_to",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_value",
+						"type": "uint256"
+					}
+				],
+				"name": "transferFrom",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_newGovernor",
+						"type": "address"
+					}
+				],
+				"name": "transferGovernance",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "vaultAddress",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {
+				"allowance(address,address)": {
+					"details": "Function to check the amount of tokens that _owner has allowed to      `_spender`.",
+					"params": {
+						"_owner": "The address which owns the funds.",
+						"_spender": "The address which will spend the funds."
+					},
+					"returns": {
+						"_0": "The number of tokens still available for the _spender."
+					}
+				},
+				"approve(address,uint256)": {
+					"details": "Approve the passed address to spend the specified amount of tokens      on behalf of msg.sender. This method is included for ERC20      compatibility. `increaseAllowance` and `decreaseAllowance` should be      used instead.      Changing an allowance with this method brings the risk that someone      may transfer both the old and the new allowance - if they are both      greater than zero - if a transfer transaction is mined before the      later approve() call is mined.",
+					"params": {
+						"_spender": "The address which will spend the funds.",
+						"_value": "The amount of tokens to be spent."
+					}
+				},
+				"balanceOf(address)": {
+					"details": "Gets the balance of the specified address.",
+					"params": {
+						"_account": "Address to query the balance of."
+					},
+					"returns": {
+						"_0": "A uint256 representing the amount of base units owned by the         specified address."
+					}
+				},
+				"burn(address,uint256)": {
+					"details": "Burns tokens, decreasing totalSupply."
+				},
+				"changeSupply(uint256)": {
+					"details": "Modify the supply without minting new tokens. This uses a change in      the exchange rate between \"credits\" and OUSD tokens to change balances.",
+					"params": {
+						"_newTotalSupply": "New total supply of OUSD."
+					}
+				},
+				"claimGovernance()": {
+					"details": "Claim Governance of the contract to a new account (`newGovernor`). Can only be called by the new Governor."
+				},
+				"creditsBalanceOf(address)": {
+					"details": "Gets the credits balance of the specified address.Backwards compatible with old low res credits per token.",
+					"params": {
+						"_account": "The address to query the balance of."
+					},
+					"returns": {
+						"_0": "(uint256, uint256) Credit balance and credits per token of the         address"
+					}
+				},
+				"creditsBalanceOfHighres(address)": {
+					"details": "Gets the credits balance of the specified address.",
+					"params": {
+						"_account": "The address to query the balance of."
+					},
+					"returns": {
+						"_0": "(uint256, uint256, bool) Credit balance, credits per token of the         address, and isUpgraded"
+					}
+				},
+				"decimals()": {
+					"details": "Returns the number of decimals used to get its user representation. For example, if `decimals` equals `2`, a balance of `505` tokens should be displayed to a user as `5,05` (`505 / 10 ** 2`). Tokens usually opt for a value of 18, imitating the relationship between Ether and Wei. NOTE: This information is only used for _display_ purposes: it in no way affects any of the arithmetic of the contract, including {IERC20-balanceOf} and {IERC20-transfer}."
+				},
+				"decreaseAllowance(address,uint256)": {
+					"details": "Decrease the amount of tokens that an owner has allowed to `_spender`.",
+					"params": {
+						"_spender": "The address which will spend the funds.",
+						"_subtractedValue": "The amount of tokens to decrease the allowance        by."
+					}
+				},
+				"governor()": {
+					"details": "Returns the address of the current Governor."
+				},
+				"increaseAllowance(address,uint256)": {
+					"details": "Increase the amount of tokens that an owner has allowed to      `_spender`.      This method should be used instead of approve() to avoid the double      approval vulnerability described above.",
+					"params": {
+						"_addedValue": "The amount of tokens to increase the allowance by.",
+						"_spender": "The address which will spend the funds."
+					}
+				},
+				"isGovernor()": {
+					"details": "Returns true if the caller is the current Governor."
+				},
+				"mint(address,uint256)": {
+					"details": "Mints new tokens, increasing totalSupply."
+				},
+				"name()": {
+					"details": "Returns the name of the token."
+				},
+				"rebaseOptIn()": {
+					"details": "Add a contract address to the non-rebasing exception list. The address's balance will be part of rebases and the account will be exposed to upside and downside."
+				},
+				"rebaseOptOut()": {
+					"details": "Explicitly mark that an address is non-rebasing."
+				},
+				"rebasingCredits()": {
+					"returns": {
+						"_0": "Low resolution total number of rebasing credits"
+					}
+				},
+				"rebasingCreditsHighres()": {
+					"returns": {
+						"_0": "High resolution total number of rebasing credits"
+					}
+				},
+				"rebasingCreditsPerToken()": {
+					"returns": {
+						"_0": "Low resolution rebasingCreditsPerToken"
+					}
+				},
+				"rebasingCreditsPerTokenHighres()": {
+					"returns": {
+						"_0": "High resolution rebasingCreditsPerToken"
+					}
+				},
+				"symbol()": {
+					"details": "Returns the symbol of the token, usually a shorter version of the name."
+				},
+				"totalSupply()": {
+					"returns": {
+						"_0": "The total supply of OUSD."
+					}
+				},
+				"transfer(address,uint256)": {
+					"details": "Transfer tokens to a specified address.",
+					"params": {
+						"_to": "the address to transfer to.",
+						"_value": "the amount to be transferred."
+					},
+					"returns": {
+						"_0": "true on success."
+					}
+				},
+				"transferFrom(address,address,uint256)": {
+					"details": "Transfer tokens from one address to another.",
+					"params": {
+						"_from": "The address you want to send tokens from.",
+						"_to": "The address you want to transfer to.",
+						"_value": "The amount of tokens to be transferred."
+					}
+				},
+				"transferGovernance(address)": {
+					"details": "Transfers Governance of the contract to a new account (`newGovernor`). Can only be called by the current Governor. Must be claimed for this to complete",
+					"params": {
+						"_newGovernor": "Address of the new Governor"
+					}
+				}
+			},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"notice": "NOTE that this is an ERC20 token but the invariant that the sum of balanceOf(x) for all x is not >= totalSupply(). This is a consequence of the rebasing design. Any integrations with OUSD should be aware.",
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/contracts/token/OUSD.sol": "OUSD"
+		},
+		"evmVersion": "london",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+			"keccak256": "0x9750c6b834f7b43000631af5cc30001c5f547b3ceb3635488f140f60e897ea6b",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://5a7d5b1ef5d8d5889ad2ed89d8619c09383b80b72ab226e0fe7bde1636481e34",
+				"dweb:/ipfs/QmebXWgtEfumQGBdVeM6c71McLixYXQP5Bk6kKXuoY4Bmr"
+			]
+		},
+		"@openzeppelin/contracts/utils/Address.sol": {
+			"keccak256": "0x2ccf9d2313a313d41a791505f2b5abfdc62191b5d4334f7f7a82691c088a1c87",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://b3a57d0854b2fdce6ebff933a48dca2445643d1eccfc27f00292e937f26c6a58",
+				"dweb:/ipfs/QmW45rZooS9TqR4YXUbjRbtf2Bpb5ouSarBvfW1LdGprvV"
+			]
+		},
+		"@openzeppelin/contracts/utils/math/SafeMath.sol": {
+			"keccak256": "0x0f633a0223d9a1dcccfcf38a64c9de0874dfcbfac0c6941ccf074d63a2ce0e1e",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://864a40efcffdf408044c332a5aa38ec5618ed7b4eecb8f65faf45671bd6cdc65",
+				"dweb:/ipfs/QmQJquTMtc6fgm5JQzGdsGpA2fqBe3MHWEdt2qzaLySMdN"
+			]
+		},
+		"contracts/contracts/governance/Governable.sol": {
+			"keccak256": "0xe5e82e9c9b2611b9cc82e2a047cb7fed850133eecc5a070ee61093c348bcc976",
+			"license": "agpl-3.0",
+			"urls": [
+				"bzz-raw://752df48fe4a3578b2a08f7518a261eb340bc7940ecb3d24929d7c2af1ed24c91",
+				"dweb:/ipfs/QmbHseRzFZqTuoKzavEgWSZveBMPT5hjgcZP2xWUUgaTTU"
+			]
+		},
+		"contracts/contracts/token/OUSD.sol": {
+			"keccak256": "0x653afc81b05dd312a45685fb2b65de73668201bed98a08bf7aec6fde929efe5d",
+			"license": "agpl-3.0",
+			"urls": [
+				"bzz-raw://37d6e70c8be70224f0b2f3f05c00a85b46e787c90f9a4a81027cd29dae126f10",
+				"dweb:/ipfs/Qmasde3MeE4bJLBfKpY9TuwzwqhJZtP13gHB31Me9EWUxf"
+			]
+		},
+		"contracts/contracts/utils/Initializable.sol": {
+			"keccak256": "0x515139ff0a6efe16dff538df1289eed43bde7f5ee01e7bf17dab7da94f09179b",
+			"license": "agpl-3.0",
+			"urls": [
+				"bzz-raw://a3ead74590e09e3c829b41f038bce447762fbd27701b22cc3c1f9fc8d12c3055",
+				"dweb:/ipfs/QmT3B1cNxa3aZqxKhCoeYqdysYSncCuMZoYjwevwfPKv2T"
+			]
+		},
+		"contracts/contracts/utils/InitializableERC20Detailed.sol": {
+			"keccak256": "0xddd9256551469bd7fafff2f46435069cc54479888511fdc6558fec6e8796ed07",
+			"license": "agpl-3.0",
+			"urls": [
+				"bzz-raw://2968671a30ddcebd5316e07404b914b37583c5938693d5545b16b1c74b7973ca",
+				"dweb:/ipfs/QmPENU1cDPvTURZBmHYW2WcY8L8uwQj9rWwWfAgGFRRVNs"
+			]
+		},
+		"contracts/contracts/utils/StableMath.sol": {
+			"keccak256": "0x83669eb50b245f9f48eeefe79034a3cb889675e46e2bee37f93caa2766284a69",
+			"license": "agpl-3.0",
+			"urls": [
+				"bzz-raw://a88f8a24e6eba852fe3a238e3fa3a3873296f7384a8262a2b82be4f3e3b397ca",
+				"dweb:/ipfs/Qmc4HUmDiy6qN33xa2EpznnMz3XJbrWAhWLkzaBVezj8gK"
+			]
+		}
+	},
+	"version": 1
+}
