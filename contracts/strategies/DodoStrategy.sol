@@ -99,6 +99,7 @@ contract DodoStrategy is InitializableAbstractStrategy, BalancerExchange, DodoEx
         balancerPoolIdUsdcTusdDaiUsdt = _balancerPoolIdUsdcTusdDaiUsdt;
         balancerPoolIdWmaticUsdcWethBal = _balancerPoolIdWmaticUsdcWethBal;
     }
+    // TODO: Use "_amount" while depositing
     function _deposit(address _asset, uint256 _amount)
         internal
     {
@@ -157,7 +158,7 @@ contract DodoStrategy is InitializableAbstractStrategy, BalancerExchange, DodoEx
         uint256 assetBalance = primaryStable.balanceOf(address(this));
         if (assetBalance > 0) {
             emit TransferLog("Withdrawing from the DODO: ",assetsMapped[0], assetBalance);
-            IERC20(assetsMapped[0]).safeTransfer(vaultAddress, assetBalance);
+            IERC20(assetsMapped[0]).safeTransfer(_beneficiary, assetBalance);
         }
     }
     /**

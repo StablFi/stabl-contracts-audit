@@ -325,7 +325,7 @@ const main = async () => {
 
 main.id = "001_core";
 main.dependencies = [];
-main.tags = ["core", "test", "main"];
+main.tags = ["core", "test", "main", "mainnet"];
 main.skip = () => false;// isFork;
 
 module.exports = main;

@@ -53,7 +53,7 @@ contract MockRewardPool {
         address _rewardTokenA,
         address _rewardTokenB,
         address _operator
-    ) public {
+    )  {
         pid = _pid;
         stakingToken = _stakingToken;
         rewardTokenA = _rewardTokenA;

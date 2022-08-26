@@ -1,7 +1,7 @@
 const { deploymentWithProposal, log } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "037_dripper", forceDeploy: true, tags: ["test", "main"],  dependencies: ["001_core"]},
+  { deployName: "037_dripper", forceDeploy: true, tags: ["test", "main", "mainnet"],  dependencies: ["001_core"]},
   async ({
     assetAddresses,
     deployWithConfirmation,

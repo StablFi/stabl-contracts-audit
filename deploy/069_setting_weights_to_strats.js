@@ -3,7 +3,7 @@ const { deploymentWithProposal, withConfirmation, deployWithConfirmation } = req
 const { MAX_UINT256 } = require("../utils/constants");
 
 module.exports = deploymentWithProposal(
-  { deployName: "069_setting_weights_to_strats" , forceDeploy: isFork, tags: ["test", "main"],  dependencies: ["001_core"] },
+  { deployName: "069_setting_weights_to_strats" , forceDeploy: isFork, tags: ["test", "main", "mainnet"],  dependencies: ["001_core"] },
   async ({ ethers, assetAddresses }) => {
       const cVaultProxy = await ethers.getContract("VaultProxy");
       const cVaultAdmin = await ethers.getContractAt(

@@ -74,7 +74,7 @@ const deployWithConfirmation = async (
   if (isMainnet) {
     await storeStorageLayoutForContract(hre, contractName);
     if (isVerificationRequired) {
-      await verifyContract(result, args, contract);
+      // await verifyContract(result, args, contract);
     }
   }
 
@@ -85,6 +85,10 @@ const deployWithConfirmation = async (
 const verifyContract = async(result, args, _contract) => {
   if (!args) args = [];
   console.log("Verifying", _contract, "contract...");
+  if (_contract.endsWith("Proxy")) {
+    console.log("Proxy contract skipped!")
+    return;
+  }
 
   // if _contract ends with proxy, prepend with proxy path
   const contract = _contract.endsWith("Proxy") ? "contracts/proxies/Proxies.sol:" + _contract : _contract;

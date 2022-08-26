@@ -1,7 +1,7 @@
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "034_vault_value_checker",forceDeploy: true, tags: ["test", "main"], dependencies: ["001_core"] },
+  { deployName: "034_vault_value_checker",forceDeploy: true, tags: ["test", "main", "mainnet"], dependencies: ["001_core"] },
   async ({
     assetAddresses,
     deployWithConfirmation,

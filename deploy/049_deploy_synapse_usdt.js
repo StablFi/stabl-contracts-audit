@@ -2,7 +2,7 @@ const { isFork } = require("../test/helpers");
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "049_deploy_synapse_usdt", forceDeploy: isFork , tags: ["test", "main"],  dependencies: ["001_core"] },
+  { deployName: "049_deploy_synapse_usdt", forceDeploy: isFork , tags: ["test", "main", "mainnet"],  dependencies: ["001_core"] },
   async ({
     oracleAddresses,
     assetAddresses,
@@ -127,23 +127,12 @@ module.exports = deploymentWithProposal(
             signature: "approveStrategy(address)",
             args: [cSynapseStrategy.address],
         },
-        {
-            // Set
-            contract: cVaultAdmin,
-            signature: "setTrusteeFeeBps(uint256)",
-            args: [1000], // 1000 BPS = 10%
-        },
+        
         // 10. Set harvester address
         {
             contract: cSynapseStrategy,
             signature: "setHarvesterAddress(address)",
             args: [dHarvesterProxy.address],
-        },
-        {
-            // Allocate USDC
-            contract: cVaultCore,
-            signature: "allocate()",
-            args: []
         },
         {
             contract: cHarvester,

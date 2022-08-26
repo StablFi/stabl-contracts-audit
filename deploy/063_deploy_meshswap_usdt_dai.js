@@ -2,7 +2,7 @@ const { deploymentWithProposal } = require("../utils/deploy");
 const { isFork } = require("../test/helpers");
 
 module.exports = deploymentWithProposal(
-  { deployName: "063_deploy_meshswap_dai_usdt", forceDeploy: isFork , tags: ["test", "main"],  dependencies: ["001_core"] },
+  { deployName: "063_deploy_meshswap_usdt_dai", forceDeploy: isFork , tags: ["test", "main", "mainnet"],  dependencies: ["001_core"] },
   async ({
     oracleAddresses,
     assetAddresses,
@@ -131,23 +131,11 @@ module.exports = deploymentWithProposal(
             signature: "approveStrategy(address)",
             args: [cMeshSwapStrategyDual.address],
         },
-        {
-            // Set
-            contract: cVaultAdmin,
-            signature: "setTrusteeFeeBps(uint256)",
-            args: [1000], // 1000 BPS = 10%
-        },
         // 10. Set harvester address
         {
             contract: cMeshSwapStrategyDual,
             signature: "setHarvesterAddress(address)",
             args: [dHarvesterProxy.address],
-        },
-        {
-            // Allocate USDC
-            contract: cVaultCore,
-            signature: "allocate()",
-            args: []
         },
         {
             contract: cHarvester,

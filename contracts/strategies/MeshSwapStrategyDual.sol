@@ -96,14 +96,14 @@ contract MeshSwapStrategyDual is InitializableAbstractStrategy, UniswapV2Exchang
         return (reserve0, reserve1, meshSwapPair.totalSupply()) ;
 
     }
-
+    // TODO: Deposit is not making use of _amount
     function _deposit(
         address _asset,
         uint256 _amount
     )  internal {
 
         require(_asset == address(primaryStable), "Token not supported.");
-        (uint256 reserve0, uint256 reserve1, uint256 totalSupply) = getReserves();
+        (uint256 reserve0, uint256 reserve1, ) = getReserves();
         _swapPrimaryStableToToken0();
         // count amount token1 to swap
         uint256 token1Balance = token1.balanceOf(address(this));
@@ -156,7 +156,7 @@ contract MeshSwapStrategyDual is InitializableAbstractStrategy, UniswapV2Exchang
             OvnMath.subBasisPoints(token1Balance, BASIS_POINTS_FOR_SLIPPAGE),
             address(this)
         );
-        uint256 lpTokenBalance = meshSwapPair.balanceOf(address(this));
+        // uint256 lpTokenBalance = meshSwapPair.balanceOf(address(this));
     }
     function deposit(
         address _asset,

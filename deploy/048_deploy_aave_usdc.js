@@ -2,7 +2,7 @@ const { isMainnet, isMainnetButNotFork, isFork } = require("../test/helpers");
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports =  deploymentWithProposal(
-  { deployName: "048_deploy_aave_usdc", forceDeploy: false , tags: ["test", "main", "this"] ,  dependencies: ["001_core"]},
+  { deployName: "048_deploy_aave_usdc", forceDeploy: false , tags: ["test", "main"] ,  dependencies: ["001_core"]},
   async ({
     oracleAddresses,
     assetAddresses,
@@ -113,23 +113,12 @@ module.exports =  deploymentWithProposal(
             signature: "approveStrategy(address)",
             args: [cAaveStrategy.address],
         },
-        {
-            // Set
-            contract: cVaultAdmin,
-            signature: "setTrusteeFeeBps(uint256)",
-            args: [1000], // 1000 BPS = 10%
-        },
+        
         // 10. Set harvester address
         {
             contract: cAaveStrategy,
             signature: "setHarvesterAddress(address)",
             args: [dHarvesterProxy.address],
-        },
-        {
-            // Allocate USDC
-            contract: cVaultCore,
-            signature: "allocate()",
-            args: []
         },
         {
             contract: cHarvester,

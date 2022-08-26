@@ -104,13 +104,13 @@ contract VaultStorage is Initializable, Governable {
 
     uint256 public maxSupplyDiff;
 
-    // Trustee contract that can collect a percentage of yield
+    // Trustee contract that can collect a percentage of yield [REMOVE_ON_PRODUCTION] 🚨
     address public trusteeAddress;
 
-    // Amount of yield collected in basis points
+    // Amount of yield collected in basis points [REMOVE_ON_PRODUCTION] 🚨
     uint256 public trusteeFeeBps;
 
-    // Deprecated: Tokens that should be swapped for stablecoins
+    // Deprecated: Tokens that should be swapped for stablecoins [REMOVE_ON_PRODUCTION] 🚨
     address[] private _deprecated_swapTokens;
 
     uint256 constant MINT_MINIMUM_ORACLE = 99800000;
@@ -147,6 +147,7 @@ contract VaultStorage is Initializable, Governable {
         address strategy;
         uint256 amount;
     }
+
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it

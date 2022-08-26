@@ -31,7 +31,7 @@ contract MockBooster {
         address _rewardsMinter,
         address _crv,
         address _cvx
-    ) public {
+    )  {
         minter = _rewardsMinter;
         crv = _crv;
         cvx = _cvx;
@@ -48,6 +48,7 @@ contract MockBooster {
             token: token,
             crvRewards: rewards
         });
+        return true;
     }
 
     function deposit(

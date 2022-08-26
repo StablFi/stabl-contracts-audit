@@ -12,7 +12,6 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import { IRewardStaking } from "./IRewardStaking.sol";
 import { DystopiaExchange } from "./DystopiaExchange.sol";
 import { IConvexDeposits } from "./IConvexDeposits.sol";
-import { IERC20, BaseCurveStrategy } from "./BaseCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
 import { AaveBorrowLibrary } from "../utils/AaveBorrowLibrary.sol";
@@ -113,12 +112,8 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
         require(reserve0 > (10 ** (IERC20Metadata(address(token0) ).decimals() - 3))  && reserve1 > (10 ** (IERC20Metadata(address(token1) ).decimals() - 3)), "Reserves too low");
         return (reserve0, reserve1) ;
     }
-
-    function _deposit(
-        address _asset,
-        uint256 _amount
-    )  internal {
-
+    // TODO: _amount is not being used.
+    function _deposit(address _asset, uint256 _amount)  internal {
         require(_asset == address(primaryStable), "Token not supported.");
         (uint256 reserve0, uint256 reserve1) = getReserves();
         _swapPrimaryStableToToken0();
@@ -420,7 +415,8 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
 
             // withdraw LP tokens and stake
             gauge.withdrawAll();
-            uint256 lpTokenBalance = dystPair.balanceOf(address(this));
+            // Reusing lpTokenBalance for Balance of dystPair
+            lpTokenBalance = dystPair.balanceOf(address(this));
             dystPair.approve(address(userProxy), lpTokenBalance);
             userProxy.depositLpAndStake(address(dystPair), lpTokenBalance);
         }
@@ -428,8 +424,8 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
     function _stakeToPenrose(uint256 _lpTokenAmount) internal {
         dystPair.approve(address(userProxy), _lpTokenAmount);
         userProxy.depositLpAndStake(address(dystPair), _lpTokenAmount);
-        uint256 penBalance = penToken.balanceOf(address(this));
-         // console.log("penBalance: ", penBalance);
+        // uint256 penBalance = penToken.balanceOf(address(this));
+        // console.log("penBalance: ", penBalance);
     }
 
     function _swapAssetsToPrimaryStable() internal {

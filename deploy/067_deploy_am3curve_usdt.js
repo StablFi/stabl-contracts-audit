@@ -134,23 +134,11 @@ module.exports = deploymentWithProposal(
             signature: "approveStrategy(address)",
             args: [cAm3CurveStrategy.address],
         },
-        {
-            // Set
-            contract: cVaultAdmin,
-            signature: "setTrusteeFeeBps(uint256)",
-            args: [1000], // 1000 BPS = 10%
-        },
         // 10. Set harvester address
         {
             contract: cAm3CurveStrategy,
             signature: "setHarvesterAddress(address)",
             args: [dHarvesterProxy.address],
-        },
-        {
-            // Allocate USDC
-            contract: cVaultCore,
-            signature: "allocate()",
-            args: []
         },
         {
             contract: cHarvester,

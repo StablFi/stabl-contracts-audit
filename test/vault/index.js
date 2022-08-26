@@ -22,7 +22,7 @@ const expect = chai.expect;
 
 describe("Vault", function () {
   
-  it("Should support an asset" , async () => {
+  it("Should support an asset  @mock" , async () => {
     const { vault, oracleRouter, cash, governor } = await loadFixture(
       defaultFixture
     );
@@ -40,7 +40,7 @@ describe("Vault", function () {
     expect(await vault.isSupportedAsset(cash.address)).to.be.true;
   });
 
-  it("Should revert when adding an asset that is already supported  @mock @mock", async function () {
+  it("Should revert when adding an asset that is already supported  @mock", async function () {
     const { vault, usdt, governor } = await loadFixture(defaultFixture);
     expect(await vault.isSupportedAsset(usdt.address)).to.be.true;
     await expect(
@@ -48,7 +48,7 @@ describe("Vault", function () {
     ).to.be.revertedWith("Asset already supported");
   });
 
-  it("Should revert when attempting to support an asset and not governor @mock @mock", async function () {
+  it("Should revert when attempting to support an asset and not governor @mock", async function () {
     const { vault, tusd, matt } = await loadFixture(defaultFixture);
     await expect(vault.connect(matt).supportAsset(tusd.address)).to.be.revertedWith(
       "Caller is not the Governor"
@@ -114,7 +114,7 @@ describe("Vault", function () {
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await expect(
       vault.connect(anna).justMint(usdc.address, usdcUnits("50.0"), 0)
-    ).to.be.revertedWith("Asset price below peg");
+    ).to.be.revertedWith("Asset price below Peg");
   });
 
   it("Should correctly handle a deposit failure of Non-Standard ERC20 Token @mock", async function () {

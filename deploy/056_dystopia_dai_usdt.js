@@ -2,7 +2,7 @@ const { deploymentWithProposal } = require("../utils/deploy");
 const { isFork } = require("../test/helpers");
 
 module.exports = deploymentWithProposal(
-  { deployName: "056_dystopia_dai_usdt", forceDeploy: isFork , tags: ["test", "main"] ,  dependencies: ["001_core"]},
+  { deployName: "056_dystopia_dai_usdt", forceDeploy: isFork , tags: ["test", "main", "mainnet"] ,  dependencies: ["001_core"]},
   async ({
     oracleAddresses,
     assetAddresses,
@@ -131,19 +131,9 @@ module.exports = deploymentWithProposal(
           args: [cDystopiaStrategy.address],
         },
         {
-          contract: cVaultAdmin,
-          signature: "setTrusteeFeeBps(uint256)",
-          args: [1000], // 1000 BPS = 10%
-        },
-        {
             contract: cDystopiaStrategy,
             signature: "setHarvesterAddress(address)",
             args: [harvesterProxy.address],
-        },
-        {
-            contract: cVaultCore,
-            signature: "allocate()",
-            args: []
         },
         {
             contract: cHarvester,

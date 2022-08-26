@@ -26,11 +26,11 @@ contract WrappedCASH is ERC4626, Governable, Initializable {
         CASH(address(asset())).rebaseOptIn();
     }
 
-    function name() public view override returns (string memory) {
+    function name() public pure override returns (string memory) {
         return "Wrapped CASH";
     }
 
-    function symbol() public view override returns (string memory) {
+    function symbol() public pure override returns (string memory) {
         return "wCASH";
     }
 

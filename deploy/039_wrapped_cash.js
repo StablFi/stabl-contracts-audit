@@ -1,7 +1,7 @@
 const { deploymentWithProposal, withConfirmation } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "039_wrapped_cash", forceDeploy: true , tags: ["test", "main"] ,  dependencies: ["001_core"]},
+  { deployName: "039_wrapped_cash", forceDeploy: true , tags: ["test", "main", "mainnet"] ,  dependencies: ["001_core"]},
   async ({ deployWithConfirmation, getTxOpts, ethers }) => {
     const { deployerAddr, governorAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);

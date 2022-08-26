@@ -57,6 +57,7 @@ interface IVault {
 
     function autoAllocateThreshold() external view returns (uint256);
 
+
     function setRebaseThreshold(uint256 _threshold) external;
 
     function rebaseThreshold() external view returns (uint256);
@@ -170,6 +171,7 @@ interface IVault {
     function payout() external;
 
     function setStrategyWithWeights(StrategyWeight[] calldata _strategyWeights) external;
+    function getAllStrategyWithWeights() external view returns (StrategyWeight[] memory);
 
     function setSwapper(address _balancerVault, address _balancerPoolId) external;
 

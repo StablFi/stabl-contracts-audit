@@ -54,7 +54,7 @@ contract VaultAdmin is VaultStorage {
         priceProvider = _priceProvider;
         emit PriceProviderUpdated(_priceProvider);
     }
- 
+
     /**
      * @dev Set a fee in basis points to be charged for a redeem.
      * @param _redeemFeeBps Basis point fee to be charged
@@ -253,24 +253,6 @@ contract VaultAdmin is VaultStorage {
         emit MaxSupplyDiffChanged(_maxSupplyDiff);
     }
 
-    /**
-     * @dev Sets the trusteeAddress that can receive a portion of yield.
-     *      Setting to the zero address disables this feature.
-     */
-    function setTrusteeAddress(address _address) external onlyGovernor {
-        trusteeAddress = _address;
-        emit TrusteeAddressChanged(_address);
-    }
-
-    /**
-     * @dev Sets the TrusteeFeeBps to the percentage of yield that should be
-     *      received in basis points.
-     */
-    function setTrusteeFeeBps(uint256 _basis) external onlyGovernor {
-        require(_basis <= 5000, "basis cannot exceed 50%");
-        trusteeFeeBps = _basis;
-        emit TrusteeFeeBpsChanged(_basis);
-    }
 
     /***************************************
                     Pause
@@ -394,7 +376,11 @@ contract VaultAdmin is VaultStorage {
     /*************************************
               Startegies Weights
     *************************************/
-    
+    /**
+     * @dev Sort the StrategyWithWeight[] by weight property
+     * @param weights Array of StrategyWithWeight structs to sort to
+     * @return sorted Sorted array by weight of StrategyWithWeight structs
+     */
     function sortWeightsByTarget(StrategyWithWeight[] memory weights) internal pure returns(StrategyWithWeight[] memory) {
         uint[] memory targets = new uint[](weights.length);
         for(uint i = 0; i < weights.length; i++) {
@@ -412,11 +398,16 @@ contract VaultAdmin is VaultStorage {
         return sorted;
     }
 
-    function setStrategyWithWeights(StrategyWithWeight[] calldata _strategyWithWeights) external onlyGovernorOrStrategist {
+    /**
+    * @dev Set the Weight against each strategy
+    * @param _strategyWithWeights Array of StrategyWithWeight structs to set
+    */
+    function setStrategyWithWeights(StrategyWithWeight[] calldata _strategyWithWeights) external onlyGovernor  {
         uint256 totalTarget = 0;
         for (uint8 i = 0; i < _strategyWithWeights.length; i++) {
             StrategyWithWeight memory strategyWithWeight = _strategyWithWeights[i];
-            require(strategyWithWeight.strategy != address(0), "weight without strategy");
+            require(strategies[strategyWithWeight.strategy].isSupported, "Strategy should be supported by the Vault");
+            require(strategyWithWeight.strategy != address(0), "Weight without strategy");
             require(
                 strategyWithWeight.minWeight <= strategyWithWeight.targetWeight,
                 "minWeight shouldn't higher than targetWeight"
@@ -448,6 +439,13 @@ contract VaultAdmin is VaultStorage {
         }
 
     }
+
+
+    /**
+    * @dev Utility function to set StrategyWithWeight struct to specific postion in the strategyWithWeights[]
+    * @param strategyWithWeight StrategyWithWeight struct object to set
+    * @param index Position to set the _strategyWithWeights in  strategyWithWeights[]
+    */
     function _addStrategyWithWeightAt(StrategyWithWeight memory strategyWithWeight, uint256 index) internal {
         uint256 currentLength = strategyWithWeights.length;
         // expand if need
@@ -459,30 +457,59 @@ contract VaultAdmin is VaultStorage {
         }
         strategyWithWeights[index] = strategyWithWeight;
     }
+
+    /**
+    * @dev Utility function to return the StrategyWithWeight object by strategy address
+    * @param strategy address of the strategy
+    * @return StrategyWithWeight object against the address
+    */
     function getStrategyWithWeight(address strategy) public view returns (StrategyWithWeight memory) {
         return strategyWithWeights[strategyWithWeightPositions[strategy]];
     }
 
+    /**
+    * @dev Accessor function for strategyWithWeights
+    * @return strategyWithWeights StrategyWithWeight[] object
+    */
     function getAllStrategyWithWeights() public view returns (StrategyWithWeight[] memory) {
         return strategyWithWeights;
     }
     /***************************
             PRIMARY STABLE
     ****************************/
-    function setPrimaryStable(address _primaryStable) external onlyGovernorOrStrategist {
+    /**
+    * @dev Set the Primary Stable address
+    * @param _primaryStable Address of the Primary Stable
+    */
+    function setPrimaryStable(address _primaryStable) external onlyGovernor {
+        require(_primaryStable != address(0), "PrimaryStable should not be empry.");
         primaryStableAddress = _primaryStable;
     }
 
     /***********************************
             QuickDepositStartegies
     ************************************/
-    function setQuickDepositStrategies(address[] calldata _quickDepositStrategies) external onlyGovernorOrStrategist {
+    /**
+    * @dev Set the quick deposit strategies for quickAllocation of funds.
+    * @param _quickDepositStrategies Array of pre-appproved startegy addresses
+    */
+    function setQuickDepositStrategies(address[] calldata _quickDepositStrategies) external onlyGovernor {
+        for (uint8 i = 0; i < _quickDepositStrategies.length; i++) {
+            require(strategies[_quickDepositStrategies[i]].isSupported, "Strategy should be supported by the Vault");
+        }
         quickDepositStrategies = _quickDepositStrategies;
     }
     /***********************************
                 setSwapper
     ************************************/
-    function setSwapper(address _balancerVault, bytes32 _balancerPoolId) external onlyGovernorOrStrategist {
+    /**
+    * @dev Set the Balancer Vault as primary swapper for the Vault
+    * @param _balancerVault Address of Balancer Vault
+    * @param _balancerPoolId Id of the Balancer Pool to use for swapping
+    */
+    function setSwapper(address _balancerVault, bytes32 _balancerPoolId) external onlyGovernor {
+        require(_balancerVault != address(0), "Empty Swapper Address");
+        require(_balancerPoolId != "", "Empty pool id not allowed");
         balancerVault = _balancerVault;
         balancerPoolId = _balancerPoolId;
     }
@@ -490,10 +517,21 @@ contract VaultAdmin is VaultStorage {
     /***********************************
                 Harvester & Dripper
     ************************************/
-    function setHarvester(address _harvester) external onlyGovernorOrStrategist {
+    /**
+    * @dev Set the Harvester address in the Vault
+    * @param _harvester Address of Harvester
+    */
+    function setHarvester(address _harvester) external onlyGovernor {
+        require(_harvester != address(0), "Empty Harvester Address");
         harvesterAddress = _harvester;
     }
-    function setDripper(address _dripper) external onlyGovernorOrStrategist {
+
+    /**
+    * @dev Set the Dripper address in the Value
+    * @param _dripper Address of the Dripper
+    */
+    function setDripper(address _dripper) external onlyGovernor {
+        require(_dripper != address(0), "Empty Dripper Address");
         dripperAddress = _dripper;
     }
 
@@ -501,6 +539,14 @@ contract VaultAdmin is VaultStorage {
     /***********************************
             Fee Parameters
     ************************************/
+    /**
+    * @dev Set the Fee Distribution Parameters for Vault (currently not used, but may be infuture)
+           and for Harvester
+    * @param _labsAddress address of the Labs account
+    * @param _labsFeeBps % in bps which Labs would recieve
+    * @param _teamAddress address of the Team account
+    * @param _teamFeeBps % in bps which Team would recieve
+    */
     function setFeeParams(address _labsAddress, uint256 _labsFeeBps, address _teamAddress, uint256 _teamFeeBps) external onlyGovernor {
         labsAddress = _labsAddress;
         labsFeeBps = _labsFeeBps;
@@ -509,6 +555,10 @@ contract VaultAdmin is VaultStorage {
         IHarvester(harvesterAddress).setLabs(labsAddress, labsFeeBps);
         IHarvester(harvesterAddress).setTeam(teamAddress, teamFeeBps);
     }
+    /**
+    * @dev Get Fee parameters for Labs and Team
+    * @return Tuple containing the Lab address, Lab % in Bps, Team address, Team % in Bps
+    */
     function getFeeParams() public view returns (address, uint256, address, uint256)  {
         return (labsAddress, labsFeeBps, teamAddress, teamFeeBps);
     }
@@ -518,9 +568,15 @@ contract VaultAdmin is VaultStorage {
     /***************************
               PAYOUT
     ****************************/
+    /**
+    * @dev Function to collect rewards from Strategies and Balance the Vault
+    */
     function payout() external {
         _payout();
     }
+    /**
+    * @dev Function to collect rewards from Strategies and Balance the Vault
+    */
     function _payout() internal {
         IHarvester(harvesterAddress).harvestAndDistribute();
         IDripper(dripperAddress).collectAndRebase();
@@ -530,71 +586,78 @@ contract VaultAdmin is VaultStorage {
     /***************************
             REBALANCE
     ****************************/
+    /**
+    * @dev Balance the Vault with predefined weights
+    */
     function balance() external onlyGovernorOrStrategist {
         _balance();
     }
+    /**
+    * @dev Balance the Vault with predefined weights
+    */
     function _balance() internal {
         IERC20 asset = IERC20(primaryStableAddress);
-        StrategyWithWeight[] memory strategies = getAllStrategyWithWeights();
+        StrategyWithWeight[] memory stratsWithWeights = getAllStrategyWithWeights();
+        require(stratsWithWeights.length > 0, "Weights not set");
+        require(primaryStableAddress != address(0), "PS not set");
 
         // 1. calc total USDC equivalent
         uint256 totalAssetInStrat = 0;
         uint256 totalWeight = 0;
-        for (uint8 i; i < strategies.length; i++) {
-            if (!strategies[i].enabled) {// Skip if strategy is not enabled
+        for (uint8 i; i < stratsWithWeights.length; i++) {
+            if (!stratsWithWeights[i].enabled) {// Skip if strategy is not enabled
                 continue;
             }
 
-            // UnstakeFull from Strategies with targetWeight == 0
-            if(strategies[i].targetWeight == 0){
-                IStrategy(strategies[i].strategy).withdrawAll();
+            // UnstakeFull from stratsWithWeights with targetWeight == 0
+            if(stratsWithWeights[i].targetWeight == 0){
+                IStrategy(stratsWithWeights[i].strategy).withdrawAll();
             }else {
-                console.log("Balance in startegy: ",IStrategy(strategies[i].strategy).checkBalance());
-                totalAssetInStrat += IStrategy(strategies[i].strategy).checkBalance();
-                totalWeight += strategies[i].targetWeight;
+                console.log("Balance in startegy: ",IStrategy(stratsWithWeights[i].strategy).checkBalance());
+                totalAssetInStrat += IStrategy(stratsWithWeights[i].strategy).checkBalance();
+                totalWeight += stratsWithWeights[i].targetWeight;
             }
 
         }
-        uint256 totalAsset = totalAssetInStrat +  asset.balanceOf(address(this));
+        uint256 totalAsset = totalAssetInStrat + asset.balanceOf(address(this));
         console.log("Total asset: ", totalAsset);
 
-        
-        // 3. calc diffs for strategies liquidity
-        Order[] memory stakeOrders = new Order[](strategies.length);
+        // 3. calc diffs for stratsWithWeights liquidity
+        Order[] memory stakeOrders = new Order[](stratsWithWeights.length);
         uint8 stakeOrdersCount = 0;
-        for (uint8 i; i < strategies.length; i++) {
+        for (uint8 i; i < stratsWithWeights.length; i++) {
 
-            if (!strategies[i].enabled) {// Skip if strategy is not enabled
+            if (!stratsWithWeights[i].enabled) {// Skip if strategy is not enabled
                 continue;
             }
 
             uint256 targetLiquidity;
-            if (strategies[i].targetWeight == 0) {
+            if (stratsWithWeights[i].targetWeight == 0) {
                 targetLiquidity = 0;
             } else {
-                targetLiquidity = (totalAsset * strategies[i].targetWeight) / totalWeight;
+                targetLiquidity = (totalAsset * stratsWithWeights[i].targetWeight) / totalWeight;
             }
 
-            uint256 currentLiquidity = IStrategy(strategies[i].strategy).checkBalance();
+            uint256 currentLiquidity = IStrategy(stratsWithWeights[i].strategy).checkBalance();
             if (targetLiquidity == currentLiquidity) {
-                // skip already at target strategies
+                // skip already at target stratsWithWeights
                 continue;
             }
 
             if (targetLiquidity < currentLiquidity) {
                 // unstake now
-                console.log("Withdraw now amount from", currentLiquidity - targetLiquidity, strategies[i].strategy);
-                IStrategy(strategies[i].strategy).withdraw(
+                console.log("Withdraw now amount from", currentLiquidity - targetLiquidity, stratsWithWeights[i].strategy);
+                IStrategy(stratsWithWeights[i].strategy).withdraw(
                     address(this),
                     address(asset),
                     currentLiquidity - targetLiquidity
                 );
             } else {
-                console.log("Deposit later amount from", targetLiquidity - currentLiquidity, strategies[i].strategy);
+                console.log("Deposit later amount from", targetLiquidity - currentLiquidity, stratsWithWeights[i].strategy);
                 // save to stake later
                 stakeOrders[stakeOrdersCount] = Order(
                     true,
-                    strategies[i].strategy,
+                    stratsWithWeights[i].strategy,
                     targetLiquidity - currentLiquidity
                 );
                 stakeOrdersCount++;
@@ -606,7 +669,7 @@ contract VaultAdmin is VaultStorage {
 
             address strategy = stakeOrders[i].strategy;
             uint256 amount = stakeOrders[i].amount;
-            console.log("Processing stake order of", strategy, amount );
+            console.log("Processing stake order of", strategy, amount);
 
             uint256 currentBalance = asset.balanceOf(address(this));
             if (currentBalance < amount) {

@@ -1,14 +1,13 @@
 const { expect } = require("chai");
 const { defaultFixture } = require("../_fixture");
 const {
-  sleep
-} = require("../../utils/deploy");
+  advanceTime
+} = require("../helpers");
 
 const { cashUnits, daiUnits, isFork, loadFixture, daiUnitsFormat, wcashUnitsFormat, cashUnitsFormat } = require("../helpers");
 
 describe("WCASH", function () {
   
-
   let cash, wcash, vault, dai, matt, josh, governor;
 
   beforeEach(async () => {
@@ -65,10 +64,10 @@ describe("WCASH", function () {
       console.log("Vault DAI Balance: ", daiUnitsFormat((await dai.balanceOf(vault.address)).toString()))
 
       console.log("Waiting");
-      await sleep(120000);
+      await advanceTime(120000);
       await expect(wcash).to.have.approxBalanceOf("100", cash);
       console.log("Waiting");
-      await sleep(30000);
+      await advanceTime(30000);
       console.log("Transferring Stray 100 DAI to the Vault")
       await dai.connect(josh).transfer(vault.address, daiUnits("100"));
 
@@ -77,7 +76,7 @@ describe("WCASH", function () {
       console.log("Vault DAI Balance: ", daiUnitsFormat((await dai.balanceOf(vault.address)).toString()))
 
       console.log("Waiting");
-      await sleep(30000);
+      await advanceTime(30000);
       console.log("Rebasing...")
       console.log("matt CASH Balance: ", cashUnitsFormat((await cash.balanceOf(matt.address)).toString()))
       console.log("WCASH CASH Balance: ", cashUnitsFormat((await cash.balanceOf(wcash.address)).toString()))
@@ -89,10 +88,10 @@ describe("WCASH", function () {
       console.log("Vault DAI Balance: ", daiUnitsFormat((await dai.balanceOf(vault.address)).toString()))
 
       console.log("Waiting");
-      await sleep(30);
+      await advanceTime(30);
       expect((await cash.balanceOf(wcash.address))).to.be.above("140");
       console.log("Waiting");
-      await sleep(30);
+      await advanceTime(30);
       console.log("matt CASH Balance: ", cashUnitsFormat((await cash.balanceOf(matt.address)).toString()))
       console.log("WCASH CASH Balance: ", cashUnitsFormat((await cash.balanceOf(wcash.address)).toString()))
       console.log("Vault DAI Balance: ", daiUnitsFormat((await dai.balanceOf(vault.address)).toString()))

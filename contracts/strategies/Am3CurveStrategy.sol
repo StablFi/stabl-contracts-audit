@@ -162,13 +162,12 @@ contract Am3CurveStrategy is BaseCurveStrategy, UniswapV2Exchange {
     function withdraw(address _recipient, address _asset, uint256 _amount) external override onlyVault nonReentrant  {
         require(_asset == address(primaryStable), "Token not supported.");
         // Withdraw all from Gauge
-        (, uint256 gaugePTokens, uint256 totalPTokens) = _getTotalPTokens();
+        (, uint256 gaugePTokens, ) = _getTotalPTokens();
         // Withdraw all from Gauge
         _lpWithdraw(gaugePTokens);
         // Remove liquidity
         ICurvePool aaveCurvePool = ICurvePool(platformAddress);
-        uint256 totalAm3Crv = IERC20(pTokenAddress).balanceOf(address(this));
-
+        // uint256 totalAm3Crv = IERC20(pTokenAddress).balanceOf(address(this));
         // console.log("am3CRV: ", totalAm3Crv);
 
         uint256[3] memory _amounts;
@@ -198,7 +197,6 @@ contract Am3CurveStrategy is BaseCurveStrategy, UniswapV2Exchange {
         // Remove liquidity
         ICurvePool aaveCurvePool = ICurvePool(platformAddress);
         aaveCurvePool.remove_liquidity_one_coin(totalPTokens, int128(uint128(_getCoinIndex(address(primaryStable)))), 0, true);
-        uint256 balance = 0;
         // Transfer assets out of Vault
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
         // console.log("Withdrawing from the Synapse: ", primaryStableBalance);

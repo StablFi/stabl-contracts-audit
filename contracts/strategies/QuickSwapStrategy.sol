@@ -95,6 +95,7 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         return (reserve0, reserve1) ;
 
     }
+    // TODO: _amount is not being used.
     function _deposit(
         address _asset,
         uint256 _amount
@@ -256,7 +257,6 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         override
         returns (uint256)
     {
-        uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
         uint256 token0Balance = token0.balanceOf(address(this));
         uint256 token1Balance = token1.balanceOf(address(this));
 
