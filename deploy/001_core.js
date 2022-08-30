@@ -57,21 +57,12 @@ const configureVault = async (harvesterProxy) => {
   );
   log("Added USDC asset to Vault");
 
-  log("Set the primaryStable to the vault ", assetAddresses.primaryStable );
+  log("Set the primaryStable to the vault " + assetAddresses.primaryStable );
   await withConfirmation(
     cVault.connect(sGovernor).setPrimaryStable(assetAddresses.primaryStable)
   );
+  log("PrimaryStable: " + (await cVault.primaryStableAddress()))
 
-  log("Set the primaryStable to the vault ", assetAddresses.primaryStable );
-  await withConfirmation(
-    cVault.connect(sGovernor).setPrimaryStable(assetAddresses.primaryStable)
-  );
-
-  log("Set the primaryStable to the vault ", assetAddresses.primaryStable );
-  await withConfirmation(
-    cVault.connect(sGovernor).setPrimaryStable(assetAddresses.primaryStable)
-  );
-  
   log(
     "Set Harvester" );
   await withConfirmation(
@@ -117,10 +108,8 @@ const deployHarvester = async () => {
     "InitializeGovernedUpgradeabilityProxy"
   );
   const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
-  const dHarvester = await deployWithConfirmation("Harvester", [
-    cVaultProxy.address,
-    assetAddresses.USDC,
-  ]);
+  const dHarvester = await deployWithConfirmation("Harvester");
+
   const cHarvester = await ethers.getContractAt(
     "Harvester",
     dHarvesterProxy.address
@@ -130,6 +119,12 @@ const deployHarvester = async () => {
       dHarvester.address,
       deployerAddr,
       []
+    )
+  );
+  await withConfirmation(
+    cHarvester.connect(sDeployer).initialize(
+      cVaultProxy.address,
+      assetAddresses.USDC,
     )
   );
 

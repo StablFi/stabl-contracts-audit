@@ -34,6 +34,9 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
 
     mapping(address => uint256 ) public assetToDenominator;
     IStakingRewards public quickSwapPairStaker;
+
+    address public balancerVault;
+
     /**
      * Initializer for setting up strategy internal state. This overrides the
      * InitializableAbstractStrategy initializer as QuickSwap strategies don't fit
@@ -85,8 +88,7 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
     function setBalancer(address _balancerVault, bytes32 _balancerPoolId) external onlyGovernor {
         require(_balancerVault != address(0), "Zero address not allowed");
         require(_balancerPoolId != "", "Empty pool id not allowed");
-
-        setBalancerVault(_balancerVault);
+        balancerVault = _balancerVault;
         poolId = _balancerPoolId;
     }
     function getReserves() internal view returns (uint256,uint256) {
@@ -110,6 +112,7 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         uint256 amount0From1;
         if (token1Balance > 0) {
             amount0From1 = onSwap(
+                balancerVault,
                 poolId,
                 IVault.SwapKind.GIVEN_IN,
                 token1,
@@ -120,6 +123,7 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         uint256 token0Balance = token0.balanceOf(address(this));
         //TODO add parameter to _getAmountToSwap() second token amount
         uint256 amount0ToSwap = _getAmountToSwap(
+            balancerVault,
             token0Balance - (amount0From1 / 2),
             reserve0,
             reserve1,
@@ -133,6 +137,7 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
 
         // swap token0 to other token
         swap(
+            balancerVault,
             poolId,
             IVault.SwapKind.GIVEN_IN,
             IAsset(address(token0)),
@@ -186,6 +191,7 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
             // count amount to unstake
             uint256 totalLpBalance = quickSwapPair.totalSupply();
             uint256 lpTokensToWithdraw = _getAmountLpTokensToWithdraw(
+                balancerVault,
                 OvnMath.addBasisPoints(_amount, BASIS_POINTS_FOR_SLIPPAGE),
                 reserve0,
                 reserve1,
@@ -272,6 +278,7 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         if ( (address(token0) != address(primaryStable))  ) {
             if (token0Balance > 0) {
                 primaryStableBalanceFromToken0 = onSwap(
+                    balancerVault,
                     poolId,
                     IVault.SwapKind.GIVEN_IN,
                     token0,
@@ -288,6 +295,7 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         if ( (address(token1) != address(primaryStable))  ) {
             if (token1Balance > 0) {
                 primaryStableBalanceFromToken1 = onSwap(
+                    balancerVault,
                     poolId,
                     IVault.SwapKind.GIVEN_IN,
                     token1,
@@ -353,6 +361,7 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         if ( (address(token0) != address(primaryStable)) && (token0.balanceOf(address(this)) > 0) )  {
             // console.log("Swapping token0");
             swap(
+                balancerVault,
                 poolId,
                 IVault.SwapKind.GIVEN_IN,
                 IAsset(address(token0)),
@@ -366,6 +375,7 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         if ( (address(token1) != address(primaryStable)) && (token1.balanceOf(address(this)) > 0) )  {
             // console.log("Swapping token1");
             swap(
+                balancerVault,
                 poolId,
                 IVault.SwapKind.GIVEN_IN,
                 IAsset(address(token1)),
@@ -381,6 +391,7 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
         if (address(primaryStable) != address(token0)) {
             swap(
+                balancerVault,
                 poolId,
                 IVault.SwapKind.GIVEN_IN,
                 IAsset(address(primaryStable)),

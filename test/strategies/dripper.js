@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { defaultFixture } = require("../_fixture");
 
-const { loadFixture, usdtUnits, advanceTime, usdtUnitsFormat } = require("../helpers");
+const { loadFixture, usdtUnits, advanceTime, usdtUnitsFormat, cashUnitsFormat, usdcUnitsFormat, usdcUnits} = require("../helpers");
 
 describe("Dripper", async () => {
   let dripper, usdc, vault, cash, governor, josh;
@@ -61,16 +61,7 @@ describe("Dripper", async () => {
       await expectApproxCollectOf(expected, dripper.collect);
     });
   });
-  describe("collectAndRebase()", async () => {
-    it("transfers funds to the vault and rebases", async () => {
-      const beforeRct = await cash.rebasingCreditsPerToken();
-      await dripper.connect(governor).setDripDuration("20000");
-      await advanceTime(1000);
-      await expectApproxCollectOf("50", dripper.collectAndRebase);
-      const afterRct = await cash.rebasingCreditsPerToken();
-      expect(afterRct).to.be.lt(beforeRct);
-    });
-  });
+
   describe("Drip math", async () => {
     it("gives all funds if collect is after the duration end", async () => {
       await dripper.connect(governor).setDripDuration("20000");
@@ -125,4 +116,117 @@ describe("Dripper", async () => {
       ).to.be.revertedWith("duration must be non-zero");
     });
   });
+});
+
+describe("Dripper's collectAndRebase()", async () => {
+  it("Should correctly drip funds to the Vault @fork ", async () => {
+    const {
+      cash,
+      vault,
+      usdc,
+      matt,
+      Labs,
+      Team,
+      josh,
+      dripper,
+      harvester,
+      governor,
+      cSynapseStrategy,
+      cMeshSwapStrategyUSDC,
+      cDodoStrategy
+    } = await loadFixture(defaultFixture);
+
+    console.log("Setting new weights...")
+    let weights = [
+      {
+        strategy: cSynapseStrategy.address,
+        contract: "SynapseStrategy",
+        name: "Synapse - USDC",
+        minWeight: 0,
+        targetWeight: 70,
+        maxWeight: 100,
+        enabled: true,
+        enabledReward: true,
+      },
+      {
+        strategy: cDodoStrategy.address,
+        contract: "DodoStrategy",
+        name: "Dodo - USDC",
+        minWeight: 0,
+        targetWeight: 20,
+        maxWeight: 100,
+        enabled: true,
+        enabledReward: true,
+      },
+      {
+        "strategy": cMeshSwapStrategyUSDC.address,
+        "contract": "MeshSwapStrategy",
+        "name": "MeshSwap USDC",
+        "minWeight": 0,
+        "targetWeight": 10,
+        "maxWeight": 100,
+        "enabled": true,
+        "enabledReward": true
+      },
+    ];
+    weights = weights.map(value => {
+
+        delete value.name
+        value.targetWeight = value.targetWeight * 1000;
+        value.maxWeight = value.maxWeight * 1000;
+
+        return value;
+    })
+    await vault.setStrategyWithWeights(weights);
+
+    console.log("MATT CASH Balance: ",cashUnitsFormat((await cash.balanceOf(matt.address)).toString()));
+    console.log("MATT USDC Balance: ",usdcUnitsFormat((await usdc.balanceOf(matt.address)).toString()));
+    console.log("Labs USDC Balance: ",usdcUnitsFormat((await usdc.balanceOf(Labs.address)).toString()));
+    console.log("Team USDC Balance: ",usdcUnitsFormat((await usdc.balanceOf(Team.address)).toString()));
+
+    console.log("Minting 1000 USDC");
+    await usdc.connect(matt).approve(vault.address, usdcUnits("1000.0"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("1000.0"), 0);
+
+    console.log("Setting the Josh as a Rebase Manager");
+    await vault.connect(governor).addRebaseManager(josh.address);
+
+    console.log("Performing payout...");
+    await vault.connect(josh).payout();
+
+    let wait = 24 * 60;
+    console.log("Simulating wait for " +wait +" minutes - Started at: " +new Date().toLocaleString());
+    await advanceTime(wait * 60 * 1000);
+
+    console.log("Performing payout...");
+    await vault.connect(josh).payout();
+
+    console.log("MATT CASH Balance: ",cashUnitsFormat((await cash.balanceOf(matt.address)).toString()));
+    console.log("JOSH CASH Balance: ",cashUnitsFormat((await cash.balanceOf(josh.address)).toString()));
+    console.log("Labs USDC Balance: ",usdcUnitsFormat((await usdc.balanceOf(Labs.address)).toString()));
+    console.log("Team USDC Balance: ",usdcUnitsFormat((await usdc.balanceOf(Team.address)).toString()));
+    console.log("Harvester USDC Balance: ",usdcUnitsFormat((await usdc.balanceOf(harvester.address)).toString()));
+    console.log("Dripper USDC Balance: ",usdcUnitsFormat((await usdc.balanceOf(dripper.address)).toString()));
+    console.log("Vault USDC Balance: ",usdcUnitsFormat((await usdc.balanceOf(vault.address)).toString()));
+
+    let baseVaultAmount = await usdc.balanceOf(vault.address);
+    let baseDripperAmount = await usdc.balanceOf(dripper.address);
+
+    for (let index = 0; index < 10; index++) {
+      let wait = 4;
+      console.log("Simulating wait for " +wait +" minutes - Started at: " +new Date().toLocaleString());
+      await advanceTime(wait * 60 * 1000);
+      await dripper.connect(josh).collectAndRebase();  
+      console.log("Dripper USDC Balance: ",usdcUnitsFormat((await usdc.balanceOf(dripper.address)).toString()));
+      console.log("Vault USDC Balance: ",usdcUnitsFormat((await usdc.balanceOf(vault.address)).toString()));
+      if ((await usdc.balanceOf(dripper.address)) == 0 ) {
+        console.log("Dripper is now empty. Breaking...")
+      }
+    }
+
+    expect(await usdc.balanceOf(vault.address)).to.be.above(baseVaultAmount);
+    expect(await usdc.balanceOf(dripper.address)).to.be.below(baseDripperAmount);
+    
+  });
+
 });

@@ -33,6 +33,7 @@ contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, B
 
 
     bytes32 poolId;
+    address public balancerVault;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -73,8 +74,7 @@ contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, B
     function setBalancer(address _balancerVault, bytes32 _balancerPoolIdUsdcTusdDaiUsdt) external onlyGovernor {
         require(_balancerVault != address(0), "Zero address not allowed");
         require(_balancerPoolIdUsdcTusdDaiUsdt != "", "Empty pool id not allowed");
-
-        setBalancerVault(_balancerVault);
+        balancerVault = _balancerVault;
         poolId = _balancerPoolIdUsdcTusdDaiUsdt;
     }
     // TODO: Deposit is not making use of _amount
@@ -157,6 +157,7 @@ contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, B
         if ( (address(token0) != address(primaryStable))  ) {
             if (token0Balance > 0) {
                 primaryStableBalanceFromToken0 = onSwap(
+                    balancerVault,
                     poolId,
                     IVault.SwapKind.GIVEN_IN,
                     token0,
@@ -215,6 +216,7 @@ contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, B
         if ( (address(token0) != address(primaryStable)) && (token0.balanceOf(address(this)) > 0) )  {
             // console.log("Swapping token0");
             swap(
+                balancerVault,
                 poolId,
                 IVault.SwapKind.GIVEN_IN,
                 IAsset(address(token0)),
@@ -233,6 +235,7 @@ contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, B
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
         if (address(primaryStable) != address(token0)) {
             swap(
+                balancerVault,
                 poolId, 
                 IVault.SwapKind.GIVEN_IN,
                 IAsset(address(primaryStable)),

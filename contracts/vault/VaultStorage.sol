@@ -116,7 +116,7 @@ contract VaultStorage is Initializable, Governable {
     uint256 constant MINT_MINIMUM_ORACLE = 99800000;
 
     address public primaryStableAddress;
-    
+
     // List of strategies for quickly depositing the primaryStable to.
     address[] public quickDepositStrategies;
 
@@ -140,14 +140,29 @@ contract VaultStorage is Initializable, Governable {
 
     mapping(address => uint256) public strategyWithWeightPositions;
     StrategyWithWeight[] public strategyWithWeights;
+
+
     uint256 public constant TOTAL_WEIGHT = 100000; // 100000 ~ 100%
+    // next payout time in epoch seconds
+    uint256 public nextPayoutTime;
+
+    // period between payouts in seconds, need to calc nextPayoutTime
+    uint256 public payoutPeriod;
+
+    // range of time for starting near next payout time at seconds
+    // if time in [nextPayoutTime-payoutTimeRange;nextPayoutTime+payoutTimeRange]
+    //    then payouts can be started by payout() method anyone
+    // else if time more than nextPayoutTime+payoutTimeRange
+    //    then payouts started by any next buy/redeem
+    uint256 public payoutTimeRange;
+
+    mapping(address => bool) public rebaseManagers;
 
     struct Order {
         bool stake;
         address strategy;
         uint256 amount;
     }
-
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it

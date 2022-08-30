@@ -2,7 +2,7 @@ const { isFork } = require("../test/helpers");
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "049_deploy_synapse_usdt", forceDeploy: isFork , tags: ["test", "main", "mainnet"],  dependencies: ["001_core"] },
+  { deployName: "049_deploy_synapse_usdt", forceDeploy: isFork , tags: ["test", "main"],  dependencies: ["001_core"] },
   async ({
     oracleAddresses,
     assetAddresses,

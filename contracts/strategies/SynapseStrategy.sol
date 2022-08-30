@@ -37,6 +37,7 @@ contract SynapseStrategy is InitializableAbstractStrategy, DystopiaExchange {
     IPool public synapsePool;
     IStakerPool public synapseStakerPool;
     uint256 public synapseStakerPoolId;
+    uint256 public fgfd;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the

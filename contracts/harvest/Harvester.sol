@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
+import { Initializable } from "../utils/Initializable.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
@@ -15,18 +16,18 @@ import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 import "../utils/Helpers.sol";
 import "hardhat/console.sol";
 
-contract Harvester is Governable {
+contract Harvester is Initializable, Governable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using StableMath for uint256;
 
     event UniswapUpdated(address _address);
     event SupportedStrategyUpdate(address _address, bool _isSupported);
-   
+
     mapping(address => bool) public supportedStrategies;
 
-    address public immutable vaultAddress;
-    address public immutable primaryStableAddress;
+    address public vaultAddress;
+    address public primaryStableAddress;
 
     /**
      * Address receiving rewards proceeds. Initially the Vault contract later will possibly
@@ -41,13 +42,13 @@ contract Harvester is Governable {
 
 
     /**
-     * @dev Constructor to set up initial internal state
+     * @dev Initializer to set up initial internal state
      * @param _vaultAddress Address of the Vault
      * @param _primaryStableAddress Address of primaryStable
      */
-    constructor(address _vaultAddress, address _primaryStableAddress) {
-        require(address(_vaultAddress) != address(0));
-        require(address(_primaryStableAddress) != address(0));
+    function initialize(address _vaultAddress, address _primaryStableAddress) external onlyGovernor initializer {
+        require(address(_vaultAddress) != address(0), "Vault Missing");
+        require(address(_primaryStableAddress) != address(0), "PS Missing");
         vaultAddress = _vaultAddress;
         primaryStableAddress = _primaryStableAddress;
     }

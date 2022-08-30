@@ -50,6 +50,9 @@ contract DodoStrategy is InitializableAbstractStrategy, BalancerExchange, DodoEx
     bytes32 public balancerPoolIdUsdcTusdDaiUsdt;
     bytes32 public balancerPoolIdWmaticUsdcWethBal;
 
+    address public balancerVault;
+
+
     /**
      * Initializer for setting up strategy internal state. This overrides the
      * InitializableAbstractStrategy initializer as Dodo strategies don't fit
@@ -95,7 +98,7 @@ contract DodoStrategy is InitializableAbstractStrategy, BalancerExchange, DodoEx
         require(_balancerPoolIdUsdcTusdDaiUsdt != "", "Empty pool id not allowed");
         require(_balancerPoolIdWmaticUsdcWethBal != "", "Empty pool id not allowed");
         primaryStable = IERC20(_primaryStable);
-        setBalancerVault(_balancerVault);
+        balancerVault = _balancerVault;
         balancerPoolIdUsdcTusdDaiUsdt = _balancerPoolIdUsdcTusdDaiUsdt;
         balancerPoolIdWmaticUsdcWethBal = _balancerPoolIdWmaticUsdcWethBal;
     }
@@ -218,6 +221,7 @@ contract DodoStrategy is InitializableAbstractStrategy, BalancerExchange, DodoEx
             if (usdtTokenAmount > 0) {
                 // swap v1 usdt -> PrimaryStable
                 primaryStableAmount = swap(
+                    balancerVault,
                     balancerPoolIdUsdcTusdDaiUsdt,
                     IVault.SwapKind.GIVEN_IN,
                     IAsset(address(usdtToken)),
@@ -236,6 +240,7 @@ contract DodoStrategy is InitializableAbstractStrategy, BalancerExchange, DodoEx
         // console.log("wmaticBalance", wmaticBalance);
         if (wmaticBalance > 0) {
             uint256 wmaticPrimaryStable = swap(
+                balancerVault,
                 balancerPoolIdWmaticUsdcWethBal,
                 IVault.SwapKind.GIVEN_IN,
                 IAsset(address(wmaticToken)),

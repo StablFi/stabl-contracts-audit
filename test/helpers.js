@@ -156,6 +156,7 @@ const isMainnetOrFork = isMainnet || isFork;
 const isMainnetButNotFork = isMainnet && !isFork;
 const isMainnetOrRinkebyOrFork = isMainnetOrFork || isRinkeby;
 const isVerificationRequired = process.env.VERIFY_ON_EXPLORER;
+const forceStorageLayoutCheck = process.env.FORCE_STORAGE_LAYOUT_CHECK;
 
 // Fixture loader that is compatible with Ganache
 const loadFixture = createFixtureLoader(
@@ -537,5 +538,6 @@ module.exports = {
   isWithinTolerance,
   changeInBalance,
   isMainnetButNotFork,
-  isVerificationRequired
+  isVerificationRequired,
+  forceStorageLayoutCheck
 };

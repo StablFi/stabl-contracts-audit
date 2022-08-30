@@ -51,6 +51,7 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
     IUserProxy public userProxy;
     IPenLens public penLens;
 
+    address public balancerVault;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -91,13 +92,13 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
         address _gauge,
         address _dystPair,
         address _dystRouter,
-        address _balancerVault, 
+        address _balancerVault,
         bytes32 _poolId,// _poolIdUsdcTusdDaiUsdt
         address _userProxy,
         address _penLens,
         address _penToken
     ) external onlyGovernor {
-        setBalancerVault(_balancerVault);
+        balancerVault = _balancerVault;
         poolId = _poolId;
         gauge = IDystopiaLP(_gauge);
         dystPair = IDystopiaLP(_dystPair);
@@ -123,6 +124,7 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
         uint256 amount0From1;
         if (token1Balance > 0) {
             amount0From1 = onSwap(
+                balancerVault,
                 poolId,
                 IVault.SwapKind.GIVEN_IN,
                 token1,
@@ -139,6 +141,7 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
         // console.log("reserve0", reserve0);
         // console.log("reserve1", reserve1);
         uint256 amountToken0ToSwap = _getAmountToSwap(
+            balancerVault,
             token0Balance,
             reserve0,
             reserve1,
@@ -152,6 +155,7 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
         // console.log("amountToken0ToSwap", amountToken0ToSwap);
         // swap some of token0 to token1
         swap(
+            balancerVault,
             poolId,
             IVault.SwapKind.GIVEN_IN,
             IAsset(address(token0)),
@@ -215,6 +219,7 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
             // count amount to unstake
             uint256 totalLpBalance = dystPair.totalSupply();
             uint256 lpTokensToWithdraw = _getAmountLpTokensToWithdraw(
+                balancerVault,
                 OvnMath.addBasisPoints(_amount, BASIS_POINTS_FOR_SLIPPAGE),
                 reserve0,
                 reserve1,
@@ -315,6 +320,7 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
         if ( (address(token0) != address(primaryStable))  ) {
             if (token0Balance > 0) {
                 primaryStableBalanceFromToken0 = onSwap(
+                    balancerVault,
                     poolId,
                     IVault.SwapKind.GIVEN_IN,
                     token0,
@@ -331,6 +337,7 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
         if ( (address(token1) != address(primaryStable))  ) {
             if (token1Balance > 0) {
                 primaryStableBalanceFromToken1 = onSwap(
+                    balancerVault,
                     poolId,
                     IVault.SwapKind.GIVEN_IN,
                     token1,
@@ -432,6 +439,7 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
         if ( (address(token0) != address(primaryStable)) && (token0.balanceOf(address(this)) > 0) )  {
              // console.log("Swapping token0");
             swap(
+                balancerVault,
                 poolId,
                 IVault.SwapKind.GIVEN_IN,
                 IAsset(address(token0)),
@@ -445,6 +453,7 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
         if ( (address(token1) != address(primaryStable)) && (token1.balanceOf(address(this)) > 0) )  {
              // console.log("Swapping token1");
             swap(
+                balancerVault,
                 poolId,
                 IVault.SwapKind.GIVEN_IN,
                 IAsset(address(token1)),
@@ -460,6 +469,7 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
         if (address(primaryStable) != address(token0)) {
             swap(
+                balancerVault,
                 poolId,
                 IVault.SwapKind.GIVEN_IN,
                 IAsset(address(primaryStable)),

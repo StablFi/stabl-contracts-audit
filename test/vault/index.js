@@ -40,6 +40,30 @@ describe("Vault", function () {
     expect(await vault.isSupportedAsset(cash.address)).to.be.true;
   });
 
+  it("Should allow DAI minting (with swapping) @fork", async function () {
+    const { vault, dai, anna, cash } = await loadFixture(defaultFixture);
+    expect(await vault.isSupportedAsset(dai.address)).to.be.true;
+
+    await expect(anna).has.a.approxBalanceOf("0.00", cash);
+
+    await dai.connect(anna).approve(vault.address, daiUnits("100"));
+    await vault.connect(anna).mint(dai.address, daiUnits("100"), 0);
+
+    expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits("100.0"),cashUnits("1"));
+  });
+
+  it("Should allow USDT minting (with swapping) @fork", async function () {
+    const { vault, usdt, anna, cash } = await loadFixture(defaultFixture);
+    expect(await vault.isSupportedAsset(usdt.address)).to.be.true;
+
+    await expect(anna).has.a.approxBalanceOf("0.00", cash);
+
+    await usdt.connect(anna).approve(vault.address, usdtUnits("100"));
+    await vault.connect(anna).mint(usdt.address, usdtUnits("100"), 0);
+
+    expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits("100.0"),cashUnits("1"));
+  });
+
   it("Should revert when adding an asset that is already supported  @mock", async function () {
     const { vault, usdt, governor } = await loadFixture(defaultFixture);
     expect(await vault.isSupportedAsset(usdt.address)).to.be.true;
@@ -90,7 +114,7 @@ describe("Vault", function () {
   it("Should correctly handle a deposit of DAI (18 decimals) @mock", async function () {
     const { cash, vault, dai, anna } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0.00", cash);
-    // We limit to paying to $1 OUSD for for one stable coin,
+    // We limit to paying to $1 CASH for for one stable coin,
     // so this will deposit at a rate of $1.
     await setOracleTokenPriceUsd("DAI", "1.30");
     await dai.connect(anna).approve(vault.address, daiUnits("3.0"));
@@ -132,7 +156,7 @@ describe("Vault", function () {
 
     // Anna has a balance of 1000 tokens and she is trying to
     // transfer 1500 tokens. The contract doesn't throw but
-    // fails silently, so Anna's OUSD balance should be zero.
+    // fails silently, so Anna's CASH balance should be zero.
     try {
       await vault
         .connect(anna)
@@ -217,7 +241,7 @@ describe("Vault", function () {
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
     await vault.connect(matt).justMint(usdc.address, usdcUnits("8.0"), 0);
-    // Matt sends his OUSD directly to Vault
+    // Matt sends his CASH directly to Vault
     await cash.connect(matt).transfer(vault.address, cashUnits("8.0"));
     // Matt asks Governor for help
     await vault.connect(governor).transferToken(cash.address, cashUnits("8.0"));
@@ -244,13 +268,13 @@ describe("Vault", function () {
 
   it("Should allow Governor to add Strategy @mock", async () => {
     const { vault, governor, cash } = await loadFixture(defaultFixture);
-    // Pretend OUSD is a strategy and add its address
+    // Pretend CASH is a strategy and add its address
     await vault.connect(governor).approveStrategy(cash.address);
   });
 
   it("Should revert when removing a Strategy that has not been added @mock", async () => {
     const { vault, governor, cash } = await loadFixture(defaultFixture);
-    // Pretend OUSD is a strategy and remove its address
+    // Pretend CASH is a strategy and remove its address
     await expect(
       vault.connect(governor).removeStrategy(cash.address)
     ).to.be.revertedWith("Strategy not approved");
@@ -288,7 +312,7 @@ describe("Vault", function () {
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
     await vault.connect(matt).justMint(usdc.address, usdcUnits("8.0"), 0);
-    // Matt sends his OUSD directly to Vault
+    // Matt sends his CASH directly to Vault
     await cash.connect(matt).transfer(vault.address, cashUnits("8.0"));
     // Matt asks Governor for help
     await vault.connect(governor).transferToken(cash.address, cashUnits("8.0"));
@@ -358,6 +382,49 @@ describe("Vault", function () {
     await expect(
       vault.connect(governor).setVaultBuffer(utils.parseUnits("2", 19))
     ).to.be.revertedWith("Invalid value");
+  });
+
+  it("Should remove strategy from all points @fork", async () => {
+    const { vault, governor, cMeshSwapStrategyUSDC } = await loadFixture(defaultFixture);
+    
+    await expect(
+      vault.connect(governor).approveStrategy(cMeshSwapStrategyUSDC.address)
+    ).to.be.revertedWith("Strategy already approved");
+    console.log("Setting the Quick Deposit Strategies...")
+    await vault.connect(governor).setQuickDepositStrategies([cMeshSwapStrategyUSDC.address]);
+    console.log("Setting the Strategies Weights...")
+    await vault.connect(governor).setStrategyWithWeights([
+      {
+          "strategy": cMeshSwapStrategyUSDC.address,
+          "minWeight": 0,
+          "targetWeight": 100*1000,
+          "maxWeight": 100*1000,
+          "enabled": true,
+          "enabledReward": true
+      }
+    ]);
+
+    console.log("Remove Strategy...")
+    await vault.connect(governor).removeStrategy(cMeshSwapStrategyUSDC.address);
+    
+    console.log("Pulling new strategy data...")
+    let allStrategies = await vault.getAllStrategies();
+    let allWeights = await vault.getAllStrategyWithWeights();
+    let allWeightStrats = [];
+    for (let index = 0; index < allWeights.length; index++) {
+      const element = allWeights[index];
+      allWeightStrats[index] = element.strategy;
+
+    }
+    let allQuickDeposit = await vault.getQuickDepositStrategies();
+
+    expect(allStrategies.includes(cMeshSwapStrategyUSDC.address)).to.be.false;
+    expect(allWeightStrats.includes(cMeshSwapStrategyUSDC.address)).to.be.false;
+    expect(allQuickDeposit.includes(cMeshSwapStrategyUSDC.address)).to.be.false;
+    
+    // TODO: Need better way to test this, mapping deletion
+    await expect(vault.strategyWithWeightPositions(cMeshSwapStrategyUSDC.address)).to.equal(0); 
+    
   });
 
   // it("Should only allow Governor and Strategist to call withdrawAllFromStrategies @fork", async () => {

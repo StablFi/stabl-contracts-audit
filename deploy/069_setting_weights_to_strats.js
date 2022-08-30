@@ -156,14 +156,14 @@ module.exports = deploymentWithProposal(
       );
       console.log("cAm3CurveStrategyProxy.address", cAm3CurveStrategyProxy.address);
     
-      const cAm3CurveStrategyUSDTProxy = await ethers.getContract(
-        "Am3CurveStrategyUSDTProxy"
-      );
-      const cAm3CurveStrategyUSDT = await ethers.getContractAt(
-        "Am3CurveStrategy",
-        cAm3CurveStrategyUSDTProxy.address
-      );
-      console.log("cAm3CurveStrategyUSDTProxy.address", cAm3CurveStrategyUSDTProxy.address);
+      // const cAm3CurveStrategyUSDTProxy = await ethers.getContract(
+      //   "Am3CurveStrategyUSDTProxy"
+      // );
+      // const cAm3CurveStrategyUSDT = await ethers.getContractAt(
+      //   "Am3CurveStrategy",
+      //   cAm3CurveStrategyUSDTProxy.address
+      // );
+      // console.log("cAm3CurveStrategyUSDTProxy.address", cAm3CurveStrategyUSDTProxy.address);
     
       const cSynapseStrategyProxy = await ethers.getContract(
         "SynapseStrategyProxy"
@@ -174,14 +174,14 @@ module.exports = deploymentWithProposal(
       );
       console.log("cSynapseStrategyProxy.address", cSynapseStrategyProxy.address);
     
-      const cSynapseStrategyUSDTProxy = await ethers.getContract(
-        "SynapseStrategyUSDTProxy"
-      );
-      const cSynapseStrategyUSDT = await ethers.getContractAt(
-        "SynapseStrategy",
-        cSynapseStrategyUSDTProxy.address
-      );
-      console.log("cSynapseStrategyUSDTProxy.address", cSynapseStrategyUSDTProxy.address);
+      // const cSynapseStrategyUSDTProxy = await ethers.getContract(
+      //   "SynapseStrategyUSDTProxy"
+      // );
+      // const cSynapseStrategyUSDT = await ethers.getContractAt(
+      //   "SynapseStrategy",
+      //   cSynapseStrategyUSDTProxy.address
+      // );
+      // console.log("cSynapseStrategyUSDTProxy.address", cSynapseStrategyUSDTProxy.address);
     
       const cDodoStrategyProxy = await ethers.getContract(
         "DodoStrategyProxy"
@@ -344,7 +344,7 @@ module.exports = deploymentWithProposal(
         //     "enabledReward": false
         // }
     ];
-    // weights.sort((a, b) => parseFloat(b.targetWeight) - parseFloat(a.targetWeight));
+    weights.sort((a, b) => parseFloat(b.targetWeight) - parseFloat(a.targetWeight));
     let totalWeight = 0;
     for (const weight of weights) {
         totalWeight += weight.targetWeight * 1000;

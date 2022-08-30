@@ -52,8 +52,7 @@ module.exports = deploymentWithProposal(
     console.log("3. Init the proxy to point at the implementation")
     await withConfirmation(
       cSynapseStrategyProxy
-        .connect(sDeployer)
-        ["initialize(address,address,bytes)"](
+        .connect(sDeployer)["initialize(address,address,bytes)"](
           dSynapseStrategyImpl.address,
           deployerAddr,
           [],

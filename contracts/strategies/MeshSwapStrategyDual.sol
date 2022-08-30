@@ -39,6 +39,7 @@ contract MeshSwapStrategyDual is InitializableAbstractStrategy, UniswapV2Exchang
     mapping(address => address) public assetToChainlink;
     mapping(address => uint256 ) public assetToDenominator;
 
+    address public balancerVault;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -85,8 +86,7 @@ contract MeshSwapStrategyDual is InitializableAbstractStrategy, UniswapV2Exchang
     function setBalancer(address _balancerVault, bytes32 _balancerPoolIdUsdcTusdDaiUsdt) external onlyGovernor {
         require(_balancerVault != address(0), "Zero address not allowed");
         require(_balancerPoolIdUsdcTusdDaiUsdt != "", "Empty pool id not allowed");
-
-        setBalancerVault(_balancerVault);
+        balancerVault = _balancerVault;
         poolId = _balancerPoolIdUsdcTusdDaiUsdt;
     }
 
@@ -110,6 +110,7 @@ contract MeshSwapStrategyDual is InitializableAbstractStrategy, UniswapV2Exchang
         uint256 amountToken0FromToken1;
         if (token1Balance > 0) {
             amountToken0FromToken1 = onSwap(
+                balancerVault,
                 poolId,
                 IVault.SwapKind.GIVEN_IN,
                 token1,
@@ -120,6 +121,7 @@ contract MeshSwapStrategyDual is InitializableAbstractStrategy, UniswapV2Exchang
         uint256 token0Balance = token0.balanceOf(address(this));
         //TODO add parameter to _getAmountToSwap() second token amount
         uint256 amountUsdcToSwap = _getAmountToSwap(
+            balancerVault,
             token0Balance - (amountToken0FromToken1 / 2),
             reserve0,
             reserve1,
@@ -133,6 +135,7 @@ contract MeshSwapStrategyDual is InitializableAbstractStrategy, UniswapV2Exchang
 
         // swap token0 to other token
         swap(
+            balancerVault,
             poolId,
             IVault.SwapKind.GIVEN_IN,
             IAsset(address(token0)),
@@ -185,6 +188,7 @@ contract MeshSwapStrategyDual is InitializableAbstractStrategy, UniswapV2Exchang
             // count amount to unstake
             uint256 totalLpBalance = meshSwapPair.totalSupply();
             uint256 lpTokensToWithdraw = _getAmountLpTokensToWithdraw(
+                balancerVault,
                 OvnMath.addBasisPoints(_amount, BASIS_POINTS_FOR_SLIPPAGE),
                 reserve0,
                 reserve1,
@@ -286,6 +290,7 @@ contract MeshSwapStrategyDual is InitializableAbstractStrategy, UniswapV2Exchang
                      // console.log("Token0 swap -  token0Balance ", token0Balance);
 
                     primaryStableBalanceFromToken0 = onSwap(
+                        balancerVault,
                         poolId,
                         IVault.SwapKind.GIVEN_IN,
                         token0,
@@ -313,6 +318,7 @@ contract MeshSwapStrategyDual is InitializableAbstractStrategy, UniswapV2Exchang
                 } else {
                      // console.log("Token1 swap -  token1Balance ", token1Balance);
                     primaryStableBalanceFromToken1 = onSwap(
+                        balancerVault,
                         poolId,
                         IVault.SwapKind.GIVEN_IN,
                         token1,
@@ -382,6 +388,7 @@ contract MeshSwapStrategyDual is InitializableAbstractStrategy, UniswapV2Exchang
         if ( (address(token0) != address(primaryStable)) && (token0.balanceOf(address(this)) > 0) )  {
              // console.log("Swapping token0");
             swap(
+                balancerVault,
                 poolId,
                 IVault.SwapKind.GIVEN_IN,
                 IAsset(address(token0)),
@@ -395,6 +402,7 @@ contract MeshSwapStrategyDual is InitializableAbstractStrategy, UniswapV2Exchang
         if ( (address(token1) != address(primaryStable)) && (token1.balanceOf(address(this)) > 0) )  {
              // console.log("Swapping token1");
             swap(
+                balancerVault,
                 poolId,
                 IVault.SwapKind.GIVEN_IN,
                 IAsset(address(token1)),
@@ -410,7 +418,8 @@ contract MeshSwapStrategyDual is InitializableAbstractStrategy, UniswapV2Exchang
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
         if (address(primaryStable) != address(token0)) {
             swap(
-                poolId, 
+                balancerVault,
+                poolId,
                 IVault.SwapKind.GIVEN_IN,
                 IAsset(address(primaryStable)),
                 IAsset(address(token0)),

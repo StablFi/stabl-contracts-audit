@@ -36,3 +36,8 @@ npx kill-port 8545
  2. Run the following command in the project directory:
 
     npx hardhat test --grep mock
+
+## Export JSON for Production
+```
+ npx --no-install hardhat export --export-all '../dapp/prod.network.json' --network mainnet
+```

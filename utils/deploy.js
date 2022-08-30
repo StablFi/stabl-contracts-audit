@@ -15,6 +15,8 @@ const {
   getAssetAddresses,
   isSmokeTest,
   isVerificationRequired,
+  forceStorageLayoutCheck
+
 } = require("../test/helpers.js");
 
 const {
@@ -51,7 +53,7 @@ const deployWithConfirmation = async (
   skipUpgradeSafety = false
 ) => {
   // check that upgrade doesn't corrupt the storage slots
-  if (!skipUpgradeSafety) {
+  if ((!skipUpgradeSafety) || forceStorageLayoutCheck) {
     await assertUpgradeIsSafe(hre, contractName);
   }
 

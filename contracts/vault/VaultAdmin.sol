@@ -42,6 +42,14 @@ contract VaultAdmin is VaultStorage {
         _;
     }
 
+    modifier onlyGovernorOrRebaseManager() {
+        require(
+            isGovernor() || rebaseManagers[msg.sender],
+            "Caller is not the Governor or Rebase Manager"
+        );
+        _;
+    }
+
     /***************************************
                  Configuration
     ****************************************/
@@ -207,6 +215,49 @@ contract VaultAdmin is VaultStorage {
 
             emit StrategyRemoved(_addr);
         }
+
+
+        // Removing strategy from quickDeposit
+        console.log("Removing strategy from quickDeposit");
+        strategyIndex = quickDepositStrategies.length;
+        for (uint256 i = 0; i < quickDepositStrategies.length; i++) {
+            if (quickDepositStrategies[i] == _addr) {
+                strategyIndex = i;
+                break;
+            }
+        }
+
+        if (strategyIndex < quickDepositStrategies.length) {
+            quickDepositStrategies[strategyIndex] = quickDepositStrategies[
+                quickDepositStrategies.length - 1
+            ];
+            quickDepositStrategies.pop();
+            emit StrategyRemoved(_addr);
+        }
+
+        console.log("Removing strategy from weights");
+        // Removing strategy from weights
+        // Initialize strategyIndex with out of bounds result so function will
+        // revert if no valid index found
+        strategyIndex = strategyWithWeights.length;
+        for (uint256 i = 0; i < strategyWithWeights.length; i++) {
+            if (strategyWithWeights[i].strategy == _addr) {
+                strategyIndex = i;
+                break;
+            }
+        }
+
+        if (strategyIndex < strategyWithWeights.length) {
+            strategyWithWeights[strategyIndex] = strategyWithWeights[
+                strategyWithWeights.length - 1
+            ];
+            strategyWithWeights.pop();
+            console.log("Deleting Mapping entry");
+            delete strategyWithWeightPositions[_addr];
+            console.log("Mapping entry Deleted");
+        }
+
+
     }
 
     /**
@@ -398,11 +449,20 @@ contract VaultAdmin is VaultStorage {
         return sorted;
     }
 
+
     /**
     * @dev Set the Weight against each strategy
     * @param _strategyWithWeights Array of StrategyWithWeight structs to set
     */
     function setStrategyWithWeights(StrategyWithWeight[] calldata _strategyWithWeights) external onlyGovernor  {
+        _setStrategyWithWeights(_strategyWithWeights);
+    }
+
+    /**
+    * @dev Set the Weight against each strategy
+    * @param _strategyWithWeights Array of StrategyWithWeight structs to set
+    */
+    function _setStrategyWithWeights(StrategyWithWeight[] calldata _strategyWithWeights) internal onlyGovernor {
         uint256 totalTarget = 0;
         for (uint8 i = 0; i < _strategyWithWeights.length; i++) {
             StrategyWithWeight memory strategyWithWeight = _strategyWithWeights[i];
@@ -482,8 +542,11 @@ contract VaultAdmin is VaultStorage {
     * @param _primaryStable Address of the Primary Stable
     */
     function setPrimaryStable(address _primaryStable) external onlyGovernor {
-        require(_primaryStable != address(0), "PrimaryStable should not be empry.");
+        require(_primaryStable != address(0), "PrimaryStable should not be empty.");
+        console.log("VaultAdmin: Setting Primary Stable: ", _primaryStable );
         primaryStableAddress = _primaryStable;
+        console.log("VaultAdmin: Setting Primary Stable: ", primaryStableAddress );
+
     }
 
     /***********************************
@@ -498,6 +561,13 @@ contract VaultAdmin is VaultStorage {
             require(strategies[_quickDepositStrategies[i]].isSupported, "Strategy should be supported by the Vault");
         }
         quickDepositStrategies = _quickDepositStrategies;
+    }
+    /**
+    * @dev Get the quick deposit strategies for quickAllocation of funds.
+    * @return QuickDepositStrategies Array of pre-appproved startegy addresses
+    */
+    function getQuickDepositStrategies() external onlyGovernor view returns (address[] memory) {
+        return quickDepositStrategies;
     }
     /***********************************
                 setSwapper
@@ -563,7 +633,50 @@ contract VaultAdmin is VaultStorage {
         return (labsAddress, labsFeeBps, teamAddress, teamFeeBps);
     }
 
+    /********************************
+            PAYOUT TIMESTAMPS
+    *********************************/
+    /**
+    * @dev Set nextPayoutTime timestamp. Should be called once at the time initialization
+           Can be arbitary as it will auto set by payout()
+    * @param _nextPayoutTime timestamp of next Payout
+    */
+    function setNextPayoutTime(uint256 _nextPayoutTime) external onlyGovernor {
+        require(_nextPayoutTime > 0, "Time cannot be 0");
+        nextPayoutTime = _nextPayoutTime;
+    }
 
+    /**
+    * @dev Set _payoutPeriod and _payoutPeriod duration.
+|    * @param _payoutPeriod Period for the payout. Ex: 24 * 60 * 60;
+|    * @param _payoutTimeRange duration to honor payout time. Ex: 15 * 60;
+    */
+    function setPayoutIntervals(uint256 _payoutPeriod, uint256 _payoutTimeRange) external onlyGovernor {
+        require((_payoutPeriod > 0) && (_payoutTimeRange > 0), "Time cannot be 0");
+        payoutPeriod = _payoutPeriod;
+        payoutTimeRange = _payoutTimeRange;
+    }
+
+    /********************************
+            REBASE MANAGER
+    *********************************/
+    /**
+    * @dev Set rebase managers to allow rebasing to specific external users
+    * @param _rebaseManager Candidate for Rebase Manager
+    */
+    function addRebaseManager(address _rebaseManager) external onlyGovernor {
+        require(_rebaseManager != address(0), "No Rebase Manager Provided");
+        require(!rebaseManagers[_rebaseManager], "Rebase Manager already whitelisted");
+        rebaseManagers[_rebaseManager] = true;
+    }
+
+    /**
+    * @dev Check if the an address is actually a Rebase Manager
+    * @param _sender address to check if it is among Rebase Managers
+    */
+    function isRebaseManager(address _sender) external returns (bool) {
+        return rebaseManagers[_sender];
+    }
 
     /***************************
               PAYOUT
@@ -571,16 +684,25 @@ contract VaultAdmin is VaultStorage {
     /**
     * @dev Function to collect rewards from Strategies and Balance the Vault
     */
-    function payout() external {
+    function payout() external onlyGovernorOrRebaseManager {
         _payout();
     }
     /**
     * @dev Function to collect rewards from Strategies and Balance the Vault
     */
     function _payout() internal {
+        if (block.timestamp + payoutTimeRange < nextPayoutTime) {
+            return;
+        }
+
         IHarvester(harvesterAddress).harvestAndDistribute();
         IDripper(dripperAddress).collectAndRebase();
         _balance();
+
+        // update next payout time. Cycle for preventing gaps
+        for (; block.timestamp >= nextPayoutTime - payoutTimeRange;) {
+            nextPayoutTime = nextPayoutTime + payoutPeriod;
+        }
     }
 
     /***************************

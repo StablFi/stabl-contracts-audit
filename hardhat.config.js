@@ -175,6 +175,7 @@ module.exports = {
       },
       chainId: 1337,
       initialBaseFeePerGas: 0,
+      
       timeout: 30*200000,
 
     },
@@ -195,6 +196,7 @@ module.exports = {
         process.env.DEPLOYER_PK || privateKeys[0],
         process.env.GOVERNOR_PK || privateKeys[0],
       ],
+      gasPrice: 40000000000, // 40 Gwei
     },
   },
   mocha: {

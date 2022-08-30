@@ -172,16 +172,26 @@ interface IVault {
 
     function setStrategyWithWeights(StrategyWeight[] calldata _strategyWeights) external;
     function getAllStrategyWithWeights() external view returns (StrategyWeight[] memory);
+    function strategyWithWeightPositions(address _strategyWeight)
+        external
+        view
+        returns (uint256);
 
     function setSwapper(address _balancerVault, address _balancerPoolId) external;
 
-    function setQuickDepositStartegies(address[] calldata _quickDepositStartegies) external;
-    
+    function setQuickDepositStrategies(address[] calldata _quickDepositStartegies) external;
+    function getQuickDepositStrategies() external view returns (address[] memory);
+
     function setPrimaryStable(address _primaryStable) external;
     function primaryStableAddress() external view returns (address);
 
 
     function getFeeParams() external view returns  (address, uint256, address, uint256);
     function setFeeParams(address _labsAddress, uint256 _labsFeeBps, address _teamAddress, uint256 _teamFeeBps) external;
-    
+
+    function setNextPayoutTime(uint256 _nextPayoutTime) external;
+    function setPayoutIntervals(uint256 _payoutPeriod, uint256 _payoutTimeRange) external;
+
+    function addRebaseManager(address _rebaseManager) external;
+    function isRebaseManager(address _sender) external returns (bool);
 }

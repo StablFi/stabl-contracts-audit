@@ -21,11 +21,11 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
-import "../exchanges/BalancerExchange.sol";
+import "../exchanges/MiniBalancerExchange.sol";
 import "./VaultStorage.sol";
 import "hardhat/console.sol";
 
-contract VaultCore is VaultStorage, BalancerExchange {
+contract VaultCore is VaultStorage, MiniBalancerExchange  {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
     using SafeMath for uint256;
@@ -49,6 +49,14 @@ contract VaultCore is VaultStorage, BalancerExchange {
         _;
     }
 
+    modifier onlyGovernorOrDripperOrRebaseManager() {
+        require(
+            isGovernor() || rebaseManagers[msg.sender] || (msg.sender == dripperAddress),
+            "Caller is not the Governor or Rebase Manager or Dripper"
+        );
+        _;
+    }
+
     /**
      * @dev Deposit a supported asset to the Vault and mint CASH. Asset will be swapped to 
             the PS and allocated to Quick Deposit Strategies
@@ -68,101 +76,10 @@ contract VaultCore is VaultStorage, BalancerExchange {
     }
 
 
-    /**
-     * @notice 🚨 TO BE REMOVED IN MAINNET DEPLOYMENT [REMOVE_ON_PRODUCTION] 🚨
-     * @dev Used to just mint the CASH without depositing the fund further to the strategies.
-            One can use quickAllocate() to deposit further if needed. quickAllocate() would work on its own
-            only when the asset is PS.
-            Primary used in Mock based tests.
-     * @param _asset Address of the asset being deposited
-     * @param _amount Amount of the asset being deposited (decimals based on _asset)
-     * @param _minimumCASHAmount Minimum CASH to mint (1e18)
-     */
-    function justMint(
-        address _asset,
-        uint256 _amount,
-        uint256 _minimumCASHAmount
-    ) external whenNotCapitalPaused nonReentrant {
-        _mint(_asset, _amount, _minimumCASHAmount);
-    }
+    
 
-    /**
-     * @notice 🚨 TO BE REMOVED IN MAINNET DEPLOYMENT [REMOVE_ON_PRODUCTION] 🚨
-     * @dev Allocate unallocated funds on Vault to strategies. Primary used in Fork based tests.
-     **/
-    function allocate() external whenNotCapitalPaused nonReentrant {
-        _allocate();
-    }
 
-    /**
-     * @notice 🚨 TO BE REMOVED IN MAINNET DEPLOYMENT [REMOVE_ON_PRODUCTION] 🚨
-     * @dev Allocate unallocated funds on Vault to strategies. Primary used in Fork based tests.
-     **/
-    function _allocate() internal {
-        uint256 vaultValue = _totalValueInVault();
-        // Nothing in vault to allocate
-        if (vaultValue == 0) return;
-        uint256 strategiesValue = _totalValueInStrategies();
-        // We have a method that does the same as this, gas optimisation
-        uint256 calculatedTotalValue = vaultValue.add(strategiesValue);
 
-        // We want to maintain a buffer on the Vault so calculate a percentage
-        // modifier to multiply each amount being allocated by to enforce the
-        // vault buffer
-        uint256 vaultBufferModifier;
-        if (strategiesValue == 0) {
-            // Nothing in Strategies, allocate 100% minus the vault buffer to
-            // strategies
-            vaultBufferModifier = uint256(1e18).sub(vaultBuffer);
-        } else {
-            vaultBufferModifier = vaultBuffer.mul(calculatedTotalValue).div(
-                vaultValue
-            );
-            if (1e18 > vaultBufferModifier) {
-                // E.g. 1e18 - (1e17 * 10e18)/5e18 = 8e17
-                // (5e18 * 8e17) / 1e18 = 4e18 allocated from Vault
-                vaultBufferModifier = uint256(1e18).sub(vaultBufferModifier);
-            } else {
-                // We need to let the buffer fill
-                return;
-            }
-        }
-        if (vaultBufferModifier == 0) return;
-
-        // Iterate over all assets in the Vault and allocate to the appropriate
-        // strategy
-        for (uint256 i = 0; i < allAssets.length; i++) {
-            IERC20 asset = IERC20(allAssets[i]);
-            uint256 assetBalance = asset.balanceOf(address(this));
-            // console.log(allAssets[i], "assetBalance: ", assetBalance);
-            // No balance, nothing to do here
-            if (assetBalance == 0) continue;
-
-            // Multiply the balance by the vault buffer modifier and truncate
-            // to the scale of the asset decimals
-            uint256 allocateAmount = assetBalance.mulTruncate(
-                vaultBufferModifier
-            );
-
-            address depositStrategyAddr = assetDefaultStrategies[
-                address(asset)
-            ];
-
-            if (depositStrategyAddr != address(0) && allocateAmount > 0) {
-                // console.log("Sending " , allocateAmount , " to " , depositStrategyAddr);
-                IStrategy strategy = IStrategy(depositStrategyAddr);
-                // Transfer asset to Strategy and call deposit method to
-                // mint or take required action
-                asset.safeTransfer(address(strategy), allocateAmount);
-                strategy.deposit(address(asset), allocateAmount);
-                emit AssetAllocated(
-                    address(asset),
-                    depositStrategyAddr,
-                    allocateAmount
-                );
-            }
-        }
-    }
 
 
 
@@ -277,7 +194,7 @@ contract VaultCore is VaultStorage, BalancerExchange {
         }
         uint8 strategyIndex = 0;
         uint8  index = 0;
-        while((totalAmount <= (output + redeemFee)) && (strategyIndex < strategyWithWeights.length)) {
+        while((totalAmount < (output + redeemFee)) && (strategyIndex < strategyWithWeights.length)) {
             uint256 currentStratBal = IStrategy(strategyWithWeights[strategyIndex].strategy).checkBalance();
             // console.log("Current strategy balance:", strategyWithWeights[strategyIndex].strategy, currentStratBal);
             if (currentStratBal > 0) {
@@ -379,7 +296,7 @@ contract VaultCore is VaultStorage, BalancerExchange {
      * @dev Calculate the total value of assets held by the Vault and all
      *      strategies and update the supply of CASH.
      */
-    function rebase() external virtual nonReentrant {
+    function rebase() external virtual nonReentrant onlyGovernorOrDripperOrRebaseManager {
         _rebase();
     }
 
@@ -390,13 +307,13 @@ contract VaultCore is VaultStorage, BalancerExchange {
      */
     function _rebase() internal whenNotRebasePaused {
         uint256 cashSupply = cash.totalSupply();
-        // console.log("Total CASH Supply: ", cashSupply);
+        console.log("Total CASH Supply: ", cashSupply);
         if (cashSupply == 0) {
             return;
         }
         uint256 primaryStableDecimals = Helpers.getDecimals(primaryStableAddress);
         uint256 vaultValue = _checkBalance().scaleBy(18, primaryStableDecimals);
-        // console.log("vaultValue " , vaultValue);
+        console.log("vaultValue " , vaultValue);
 
         // Only rachet CASH supply upwards
         cashSupply = cash.totalSupply(); // Final check should use latest value
@@ -406,58 +323,7 @@ contract VaultCore is VaultStorage, BalancerExchange {
         }
     }
 
-    /**
-     * @dev Determine the total value of assets held by the vault and its
-     *         strategies.
-     * @return value Total value in USD (1e18)
-     */
-    function totalValue() external view virtual returns (uint256 value) {
-        value = _totalValue();
-    }
-
-    /**
-     * @dev Internal Calculate the total value of the assets held by the
-     *         vault and its strategies.
-     * @return value Total value in USD (1e18)
-     */
-    function _totalValue() internal view virtual returns (uint256 value) {
-        return _totalValueInVault().add(_totalValueInStrategies());
-    }
-
-    /**
-     * @dev Internal to calculate total value of all assets held in Vault.
-     * @return value Total value in ETH (1e6)
-     */
-    function _totalValueInVault() internal view returns (uint256 value) {
-        uint256 balance = IERC20(primaryStableAddress).balanceOf(address(this));
-        if (balance > 0) {
-            value = value.add(balance);
-        }
-    }
-
-    /**
-     * @dev Internal to calculate total value of all assets held in Strategies.
-     * @return value Total value in ETH (1e18)
-     */
-    function _totalValueInStrategies() internal view returns (uint256 value) {
-        for (uint256 i = 0; i < allStrategies.length; i++) {
-            value = value.add(_totalValueInStrategy(allStrategies[i]));
-        }
-    }
-
-    /**
-     * @dev Internal to calculate total value of all assets held by strategy.
-     * @param _strategyAddr Address of the strategy
-     */
-    function _totalValueInStrategy(address _strategyAddr)
-        internal
-        view
-        returns (uint256)
-    {
-        IStrategy strategy = IStrategy(_strategyAddr);
-        return strategy.checkBalance();
-        
-    }
+    
 
     /**
      * @notice Get the balance of an asset held in Vault and all strategies.
@@ -486,6 +352,27 @@ contract VaultCore is VaultStorage, BalancerExchange {
             balance = balance.add(strategy.checkBalance());
         }
     }
+
+
+    /**
+     * @dev Determine the total value of assets held by the vault and its
+     *         strategies.
+     * @return value Total value in USDC (1e6)
+     */
+    function totalValue() external view virtual returns (uint256 value) {
+        value = _totalValue();
+    }
+
+    /**
+     * @dev Internal Calculate the total value of the assets held by the
+     *         vault and its strategies.
+     * @return value Total value in USDC (1e6)
+     */
+    function _totalValue() internal view virtual returns (uint256 value) {
+        return _checkBalance();
+    }
+
+   
 
 
     /**
@@ -546,25 +433,6 @@ contract VaultCore is VaultStorage, BalancerExchange {
         return (primaryStableBalance.mul(factor).div(totalBalance), totalBalance, redeemFee.div(10**(18 - primaryStableDecimals)));
     }
 
-    /**
-     * @notice Get an array of the supported asset prices in USD.
-     * @return assetPrices Array of asset prices in USD (1e18)
-     */
-    function _getAssetPrices()
-        internal
-        view
-        returns (uint256[] memory assetPrices)
-    {
-        assetPrices = new uint256[](getAssetCount());
-
-        IOracle oracle = IOracle(priceProvider);
-        // Price from Oracle is returned with 8 decimals
-        // _amount is in assetDecimals
-        for (uint256 i = 0; i < allAssets.length; i++) {
-            assetPrices[i] = oracle.price(allAssets[i]).scaleBy(18, 8);
-        }
-    }
-
     /********************************
                 Swapping
     *********************************/
@@ -575,10 +443,10 @@ contract VaultCore is VaultStorage, BalancerExchange {
      */    
     function _swapAsset(address tokenFrom, address tokenTo) internal {
         require(balancerVault != address(0), "Empty Swapper Address");
-        setBalancerVault(balancerVault);
         if ( ( tokenFrom != tokenTo) && (IERC20(tokenFrom).balanceOf(address(this)) > 0) )  {
             // console.log("VaultCore: Swapping from ", tokenFrom, tokenTo);
             swap(
+                balancerVault,
                 balancerPoolId,
                 IVault.SwapKind.GIVEN_IN,
                 IAsset(address(tokenFrom)),

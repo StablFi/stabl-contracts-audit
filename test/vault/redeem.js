@@ -19,7 +19,7 @@ const {
 
 describe("Vault Redeem", function () {
 
-  it("Should allow a redeem with DAI @fork", async () => {
+  it("Should allow a redeem with DAI @fork @special", async () => {
     const { cash, vault, dai, matt, Labs, Team, usdc } = await loadFixture(defaultFixture);
     console.log("")
 

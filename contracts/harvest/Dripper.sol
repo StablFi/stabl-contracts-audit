@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Governable } from "../governance/Governable.sol";
+import { Initializable } from "../utils/Initializable.sol";
 import { IVault } from "../interfaces/IVault.sol";
 
 /**
@@ -46,7 +47,7 @@ import { IVault } from "../interfaces/IVault.sol";
  * UPDATE: USDT changed to USDC
  */
 
-contract Dripper is Governable {
+contract Dripper is Initializable, Governable {
     using SafeERC20 for IERC20;
 
     struct Drip {
@@ -54,15 +55,24 @@ contract Dripper is Governable {
         uint192 perBlock; // drip rate per block
     }
 
-    address immutable vault; // CASH vault
-    address immutable token; // token to drip out
+    address  vault; // CASH vault
+    address  token; // token to drip out
     uint256 public dripDuration; // in seconds
     Drip public drip; // active drip parameters
 
-    constructor(address _vault, address _token) {
+
+    /**
+     * @dev Initializer to set up initial internal state
+     * @param _vault Address of the Vault
+     * @param _token Dripping token Ex: USDC
+     */
+    function initialize(address _vault, address _token) external onlyGovernor initializer {
+        require(address(_vault) != address(0), "Vault Missing");
+        require(address(_token) != address(0), "Dripping Token Missing");
         vault = _vault;
         token = _token;
     }
+
 
     /// @notice How much funds have dripped out already and are currently
     //   available to be sent to the vault.
@@ -81,6 +91,7 @@ contract Dripper is Governable {
     /// @notice Collect all dripped funds, send to vault, recalculate new drip
     ///  rate, and rebase CASH.
     function collectAndRebase() external {
+        require(IVault(vault).isRebaseManager(msg.sender) || msg.sender == vault, "Only Rebase Managers can rebase the Vault");
         _collect();
         IVault(vault).rebase();
     }

@@ -50,7 +50,9 @@ contract AaveStrategy is InitializableAbstractStrategy, BalancerExchange {
     uint256 public BORROW_RATE_MAX;
     uint256 public BORROW_RATE_MAX_HARD;
     uint256 public constant BORROW_RATE_DIVISOR = 10000;
-    
+
+
+    address public balancerVault;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -119,9 +121,8 @@ contract AaveStrategy is InitializableAbstractStrategy, BalancerExchange {
     function setBalancer(address _balancerVault, bytes32 _balancerPoolId) external onlyGovernor {
         require(_balancerVault != address(0), "Zero address not allowed");
         require(_balancerPoolId != "", "Empty pool id not allowed");
-
-        setBalancerVault(_balancerVault);
         poolId = _balancerPoolId;
+        balancerVault = _balancerVault;
     }
 
     /**

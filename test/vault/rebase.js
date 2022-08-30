@@ -14,17 +14,21 @@ const {
 } = require("../helpers");
 
 describe("Vault rebase pausing @fast @mock", async () => {
-  afterEach(async () => {
-    const {vault} = await defaultFixture();
-    console.log("afterEach: Total Vault Value: ", (await vault.totalValue()).toString())
-  });
-  after(async () => {
-    const {vault} = await defaultFixture();
-    console.log("after: Total Vault Value: ", (await vault.totalValue()).toString())
+  it("Should allow governor to call rebase @fast @mock", async () => {
+    let { vault, governor } = await loadFixture(defaultFixture);
+    await vault.connect(governor).rebase();
   });
 
-  it("Should allow non-governor to call rebase @fast @mock", async () => {
+  it("Should not allow anyone to call rebase @fast @mock", async () => {
     let { vault, anna } = await loadFixture(defaultFixture);
+    await expect(vault.connect(anna).rebase()).to.be.revertedWith(
+      "Caller is not the Governor or Rebase Manager"
+    );
+  });
+
+  it("Should allow rebase manager to call rebase @fast @mock", async () => {
+    let { vault, anna, governor } = await loadFixture(defaultFixture);
+    await vault.connect(governor).addRebaseManager(anna.address);
     await vault.connect(anna).rebase();
   });
 

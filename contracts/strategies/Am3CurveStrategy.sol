@@ -40,6 +40,9 @@ contract Am3CurveStrategy is BaseCurveStrategy, UniswapV2Exchange {
     ICurveGauge crvGauge;
     ICRVMinter crvMinter;
 
+    IERC20 public Superb;
+    
+
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -175,9 +178,12 @@ contract Am3CurveStrategy is BaseCurveStrategy, UniswapV2Exchange {
         _amounts[poolCoinIndex] = _amount;
 
         uint256 am3CrvTokenToWithdrawFrom = aaveCurvePool.calc_token_amount(_amounts, false);
-        // console.log("am3CrvTokenToWithdrawFrom", am3CrvTokenToWithdrawFrom);
-
-        aaveCurvePool.remove_liquidity_one_coin(am3CrvTokenToWithdrawFrom, int128(uint128(_getCoinIndex(_asset))), 0, true);
+        console.log("am3CrvTokenToWithdrawFrom", am3CrvTokenToWithdrawFrom);
+        uint256 recievableOnWithdrawl = aaveCurvePool.calc_withdraw_one_coin(am3CrvTokenToWithdrawFrom,int128(uint128(_getCoinIndex(address(primaryStable)))));
+        uint256 minAmount = recievableOnWithdrawl.mulTruncate(
+            uint256(1e18) - maxSlippage
+        );
+        aaveCurvePool.remove_liquidity_one_coin(am3CrvTokenToWithdrawFrom, int128(uint128(_getCoinIndex(_asset))), minAmount, true);
 
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
         // console.log("Withdrawing from the Synapse: ", primaryStableBalance);
@@ -196,7 +202,13 @@ contract Am3CurveStrategy is BaseCurveStrategy, UniswapV2Exchange {
         _lpWithdraw(gaugePTokens);
         // Remove liquidity
         ICurvePool aaveCurvePool = ICurvePool(platformAddress);
-        aaveCurvePool.remove_liquidity_one_coin(totalPTokens, int128(uint128(_getCoinIndex(address(primaryStable)))), 0, true);
+
+        uint256 allAm3CrvTokens = IERC20(pTokenAddress).balanceOf(address(this));
+        uint256 recievableOnWithdrawl = aaveCurvePool.calc_withdraw_one_coin(allAm3CrvTokens,int128(uint128(_getCoinIndex(address(primaryStable)))));
+        uint256 minAmount = recievableOnWithdrawl.mulTruncate(
+            uint256(1e18) - maxSlippage
+        );
+        aaveCurvePool.remove_liquidity_one_coin(totalPTokens, int128(uint128(_getCoinIndex(address(primaryStable)))), minAmount, true);
         // Transfer assets out of Vault
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
         // console.log("Withdrawing from the Synapse: ", primaryStableBalance);

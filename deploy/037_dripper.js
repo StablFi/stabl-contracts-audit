@@ -1,4 +1,4 @@
-const { deploymentWithProposal, log } = require("../utils/deploy");
+  const { deploymentWithProposal, log } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
   { deployName: "037_dripper", forceDeploy: true, tags: ["test", "main", "mainnet"],  dependencies: ["001_core"]},
@@ -30,14 +30,11 @@ module.exports = deploymentWithProposal(
     // ----------------
 
     // 1. Deploy Dripper
-    await deployWithConfirmation("Dripper", [
-      cVaultProxy.address,
-      assetAddresses.primaryStable,
-    ]);
+    await deployWithConfirmation("Dripper");
     const cDripperImpl = await ethers.getContract("Dripper");
 
     // 2. Deploy Proxy
-    await deployWithConfirmation("DripperProxy");
+    await deployWithConfirmation("DripperProxy",[],"InitializeGovernedUpgradeabilityProxy");
     const cDripperProxy = await ethers.getContract("DripperProxy");
     const cDripper = await ethers.getContractAt(
       "Dripper",
@@ -54,6 +51,13 @@ module.exports = deploymentWithProposal(
           [],
           await getTxOpts()
         )
+    );
+    // 3.1 Initialize
+    await withConfirmation(
+      cDripper.connect(sDeployer).initialize(
+        cVaultProxy.address,
+        assetAddresses.USDC,
+      )
     );
 
     // 4. Configure Dripper to one week

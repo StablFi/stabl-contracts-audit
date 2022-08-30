@@ -67,7 +67,7 @@ const findBestMainnetTokenHolder = async (contract, hre) => {
 };
 
 const fundAccounts = async () => {
-  console.log("Funding accounts...")
+  // console.log("Funding accounts...")
   const signers = await hre.ethers.getSigners();
   let usdt, dai, tusd, usdc, nonStandardToken;
   if (isFork) {
@@ -164,7 +164,7 @@ const fundAccounts = async () => {
       params: [addresses.polygon.Binance],
     });
   }
-  console.log("Funded")
+  // console.log("Funded")
 };
 
 module.exports = {
