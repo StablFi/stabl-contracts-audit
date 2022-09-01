@@ -41,6 +41,8 @@ const {
   reallocate,
   rebase,
   yield,
+  payout,
+  collectAndRebase
 } = require("./tasks/vault");
 
 const MAINNET_DEPLOYER = "0x442bB41E499bB21aFc6a42327C9E257a7d09872e";
@@ -112,6 +114,8 @@ task("rebalance", "Call rebalance() on the Vault", rebalance);
 task("capital", "Set the Vault's pauseCapital flag", capital);
 task("harvest", "Call harvest() on Vault", harvest);
 task("rebase", "Call rebase() on the Vault", rebase);
+task("payout", "Call payout() on the Vault", payout);
+task("collectAndRebase", "Call collectAndRebase() on the Dripper", collectAndRebase);
 task("yield", "Artificially generate yield on the Vault", yield);
 task("reallocate", "Allocate assets from one Strategy to another")
   .addParam("from", "Address to withdraw asset from")
@@ -194,9 +198,10 @@ module.exports = {
       url: `${process.env.PROVIDER_URL}`,
       accounts: [
         process.env.DEPLOYER_PK || privateKeys[0],
-        process.env.GOVERNOR_PK || privateKeys[0],
+        privateKeys[1],
+        privateKeys[2],
       ],
-      gasPrice: 40000000000, // 40 Gwei
+      // gas: 24500000,
     },
   },
   mocha: {

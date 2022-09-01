@@ -341,13 +341,13 @@ async function redeem(taskArguments, hre) {
   const cash = await ethers.getContractAt("CASH", cashProxy.address);
 
   const vaultProxy = await ethers.getContract("VaultProxy");
-  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
+  const vault = await ethers.getContractAt("contracts/interfaces/IVault.sol:IVault", vaultProxy.address);
 
   let dai, usdc, usdt;
   if (isFork) {
-    dai = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.DAI);
-    usdc = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDC);
-    usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
+    dai = await hre.ethers.getContractAt(usdtAbi, addresses.polygon.DAI);
+    usdc = await hre.ethers.getContractAt(usdtAbi, addresses.polygon.USDC);
+    usdt = await hre.ethers.getContractAt(usdtAbi, addresses.polygon.USDT);
   } else {
     dai = await hre.ethers.getContract("MockDAI");
     usdc = await hre.ethers.getContract("MockUSDC");
@@ -361,7 +361,7 @@ async function redeem(taskArguments, hre) {
   const signers = await hre.ethers.getSigners();
   for (let i = accountIndex; i < accountIndex + numAccounts; i++) {
     const signer = signers[i];
-    const address = signer.address;
+    const address = signer.address
     console.log(
       `Redeeming ${redeemAmount} CASH for account ${i} at address ${address}`
     );
@@ -377,10 +377,11 @@ async function redeem(taskArguments, hre) {
     console.log("USDT balance=", usdtUnitsFormat(usdtBalance, 6));
 
     // Redeem.
-    await vault
+    let tx = await vault
       .connect(signer)
-      .redeem(cashUnits(redeemAmount), 0, { gasLimit: 2000000 });
-
+      .redeem(cashUnits(redeemAmount), 0, { gasLimit: 3500000 });
+    tx.wait();
+    
     // Show the new balances.
     cashBalance = await cash.balanceOf(address);
     daiBalance = await dai.balanceOf(address);

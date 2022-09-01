@@ -289,7 +289,7 @@ const deployCore = async () => {
   await withConfirmation(
     cCASH
       .connect(sGovernor)
-      .initialize("Stabl", "CASH", cVaultProxy.address)
+      .initialize("CASH", "CASH", cVaultProxy.address)
   );
 
   log("Initialized CASH");

@@ -323,6 +323,34 @@ async function reallocate(taskArguments, hre) {
   await printBalances(allAssets);
 }
 
+async function payout(taskArguments, hre) {
+  const { withConfirmation } = require("../utils/deploy");
+
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = hre.ethers.provider.getSigner(governorAddr);
+
+  const vaultProxy = await hre.ethers.getContract("VaultProxy");
+  const vault = await hre.ethers.getContractAt("contracts/interfaces/IVault.sol:IVault", vaultProxy.address);
+
+  console.log("Sending a transaction to call payout() on", vaultProxy.address);
+  await withConfirmation(vault.connect(sGovernor).payout());
+  console.log("Payout transaction confirmed");
+}
+
+async function collectAndRebase(taskArguments, hre) {
+  const { withConfirmation } = require("../utils/deploy");
+
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = hre.ethers.provider.getSigner(governorAddr);
+
+  const dripperProxy = await hre.ethers.getContract("DripperProxy");
+  const dripper = await hre.ethers.getContractAt("Dripper", dripperProxy.address);
+
+  console.log("Sending a transaction to call collectAndRebase() on", dripperProxy.address);
+  await withConfirmation(dripper.connect(sGovernor).collectAndRebase());
+  console.log("collectAndRebase transaction confirmed");
+}
+
 module.exports = {
   allocate,
   capital,
@@ -331,4 +359,6 @@ module.exports = {
   rebalance,
   rebase,
   yield,
+  payout,
+  collectAndRebase
 };

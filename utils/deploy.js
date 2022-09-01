@@ -76,7 +76,7 @@ const deployWithConfirmation = async (
   if (isMainnet) {
     await storeStorageLayoutForContract(hre, contractName);
     if (isVerificationRequired) {
-      // await verifyContract(result, args, contract);
+      await verifyContract(result, args, contract);
     }
   }
 
@@ -88,18 +88,14 @@ const verifyContract = async(result, args, _contract) => {
   if (!args) args = [];
   console.log("Verifying", _contract, "contract...");
   if (_contract.endsWith("Proxy")) {
-    console.log("Proxy contract skipped!")
+    console.log("Proxy contract skipped! Manually verify it from Explorer.")
     return;
   }
-
-  // if _contract ends with proxy, prepend with proxy path
-  const contract = _contract.endsWith("Proxy") ? "contracts/proxies/Proxies.sol:" + _contract : _contract;
 
   try {
     await hre.run('verify:verify', {
       address: result.address,
-      constructorArguments: args,
-      contract: contract
+      constructorArguments: args
     })
   } catch (error) {
     console.warn("Warning: verification of deployed contract failed." , error.message);

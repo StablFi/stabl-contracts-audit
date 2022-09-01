@@ -154,6 +154,7 @@ contract VaultCore is VaultStorage, MiniBalancerExchange  {
      */
     function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal {
         require(_amount > 0, "Amount must be greater than 0");
+        require( cash.balanceOf(msg.sender) >=  _amount, "Insufficient Amount!");
         (
             uint256 output,
             uint256 backingValue,
@@ -184,7 +185,7 @@ contract VaultCore is VaultStorage, MiniBalancerExchange  {
 
         // Send output
         require(output > 0, "Nothing to redeem");
-
+        console.log("Total redeemable: ",  redeemFee+output);
         IERC20 primaryStable = IERC20(primaryStableAddress);
         address[] memory strategiesToWithdrawFrom = new address[](strategyWithWeights.length);
         uint256[] memory amountsToWithdraw = new uint256[](strategyWithWeights.length);
@@ -196,7 +197,7 @@ contract VaultCore is VaultStorage, MiniBalancerExchange  {
         uint8  index = 0;
         while((totalAmount < (output + redeemFee)) && (strategyIndex < strategyWithWeights.length)) {
             uint256 currentStratBal = IStrategy(strategyWithWeights[strategyIndex].strategy).checkBalance();
-            // console.log("Current strategy balance:", strategyWithWeights[strategyIndex].strategy, currentStratBal);
+            console.log("Current strategy balance:", strategyWithWeights[strategyIndex].strategy, currentStratBal);
             if (currentStratBal > 0) {
                 if ( (currentStratBal + totalAmount) > (output + redeemFee) ) {
                     strategiesToWithdrawFrom[index] = strategyWithWeights[strategyIndex].strategy;
@@ -209,11 +210,11 @@ contract VaultCore is VaultStorage, MiniBalancerExchange  {
                 }
                 index++;
             }
-            // console.log("Total amount after:", strategyWithWeights[strategyIndex].strategy, totalAmount);
+            console.log("Total amount after:", strategyWithWeights[strategyIndex].strategy, totalAmount);
 
             strategyIndex++;
         }
-        // console.log("Total amount:", totalAmount);
+        console.log("Total amount:", totalAmount);
         require(totalAmount >= (output + redeemFee), "Not enough funds anywhere to redeem.");
 
         // Withdraw from strategies
@@ -221,12 +222,12 @@ contract VaultCore is VaultStorage, MiniBalancerExchange  {
             if (strategiesToWithdrawFrom[i] == address(0)) {
                 break;
             }
-            // console.log("VaultCore - Redeem - Balance in strategy: ",IStrategy(strategiesToWithdrawFrom[i]).checkBalance() );
+            console.log("VaultCore - Redeem - Balance in strategy: ",IStrategy(strategiesToWithdrawFrom[i]).checkBalance() );
             if (amountsToWithdraw[i] > 0) {
-                // console.log("VaultCore - Redeem - Withdraw from strategy: ", strategiesToWithdrawFrom[i], amountsToWithdraw[i]);
+                console.log("VaultCore - Redeem - Withdraw from strategy: ", strategiesToWithdrawFrom[i], amountsToWithdraw[i]);
                 IStrategy(strategiesToWithdrawFrom[i]).withdraw(address(this), primaryStableAddress, amountsToWithdraw[i]);
             } else {
-                // console.log("VaultCore - Redeem - Withdraw all from strategy: ",IStrategy(strategiesToWithdrawFrom[i]).checkBalance() );
+                console.log("VaultCore - Redeem - Withdraw all from strategy: ",IStrategy(strategiesToWithdrawFrom[i]).checkBalance() );
                 IStrategy(strategiesToWithdrawFrom[i]).withdrawAll();
             }
             

@@ -91,7 +91,7 @@ contract Dripper is Initializable, Governable {
     /// @notice Collect all dripped funds, send to vault, recalculate new drip
     ///  rate, and rebase CASH.
     function collectAndRebase() external {
-        require(IVault(vault).isRebaseManager(msg.sender) || msg.sender == vault, "Only Rebase Managers can rebase the Vault");
+        require(IVault(vault).isRebaseManager(msg.sender) || msg.sender == vault ||  isGovernor(), "Only Governor or Rebase Managers can rebase the Vault");
         _collect();
         IVault(vault).rebase();
     }
