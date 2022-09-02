@@ -1,0 +1,299 @@
+{
+  "address": "0x80487b4f8f70e793A81a42367c225ee0B94315DF",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousGovernor",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newGovernor",
+          "type": "address"
+        }
+      ],
+      "name": "GovernorshipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousGovernor",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newGovernor",
+          "type": "address"
+        }
+      ],
+      "name": "PendingGovernorshipTransfer",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "implementation",
+          "type": "address"
+        }
+      ],
+      "name": "Upgraded",
+      "type": "event"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "fallback"
+    },
+    {
+      "inputs": [],
+      "name": "admin",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "claimGovernance",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "governor",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "implementation",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_logic",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_initGovernor",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "_data",
+          "type": "bytes"
+        }
+      ],
+      "name": "initialize",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "isGovernor",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_newGovernor",
+          "type": "address"
+        }
+      ],
+      "name": "transferGovernance",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newImplementation",
+          "type": "address"
+        }
+      ],
+      "name": "upgradeTo",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newImplementation",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "upgradeToAndCall",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x5347dd5db86c3cd50991bbd7eec4f69e9539c9fc460806d3e8eb87c7ac29a535",
+  "receipt": {
+    "to": null,
+    "from": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "contractAddress": "0x80487b4f8f70e793A81a42367c225ee0B94315DF",
+    "transactionIndex": 26,
+    "gasUsed": "614791",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008002000000000000000000000000000000000000000000000000000000820020000000000000000100000000000000000000020000000000000000000800000000000000000080000000000000000004000000000000000000000000000000000000000000000000000000000000200000000000800000000000000000000000000000000000000000000000804000000000000000000011c00000000000000000000000000000100000000020000000001000000000000000000000000000000000000000000000000000100002",
+    "blockHash": "0xeb71cff5b57a642a66d7afc6fc39c0ca32af7e7c58d99ab7b6305c5e1c8c1601",
+    "transactionHash": "0x5347dd5db86c3cd50991bbd7eec4f69e9539c9fc460806d3e8eb87c7ac29a535",
+    "logs": [
+      {
+        "transactionIndex": 26,
+        "blockNumber": 32556628,
+        "transactionHash": "0x5347dd5db86c3cd50991bbd7eec4f69e9539c9fc460806d3e8eb87c7ac29a535",
+        "address": "0x80487b4f8f70e793A81a42367c225ee0B94315DF",
+        "topics": [
+          "0xc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a",
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x000000000000000000000000a2a067351c977113b98096f75c9685a3d51614ec"
+        ],
+        "data": "0x",
+        "logIndex": 117,
+        "blockHash": "0xeb71cff5b57a642a66d7afc6fc39c0ca32af7e7c58d99ab7b6305c5e1c8c1601"
+      },
+      {
+        "transactionIndex": 26,
+        "blockNumber": 32556628,
+        "transactionHash": "0x5347dd5db86c3cd50991bbd7eec4f69e9539c9fc460806d3e8eb87c7ac29a535",
+        "address": "0x0000000000000000000000000000000000001010",
+        "topics": [
+          "0x4dfe1bbbcf077ddc3e01291eea2d5c70c2b422b415d95645b9adcfd678cb1d63",
+          "0x0000000000000000000000000000000000000000000000000000000000001010",
+          "0x000000000000000000000000a2a067351c977113b98096f75c9685a3d51614ec",
+          "0x00000000000000000000000046a3a41bd932244dd08186e4c19f1a7e48cbcdf4"
+        ],
+        "data": "0x000000000000000000000000000000000000000000000000004ea15ea20d9b0e0000000000000000000000000000000000000000000000029640723f60fb079600000000000000000000000000000000000000000000170e50444669f1b6369c00000000000000000000000000000000000000000000000295f1d0e0beed6c8800000000000000000000000000000000000000000000170e5092e7c893c3d1aa",
+        "logIndex": 118,
+        "blockHash": "0xeb71cff5b57a642a66d7afc6fc39c0ca32af7e7c58d99ab7b6305c5e1c8c1601"
+      }
+    ],
+    "blockNumber": 32556628,
+    "cumulativeGasUsed": "7413124",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "solcInputHash": "687ed9fa5cffd3a4c7a6373a1d9ad1d9",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.6+commit.11564f7e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousGovernor\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newGovernor\",\"type\":\"address\"}],\"name\":\"GovernorshipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousGovernor\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newGovernor\",\"type\":\"address\"}],\"name\":\"PendingGovernorshipTransfer\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"implementation\",\"type\":\"address\"}],\"name\":\"Upgraded\",\"type\":\"event\"},{\"stateMutability\":\"payable\",\"type\":\"fallback\"},{\"inputs\":[],\"name\":\"admin\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"claimGovernance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"governor\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"implementation\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_logic\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_initGovernor\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"_data\",\"type\":\"bytes\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"isGovernor\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_newGovernor\",\"type\":\"address\"}],\"name\":\"transferGovernance\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newImplementation\",\"type\":\"address\"}],\"name\":\"upgradeTo\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newImplementation\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"}],\"name\":\"upgradeToAndCall\",\"outputs\":[],\"stateMutability\":\"payable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"admin()\":{\"returns\":{\"_0\":\"The address of the proxy admin/it's also the governor.\"}},\"claimGovernance()\":{\"details\":\"Claim Governance of the contract to a new account (`newGovernor`). Can only be called by the new Governor.\"},\"governor()\":{\"details\":\"Returns the address of the current Governor.\"},\"implementation()\":{\"returns\":{\"_0\":\"The address of the implementation.\"}},\"initialize(address,address,bytes)\":{\"details\":\"Contract initializer with Governor enforcement\",\"params\":{\"_data\":\"Data to send as msg.data to the implementation to initialize the proxied contract. It should include the signature and the parameters of the function to be called, as described in https://solidity.readthedocs.io/en/v0.4.24/abi-spec.html#function-selector-and-argument-encoding. This parameter is optional, if no data is given the initialization call to proxied contract will be skipped.\",\"_initGovernor\":\"Address of the initial Governor.\",\"_logic\":\"Address of the initial implementation.\"}},\"isGovernor()\":{\"details\":\"Returns true if the caller is the current Governor.\"},\"transferGovernance(address)\":{\"details\":\"Transfers Governance of the contract to a new account (`newGovernor`). Can only be called by the current Governor. Must be claimed for this to complete\",\"params\":{\"_newGovernor\":\"Address of the new Governor\"}},\"upgradeTo(address)\":{\"details\":\"Upgrade the backing implementation of the proxy. Only the admin can call this function.\",\"params\":{\"newImplementation\":\"Address of the new implementation.\"}},\"upgradeToAndCall(address,bytes)\":{\"details\":\"Upgrade the backing implementation of the proxy and call a function on the new implementation. This is useful to initialize the proxied contract.\",\"params\":{\"data\":\"Data to send as msg.data in the low level call. It should include the signature and the parameters of the function to be called, as described in https://solidity.readthedocs.io/en/v0.4.24/abi-spec.html#function-selector-and-argument-encoding.\",\"newImplementation\":\"Address of the new implementation.\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"notice\":\"CASHProxy delegates calls to an CASH implementation\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/proxies/Proxies.sol\":\"CASHProxy\"},\"evmVersion\":\"berlin\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@openzeppelin/contracts/utils/Address.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\n// OpenZeppelin Contracts v4.4.1 (utils/Address.sol)\\n\\npragma solidity ^0.8.0;\\n\\n/**\\n * @dev Collection of functions related to the address type\\n */\\nlibrary Address {\\n    /**\\n     * @dev Returns true if `account` is a contract.\\n     *\\n     * [IMPORTANT]\\n     * ====\\n     * It is unsafe to assume that an address for which this function returns\\n     * false is an externally-owned account (EOA) and not a contract.\\n     *\\n     * Among others, `isContract` will return false for the following\\n     * types of addresses:\\n     *\\n     *  - an externally-owned account\\n     *  - a contract in construction\\n     *  - an address where a contract will be created\\n     *  - an address where a contract lived, but was destroyed\\n     * ====\\n     */\\n    function isContract(address account) internal view returns (bool) {\\n        // This method relies on extcodesize, which returns 0 for contracts in\\n        // construction, since the code is only stored at the end of the\\n        // constructor execution.\\n\\n        uint256 size;\\n        assembly {\\n            size := extcodesize(account)\\n        }\\n        return size > 0;\\n    }\\n\\n    /**\\n     * @dev Replacement for Solidity's `transfer`: sends `amount` wei to\\n     * `recipient`, forwarding all available gas and reverting on errors.\\n     *\\n     * https://eips.ethereum.org/EIPS/eip-1884[EIP1884] increases the gas cost\\n     * of certain opcodes, possibly making contracts go over the 2300 gas limit\\n     * imposed by `transfer`, making them unable to receive funds via\\n     * `transfer`. {sendValue} removes this limitation.\\n     *\\n     * https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/[Learn more].\\n     *\\n     * IMPORTANT: because control is transferred to `recipient`, care must be\\n     * taken to not create reentrancy vulnerabilities. Consider using\\n     * {ReentrancyGuard} or the\\n     * https://solidity.readthedocs.io/en/v0.5.11/security-considerations.html#use-the-checks-effects-interactions-pattern[checks-effects-interactions pattern].\\n     */\\n    function sendValue(address payable recipient, uint256 amount) internal {\\n        require(address(this).balance >= amount, \\\"Address: insufficient balance\\\");\\n\\n        (bool success, ) = recipient.call{value: amount}(\\\"\\\");\\n        require(success, \\\"Address: unable to send value, recipient may have reverted\\\");\\n    }\\n\\n    /**\\n     * @dev Performs a Solidity function call using a low level `call`. A\\n     * plain `call` is an unsafe replacement for a function call: use this\\n     * function instead.\\n     *\\n     * If `target` reverts with a revert reason, it is bubbled up by this\\n     * function (like regular Solidity function calls).\\n     *\\n     * Returns the raw returned data. To convert to the expected return value,\\n     * use https://solidity.readthedocs.io/en/latest/units-and-global-variables.html?highlight=abi.decode#abi-encoding-and-decoding-functions[`abi.decode`].\\n     *\\n     * Requirements:\\n     *\\n     * - `target` must be a contract.\\n     * - calling `target` with `data` must not revert.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCall(address target, bytes memory data) internal returns (bytes memory) {\\n        return functionCall(target, data, \\\"Address: low-level call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`], but with\\n     * `errorMessage` as a fallback revert reason when `target` reverts.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, 0, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but also transferring `value` wei to `target`.\\n     *\\n     * Requirements:\\n     *\\n     * - the calling contract must have an ETH balance of at least `value`.\\n     * - the called Solidity function must be `payable`.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCallWithValue(\\n        address target,\\n        bytes memory data,\\n        uint256 value\\n    ) internal returns (bytes memory) {\\n        return functionCallWithValue(target, data, value, \\\"Address: low-level call with value failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCallWithValue-address-bytes-uint256-}[`functionCallWithValue`], but\\n     * with `errorMessage` as a fallback revert reason when `target` reverts.\\n     *\\n     * _Available since v3.1._\\n     */\\n    function functionCallWithValue(\\n        address target,\\n        bytes memory data,\\n        uint256 value,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        require(address(this).balance >= value, \\\"Address: insufficient balance for call\\\");\\n        require(isContract(target), \\\"Address: call to non-contract\\\");\\n\\n        (bool success, bytes memory returndata) = target.call{value: value}(data);\\n        return verifyCallResult(success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but performing a static call.\\n     *\\n     * _Available since v3.3._\\n     */\\n    function functionStaticCall(address target, bytes memory data) internal view returns (bytes memory) {\\n        return functionStaticCall(target, data, \\\"Address: low-level static call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],\\n     * but performing a static call.\\n     *\\n     * _Available since v3.3._\\n     */\\n    function functionStaticCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal view returns (bytes memory) {\\n        require(isContract(target), \\\"Address: static call to non-contract\\\");\\n\\n        (bool success, bytes memory returndata) = target.staticcall(data);\\n        return verifyCallResult(success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],\\n     * but performing a delegate call.\\n     *\\n     * _Available since v3.4._\\n     */\\n    function functionDelegateCall(address target, bytes memory data) internal returns (bytes memory) {\\n        return functionDelegateCall(target, data, \\\"Address: low-level delegate call failed\\\");\\n    }\\n\\n    /**\\n     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],\\n     * but performing a delegate call.\\n     *\\n     * _Available since v3.4._\\n     */\\n    function functionDelegateCall(\\n        address target,\\n        bytes memory data,\\n        string memory errorMessage\\n    ) internal returns (bytes memory) {\\n        require(isContract(target), \\\"Address: delegate call to non-contract\\\");\\n\\n        (bool success, bytes memory returndata) = target.delegatecall(data);\\n        return verifyCallResult(success, returndata, errorMessage);\\n    }\\n\\n    /**\\n     * @dev Tool to verifies that a low level call was successful, and revert if it wasn't, either by bubbling the\\n     * revert reason using the provided one.\\n     *\\n     * _Available since v4.3._\\n     */\\n    function verifyCallResult(\\n        bool success,\\n        bytes memory returndata,\\n        string memory errorMessage\\n    ) internal pure returns (bytes memory) {\\n        if (success) {\\n            return returndata;\\n        } else {\\n            // Look for revert reason and bubble it up if present\\n            if (returndata.length > 0) {\\n                // The easiest way to bubble the revert reason is using memory via assembly\\n\\n                assembly {\\n                    let returndata_size := mload(returndata)\\n                    revert(add(32, returndata), returndata_size)\\n                }\\n            } else {\\n                revert(errorMessage);\\n            }\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0x51b758a8815ecc9596c66c37d56b1d33883a444631a3f916b9fe65cb863ef7c4\",\"license\":\"MIT\"},\"contracts/governance/Governable.sol\":{\"content\":\"// SPDX-License-Identifier: agpl-3.0\\r\\npragma solidity ^0.8.0;\\r\\n\\r\\n/**\\r\\n * @title CASH Governable Contract\\r\\n * @dev Copy of the openzeppelin Ownable.sol contract with nomenclature change\\r\\n *      from owner to governor and renounce methods removed. Does not use\\r\\n *      Context.sol like Ownable.sol does for simplification.\\r\\n * @author Stabl Protocol Inc\\r\\n */\\r\\ncontract Governable {\\r\\n    // Storage position of the owner and pendingOwner of the contract\\r\\n    // keccak256(\\\"CASH.governor\\\");\\r\\n    bytes32 private constant governorPosition =\\r\\n        0x83f34c88ec39d54d1e423bd8a181ebc59ede5dcc9996c2df334668b4f89fdd73;\\r\\n\\r\\n    // keccak256(\\\"CASH.pending.governor\\\");\\r\\n    bytes32 private constant pendingGovernorPosition =\\r\\n        0x7eaf9a7750884803435dfabc67aa617a7d8fefb23d8d84b3c9722bd69e48c4bc;\\r\\n\\r\\n    // keccak256(\\\"CASH.reentry.status\\\");\\r\\n    bytes32 private constant reentryStatusPosition =\\r\\n        0x48a06827bfe8bfc0a59fe65d0fa78f553938265ed1f971326fc09947d19a593c;\\r\\n\\r\\n    // See OpenZeppelin ReentrancyGuard implementation\\r\\n    uint256 constant _NOT_ENTERED = 1;\\r\\n    uint256 constant _ENTERED = 2;\\r\\n\\r\\n    event PendingGovernorshipTransfer(\\r\\n        address indexed previousGovernor,\\r\\n        address indexed newGovernor\\r\\n    );\\r\\n\\r\\n    event GovernorshipTransferred(\\r\\n        address indexed previousGovernor,\\r\\n        address indexed newGovernor\\r\\n    );\\r\\n\\r\\n    /**\\r\\n     * @dev Initializes the contract setting the deployer as the initial Governor.\\r\\n     */\\r\\n    constructor() {\\r\\n        _setGovernor(msg.sender);\\r\\n        emit GovernorshipTransferred(address(0), _governor());\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Returns the address of the current Governor.\\r\\n     */\\r\\n    function governor() public view returns (address) {\\r\\n        return _governor();\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Returns the address of the current Governor.\\r\\n     */\\r\\n    function _governor() internal view returns (address governorOut) {\\r\\n        bytes32 position = governorPosition;\\r\\n        assembly {\\r\\n            governorOut := sload(position)\\r\\n        }\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Returns the address of the pending Governor.\\r\\n     */\\r\\n    function _pendingGovernor()\\r\\n        internal\\r\\n        view\\r\\n        returns (address pendingGovernor)\\r\\n    {\\r\\n        bytes32 position = pendingGovernorPosition;\\r\\n        assembly {\\r\\n            pendingGovernor := sload(position)\\r\\n        }\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Throws if called by any account other than the Governor.\\r\\n     */\\r\\n    modifier onlyGovernor() {\\r\\n        require(isGovernor(), \\\"Caller is not the Governor\\\");\\r\\n        _;\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Returns true if the caller is the current Governor.\\r\\n     */\\r\\n    function isGovernor() public view returns (bool) {\\r\\n        return msg.sender == _governor();\\r\\n    }\\r\\n\\r\\n    function _setGovernor(address newGovernor) internal {\\r\\n        bytes32 position = governorPosition;\\r\\n        assembly {\\r\\n            sstore(position, newGovernor)\\r\\n        }\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Prevents a contract from calling itself, directly or indirectly.\\r\\n     * Calling a `nonReentrant` function from another `nonReentrant`\\r\\n     * function is not supported. It is possible to prevent this from happening\\r\\n     * by making the `nonReentrant` function external, and make it call a\\r\\n     * `private` function that does the actual work.\\r\\n     */\\r\\n    modifier nonReentrant() {\\r\\n        bytes32 position = reentryStatusPosition;\\r\\n        uint256 _reentry_status;\\r\\n        assembly {\\r\\n            _reentry_status := sload(position)\\r\\n        }\\r\\n\\r\\n        // On the first call to nonReentrant, _notEntered will be true\\r\\n        require(_reentry_status != _ENTERED, \\\"Reentrant call\\\");\\r\\n\\r\\n        // Any calls to nonReentrant after this point will fail\\r\\n        assembly {\\r\\n            sstore(position, _ENTERED)\\r\\n        }\\r\\n\\r\\n        _;\\r\\n\\r\\n        // By storing the original value once again, a refund is triggered (see\\r\\n        // https://eips.ethereum.org/EIPS/eip-2200)\\r\\n        assembly {\\r\\n            sstore(position, _NOT_ENTERED)\\r\\n        }\\r\\n    }\\r\\n\\r\\n    function _setPendingGovernor(address newGovernor) internal {\\r\\n        bytes32 position = pendingGovernorPosition;\\r\\n        assembly {\\r\\n            sstore(position, newGovernor)\\r\\n        }\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Transfers Governance of the contract to a new account (`newGovernor`).\\r\\n     * Can only be called by the current Governor. Must be claimed for this to complete\\r\\n     * @param _newGovernor Address of the new Governor\\r\\n     */\\r\\n    function transferGovernance(address _newGovernor) external onlyGovernor {\\r\\n        _setPendingGovernor(_newGovernor);\\r\\n        emit PendingGovernorshipTransfer(_governor(), _newGovernor);\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Claim Governance of the contract to a new account (`newGovernor`).\\r\\n     * Can only be called by the new Governor.\\r\\n     */\\r\\n    function claimGovernance() external {\\r\\n        require(\\r\\n            msg.sender == _pendingGovernor(),\\r\\n            \\\"Only the pending Governor can complete the claim\\\"\\r\\n        );\\r\\n        _changeGovernor(msg.sender);\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Change Governance of the contract to a new account (`newGovernor`).\\r\\n     * @param _newGovernor Address of the new Governor\\r\\n     */\\r\\n    function _changeGovernor(address _newGovernor) internal {\\r\\n        require(_newGovernor != address(0), \\\"New Governor is address(0)\\\");\\r\\n        emit GovernorshipTransferred(_governor(), _newGovernor);\\r\\n        _setGovernor(_newGovernor);\\r\\n    }\\r\\n}\\r\\n\",\"keccak256\":\"0xde5eed875b7d7ab3a97ca112ff817081874518ae2f1065fe9b10fc4194ecef43\",\"license\":\"agpl-3.0\"},\"contracts/proxies/InitializeGovernedUpgradeabilityProxy.sol\":{\"content\":\"// SPDX-License-Identifier: agpl-3.0\\r\\npragma solidity ^0.8.0;\\r\\n\\r\\nimport { Address } from \\\"@openzeppelin/contracts/utils/Address.sol\\\";\\r\\n\\r\\nimport { Governable } from \\\"../governance/Governable.sol\\\";\\r\\n\\r\\n/**\\r\\n * @title BaseGovernedUpgradeabilityProxy\\r\\n * @dev This contract combines an upgradeability proxy with our governor system.\\r\\n * It is based on an older version of OpenZeppelins BaseUpgradeabilityProxy\\r\\n * with Solidity ^0.8.0.\\r\\n * @author Stabl Protocol Inc\\r\\n */\\r\\ncontract InitializeGovernedUpgradeabilityProxy is Governable {\\r\\n    /**\\r\\n     * @dev Emitted when the implementation is upgraded.\\r\\n     * @param implementation Address of the new implementation.\\r\\n     */\\r\\n    event Upgraded(address indexed implementation);\\r\\n\\r\\n    /**\\r\\n     * @dev Contract initializer with Governor enforcement\\r\\n     * @param _logic Address of the initial implementation.\\r\\n     * @param _initGovernor Address of the initial Governor.\\r\\n     * @param _data Data to send as msg.data to the implementation to initialize\\r\\n     * the proxied contract.\\r\\n     * It should include the signature and the parameters of the function to be\\r\\n     * called, as described in\\r\\n     * https://solidity.readthedocs.io/en/v0.4.24/abi-spec.html#function-selector-and-argument-encoding.\\r\\n     * This parameter is optional, if no data is given the initialization call\\r\\n     * to proxied contract will be skipped.\\r\\n     */\\r\\n    function initialize(\\r\\n        address _logic,\\r\\n        address _initGovernor,\\r\\n        bytes memory _data\\r\\n    ) public payable onlyGovernor {\\r\\n        require(_implementation() == address(0), \\\"implementation already set\\\");\\r\\n        assert(\\r\\n            IMPLEMENTATION_SLOT ==\\r\\n                bytes32(uint256(keccak256(\\\"eip1967.proxy.implementation\\\")) - 1)\\r\\n        );\\r\\n        _changeGovernor(_initGovernor);\\r\\n        _setImplementation(_logic);\\r\\n        if (_data.length > 0) {\\r\\n            (bool success, ) = _logic.delegatecall(_data);\\r\\n            require(success);\\r\\n        }\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @return The address of the proxy admin/it's also the governor.\\r\\n     */\\r\\n    function admin() external view returns (address) {\\r\\n        return _governor();\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @return The address of the implementation.\\r\\n     */\\r\\n    function implementation() external view returns (address) {\\r\\n        return _implementation();\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Upgrade the backing implementation of the proxy.\\r\\n     * Only the admin can call this function.\\r\\n     * @param newImplementation Address of the new implementation.\\r\\n     */\\r\\n    function upgradeTo(address newImplementation) external onlyGovernor {\\r\\n        _upgradeTo(newImplementation);\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Upgrade the backing implementation of the proxy and call a function\\r\\n     * on the new implementation.\\r\\n     * This is useful to initialize the proxied contract.\\r\\n     * @param newImplementation Address of the new implementation.\\r\\n     * @param data Data to send as msg.data in the low level call.\\r\\n     * It should include the signature and the parameters of the function to be called, as described in\\r\\n     * https://solidity.readthedocs.io/en/v0.4.24/abi-spec.html#function-selector-and-argument-encoding.\\r\\n     */\\r\\n    function upgradeToAndCall(address newImplementation, bytes calldata data)\\r\\n        external\\r\\n        payable\\r\\n        onlyGovernor\\r\\n    {\\r\\n        _upgradeTo(newImplementation);\\r\\n        (bool success, ) = newImplementation.delegatecall(data);\\r\\n        require(success);\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Fallback function.\\r\\n     * Implemented entirely in `_fallback`.\\r\\n     */\\r\\n    fallback() external payable {\\r\\n        _fallback();\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Delegates execution to an implementation contract.\\r\\n     * This is a low level function that doesn't return to its internal call site.\\r\\n     * It will return to the external caller whatever the implementation returns.\\r\\n     * @param _impl Address to delegate.\\r\\n     */\\r\\n    function _delegate(address _impl) internal {\\r\\n        assembly {\\r\\n            // Copy msg.data. We take full control of memory in this inline assembly\\r\\n            // block because it will not return to Solidity code. We overwrite the\\r\\n            // Solidity scratch pad at memory position 0.\\r\\n            calldatacopy(0, 0, calldatasize())\\r\\n\\r\\n            // Call the implementation.\\r\\n            // out and outsize are 0 because we don't know the size yet.\\r\\n            let result := delegatecall(gas(), _impl, 0, calldatasize(), 0, 0)\\r\\n\\r\\n            // Copy the returned data.\\r\\n            returndatacopy(0, 0, returndatasize())\\r\\n\\r\\n            switch result\\r\\n            // delegatecall returns 0 on error.\\r\\n            case 0 {\\r\\n                revert(0, returndatasize())\\r\\n            }\\r\\n            default {\\r\\n                return(0, returndatasize())\\r\\n            }\\r\\n        }\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Function that is run as the first thing in the fallback function.\\r\\n     * Can be redefined in derived contracts to add functionality.\\r\\n     * Redefinitions must call super._willFallback().\\r\\n     */\\r\\n    function _willFallback() internal {}\\r\\n\\r\\n    /**\\r\\n     * @dev fallback implementation.\\r\\n     * Extracted to enable manual triggering.\\r\\n     */\\r\\n    function _fallback() internal {\\r\\n        _willFallback();\\r\\n        _delegate(_implementation());\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Storage slot with the address of the current implementation.\\r\\n     * This is the keccak-256 hash of \\\"eip1967.proxy.implementation\\\" subtracted by 1, and is\\r\\n     * validated in the constructor.\\r\\n     */\\r\\n    bytes32 internal constant IMPLEMENTATION_SLOT =\\r\\n        0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;\\r\\n\\r\\n    /**\\r\\n     * @dev Returns the current implementation.\\r\\n     * @return impl Address of the current implementation\\r\\n     */\\r\\n    function _implementation() internal view returns (address impl) {\\r\\n        bytes32 slot = IMPLEMENTATION_SLOT;\\r\\n        assembly {\\r\\n            impl := sload(slot)\\r\\n        }\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Upgrades the proxy to a new implementation.\\r\\n     * @param newImplementation Address of the new implementation.\\r\\n     */\\r\\n    function _upgradeTo(address newImplementation) internal {\\r\\n        _setImplementation(newImplementation);\\r\\n        emit Upgraded(newImplementation);\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Sets the implementation address of the proxy.\\r\\n     * @param newImplementation Address of the new implementation.\\r\\n     */\\r\\n    function _setImplementation(address newImplementation) internal {\\r\\n        require(\\r\\n            Address.isContract(newImplementation),\\r\\n            \\\"Cannot set a proxy implementation to a non-contract address\\\"\\r\\n        );\\r\\n\\r\\n        bytes32 slot = IMPLEMENTATION_SLOT;\\r\\n\\r\\n        assembly {\\r\\n            sstore(slot, newImplementation)\\r\\n        }\\r\\n    }\\r\\n}\\r\\n\",\"keccak256\":\"0x015f4e1df57219072297a4fccc89f02cfcb77e15d7dba6859855c8ea5adfb9f5\",\"license\":\"agpl-3.0\"},\"contracts/proxies/Proxies.sol\":{\"content\":\"// SPDX-License-Identifier: agpl-3.0\\r\\npragma solidity ^0.8.0;\\r\\n\\r\\nimport { InitializeGovernedUpgradeabilityProxy } from \\\"./InitializeGovernedUpgradeabilityProxy.sol\\\";\\r\\n\\r\\n\\r\\n/**\\r\\n * @notice CASHProxy delegates calls to an CASH implementation\\r\\n */\\r\\ncontract BoxProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n/**\\r\\n * @notice CASHProxy delegates calls to an CASH implementation\\r\\n */\\r\\ncontract CASHProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n/**\\r\\n * @notice WrappedCASHProxy delegates calls to a WrappedCASH implementation\\r\\n */\\r\\ncontract WrappedCASHProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n/**\\r\\n * @notice VaultProxy delegates calls to a Vault implementation\\r\\n */\\r\\ncontract VaultProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n/**\\r\\n * @notice CompoundStrategyProxy delegates calls to a CompoundStrategy implementation\\r\\n */\\r\\ncontract CompoundStrategyProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n/**\\r\\n * @notice AaveStrategyUSDCProxy delegates calls to a AaveStrategy implementation\\r\\n */\\r\\ncontract AaveStrategyUSDCProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n/**\\r\\n * @notice AaveStrategyDAIProxy delegates calls to a AaveStrategy implementation\\r\\n */\\r\\ncontract AaveStrategyDAIProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n/**\\r\\n * @notice AaveStrategyUSDTProxy delegates calls to a AaveStrategy implementation\\r\\n */\\r\\ncontract AaveStrategyUSDTProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n\\r\\n/**\\r\\n * @notice ThreePoolStrategyProxy delegates calls to a ThreePoolStrategy implementation\\r\\n */\\r\\ncontract ThreePoolStrategyProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n/**\\r\\n * @notice ConvexStrategyProxy delegates calls to a ConvexStrategy implementation\\r\\n */\\r\\ncontract ConvexStrategyProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n\\r\\n\\r\\n/**\\r\\n * @notice DystopiaStrategyUsdcDaiProxy delegates calls to a DystopiaStrategy implementation\\r\\n */\\r\\ncontract DystopiaStrategyUsdcDaiProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n/**\\r\\n * @notice DystopiaStrategyUsdcUsdtProxy delegates calls to a DystopiaStrategy implementation\\r\\n */\\r\\ncontract DystopiaStrategyUsdcUsdtProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n/**\\r\\n * @notice DystopiaStrategyDaiUsdtProxy delegates calls to a DystopiaStrategy implementation\\r\\n */\\r\\ncontract DystopiaStrategyDaiUsdtProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n\\r\\n\\r\\n\\r\\n/**\\r\\n * @notice MeshSwapStrategyDAIProxy delegates calls to a MeshSwapStrategy implementation\\r\\n */\\r\\ncontract MeshSwapStrategyDAIProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n/**\\r\\n * @notice MeshSwapStrategyUSDTProxy delegates calls to a MeshSwapStrategy implementation\\r\\n */\\r\\ncontract MeshSwapStrategyUSDTProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n/**\\r\\n * @notice MeshSwapStrategyUSDCProxy delegates calls to a MeshSwapStrategy implementation\\r\\n */\\r\\ncontract MeshSwapStrategyUSDCProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n\\r\\n\\r\\n\\r\\n\\r\\n/**\\r\\n * @notice MeshSwapStrategyUSDCUSDTProxy delegates calls to a MeshSwapStrategyDual implementation\\r\\n */\\r\\ncontract MeshSwapStrategyUSDCUSDTProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n/**\\r\\n * @notice MeshSwapStrategyUSDCDAIProxy delegates calls to a MeshSwapStrategyDual implementation\\r\\n */\\r\\ncontract MeshSwapStrategyUSDCDAIProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n/**\\r\\n * @notice MeshSwapStrategyUSDTDAIProxy delegates calls to a MeshSwapStrategyDual implementation\\r\\n */\\r\\ncontract MeshSwapStrategyUSDTDAIProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n\\r\\n/**\\r\\n * @notice QuickSwapStrategyUSDCDAIProxy delegates calls to a QuickSwapStrategy implementation\\r\\n */\\r\\ncontract QuickSwapStrategyUSDCDAIProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n}\\r\\n\\r\\n/**\\r\\n * @notice QuickSwapStrategyUSDCUSDTProxy delegates calls to a QuickSwapStrategy implementation\\r\\n */\\r\\ncontract QuickSwapStrategyUSDCUSDTProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n}\\r\\n\\r\\n\\r\\n\\r\\n\\r\\n/**\\r\\n * @notice Am3CurveStrategyProxy delegates calls to a Am3CurveStrategy implementation\\r\\n */\\r\\ncontract Am3CurveStrategyProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n\\r\\n/**\\r\\n * @notice Am3CurveStrategyUSDTProxy delegates calls to a Am3CurveStrategy implementation\\r\\n */\\r\\ncontract Am3CurveStrategyUSDTProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n\\r\\n/**\\r\\n * @notice SynapseStrategyProxy delegates calls to a SynapseStrategy implementation\\r\\n */\\r\\ncontract SynapseStrategyProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n/**\\r\\n * @notice SynapseStrategyUSDTProxy delegates calls to a SynapseStrategy implementation\\r\\n */\\r\\ncontract SynapseStrategyUSDTProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n\\r\\n/**\\r\\n * @notice DodoStrategyProxy delegates calls to a DodoStrategy implementation\\r\\n */\\r\\ncontract DodoStrategyProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n\\r\\n/**\\r\\n * @notice HarvesterProxy delegates calls to a Harvester implementation\\r\\n */\\r\\ncontract HarvesterProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\\r\\n/**\\r\\n * @notice DripperProxy delegates calls to a Dripper implementation\\r\\n */\\r\\ncontract DripperProxy is InitializeGovernedUpgradeabilityProxy {\\r\\n\\r\\n}\\r\\n\",\"keccak256\":\"0x83d2c51be7c6e1db829b4d48c48c98274f76f8594c93cb08a8747e7e11a87269\",\"license\":\"agpl-3.0\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b5061002733600080516020610a3083398151915255565b600080516020610a30833981519152546040516001600160a01b03909116906000907fc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a908290a36109b38061007d6000396000f3fe6080604052600436106100865760003560e01c80635d36b190116100595780635d36b1901461010a578063c7af33521461011f578063cf7a1d7714610144578063d38bfff414610157578063f851a4401461009057610086565b80630c340a24146100905780633659cfe6146100c25780634f1ef286146100e25780635c60da1b146100f5575b61008e610177565b005b34801561009c57600080fd5b506100a5610197565b6040516001600160a01b0390911681526020015b60405180910390f35b3480156100ce57600080fd5b5061008e6100dd3660046106f3565b6101b4565b61008e6100f03660046107e7565b6101ed565b34801561010157600080fd5b506100a561028a565b34801561011657600080fd5b5061008e6102a2565b34801561012b57600080fd5b50610134610346565b60405190151581526020016100b9565b61008e610152366004610715565b610377565b34801561016357600080fd5b5061008e6101723660046106f3565b610488565b61019561019060008051602061095e8339815191525490565b61052c565b565b60006101af60008051602061093e8339815191525490565b905090565b6101bc610346565b6101e15760405162461bcd60e51b81526004016101d8906108b5565b60405180910390fd5b6101ea81610550565b50565b6101f5610346565b6102115760405162461bcd60e51b81526004016101d8906108b5565b61021a83610550565b6000836001600160a01b0316838360405161023692919061086a565b600060405180830381855af49150503d8060008114610271576040519150601f19603f3d011682016040523d82523d6000602084013e610276565b606091505b505090508061028457600080fd5b50505050565b60006101af60008051602061095e8339815191525490565b7f7eaf9a7750884803435dfabc67aa617a7d8fefb23d8d84b3c9722bd69e48c4bc546001600160a01b0316336001600160a01b03161461033d5760405162461bcd60e51b815260206004820152603060248201527f4f6e6c79207468652070656e64696e6720476f7665726e6f722063616e20636f60448201526f6d706c6574652074686520636c61696d60801b60648201526084016101d8565b61019533610590565b600061035e60008051602061093e8339815191525490565b6001600160a01b0316336001600160a01b031614905090565b61037f610346565b61039b5760405162461bcd60e51b81526004016101d8906108b5565b60006103b360008051602061095e8339815191525490565b6001600160a01b0316146104095760405162461bcd60e51b815260206004820152601a60248201527f696d706c656d656e746174696f6e20616c72656164792073657400000000000060448201526064016101d8565b61043460017f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbd6108ec565b60008051602061095e8339815191521461045057610450610911565b61045982610590565b61046283610651565b805115610483576000836001600160a01b031682604051610236919061087a565b505050565b610490610346565b6104ac5760405162461bcd60e51b81526004016101d8906108b5565b6104d4817f7eaf9a7750884803435dfabc67aa617a7d8fefb23d8d84b3c9722bd69e48c4bc55565b806001600160a01b03166104f460008051602061093e8339815191525490565b6001600160a01b03167fa39cc5eb22d0f34d8beaefee8a3f17cc229c1a1d1ef87a5ad47313487b1c4f0d60405160405180910390a350565b3660008037600080366000845af43d6000803e80801561054b573d6000f35b3d6000fd5b61055981610651565b6040516001600160a01b038216907fbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b90600090a250565b6001600160a01b0381166105e65760405162461bcd60e51b815260206004820152601a60248201527f4e657720476f7665726e6f72206973206164647265737328302900000000000060448201526064016101d8565b806001600160a01b031661060660008051602061093e8339815191525490565b6001600160a01b03167fc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a60405160405180910390a36101ea8160008051602061093e83398151915255565b803b6106c55760405162461bcd60e51b815260206004820152603b60248201527f43616e6e6f742073657420612070726f787920696d706c656d656e746174696f60448201527f6e20746f2061206e6f6e2d636f6e74726163742061646472657373000000000060648201526084016101d8565b60008051602061095e83398151915255565b80356001600160a01b03811681146106ee57600080fd5b919050565b60006020828403121561070557600080fd5b61070e826106d7565b9392505050565b60008060006060848603121561072a57600080fd5b610733846106d7565b9250610741602085016106d7565b9150604084013567ffffffffffffffff8082111561075e57600080fd5b818601915086601f83011261077257600080fd5b81358181111561078457610784610927565b604051601f8201601f19908116603f011681019083821181831017156107ac576107ac610927565b816040528281528960208487010111156107c557600080fd5b8260208601602083013760006020848301015280955050505050509250925092565b6000806000604084860312156107fc57600080fd5b610805846106d7565b9250602084013567ffffffffffffffff8082111561082257600080fd5b818601915086601f83011261083657600080fd5b81358181111561084557600080fd5b87602082850101111561085757600080fd5b6020830194508093505050509250925092565b8183823760009101908152919050565b6000825160005b8181101561089b5760208186018101518583015201610881565b818111156108aa576000828501525b509190910192915050565b6020808252601a908201527f43616c6c6572206973206e6f742074686520476f7665726e6f72000000000000604082015260600190565b60008282101561090c57634e487b7160e01b600052601160045260246000fd5b500390565b634e487b7160e01b600052600160045260246000fd5b634e487b7160e01b600052604160045260246000fdfe83f34c88ec39d54d1e423bd8a181ebc59ede5dcc9996c2df334668b4f89fdd73360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbca264697066735822122060022d1b5933e491f8fe7f548ad9aa6ffcaef001a55074ef9e2e27fc2cb2133164736f6c6343000806003383f34c88ec39d54d1e423bd8a181ebc59ede5dcc9996c2df334668b4f89fdd73",
+  "deployedBytecode": "0x6080604052600436106100865760003560e01c80635d36b190116100595780635d36b1901461010a578063c7af33521461011f578063cf7a1d7714610144578063d38bfff414610157578063f851a4401461009057610086565b80630c340a24146100905780633659cfe6146100c25780634f1ef286146100e25780635c60da1b146100f5575b61008e610177565b005b34801561009c57600080fd5b506100a5610197565b6040516001600160a01b0390911681526020015b60405180910390f35b3480156100ce57600080fd5b5061008e6100dd3660046106f3565b6101b4565b61008e6100f03660046107e7565b6101ed565b34801561010157600080fd5b506100a561028a565b34801561011657600080fd5b5061008e6102a2565b34801561012b57600080fd5b50610134610346565b60405190151581526020016100b9565b61008e610152366004610715565b610377565b34801561016357600080fd5b5061008e6101723660046106f3565b610488565b61019561019060008051602061095e8339815191525490565b61052c565b565b60006101af60008051602061093e8339815191525490565b905090565b6101bc610346565b6101e15760405162461bcd60e51b81526004016101d8906108b5565b60405180910390fd5b6101ea81610550565b50565b6101f5610346565b6102115760405162461bcd60e51b81526004016101d8906108b5565b61021a83610550565b6000836001600160a01b0316838360405161023692919061086a565b600060405180830381855af49150503d8060008114610271576040519150601f19603f3d011682016040523d82523d6000602084013e610276565b606091505b505090508061028457600080fd5b50505050565b60006101af60008051602061095e8339815191525490565b7f7eaf9a7750884803435dfabc67aa617a7d8fefb23d8d84b3c9722bd69e48c4bc546001600160a01b0316336001600160a01b03161461033d5760405162461bcd60e51b815260206004820152603060248201527f4f6e6c79207468652070656e64696e6720476f7665726e6f722063616e20636f60448201526f6d706c6574652074686520636c61696d60801b60648201526084016101d8565b61019533610590565b600061035e60008051602061093e8339815191525490565b6001600160a01b0316336001600160a01b031614905090565b61037f610346565b61039b5760405162461bcd60e51b81526004016101d8906108b5565b60006103b360008051602061095e8339815191525490565b6001600160a01b0316146104095760405162461bcd60e51b815260206004820152601a60248201527f696d706c656d656e746174696f6e20616c72656164792073657400000000000060448201526064016101d8565b61043460017f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbd6108ec565b60008051602061095e8339815191521461045057610450610911565b61045982610590565b61046283610651565b805115610483576000836001600160a01b031682604051610236919061087a565b505050565b610490610346565b6104ac5760405162461bcd60e51b81526004016101d8906108b5565b6104d4817f7eaf9a7750884803435dfabc67aa617a7d8fefb23d8d84b3c9722bd69e48c4bc55565b806001600160a01b03166104f460008051602061093e8339815191525490565b6001600160a01b03167fa39cc5eb22d0f34d8beaefee8a3f17cc229c1a1d1ef87a5ad47313487b1c4f0d60405160405180910390a350565b3660008037600080366000845af43d6000803e80801561054b573d6000f35b3d6000fd5b61055981610651565b6040516001600160a01b038216907fbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b90600090a250565b6001600160a01b0381166105e65760405162461bcd60e51b815260206004820152601a60248201527f4e657720476f7665726e6f72206973206164647265737328302900000000000060448201526064016101d8565b806001600160a01b031661060660008051602061093e8339815191525490565b6001600160a01b03167fc7c0c772add429241571afb3805861fb3cfa2af374534088b76cdb4325a87e9a60405160405180910390a36101ea8160008051602061093e83398151915255565b803b6106c55760405162461bcd60e51b815260206004820152603b60248201527f43616e6e6f742073657420612070726f787920696d706c656d656e746174696f60448201527f6e20746f2061206e6f6e2d636f6e74726163742061646472657373000000000060648201526084016101d8565b60008051602061095e83398151915255565b80356001600160a01b03811681146106ee57600080fd5b919050565b60006020828403121561070557600080fd5b61070e826106d7565b9392505050565b60008060006060848603121561072a57600080fd5b610733846106d7565b9250610741602085016106d7565b9150604084013567ffffffffffffffff8082111561075e57600080fd5b818601915086601f83011261077257600080fd5b81358181111561078457610784610927565b604051601f8201601f19908116603f011681019083821181831017156107ac576107ac610927565b816040528281528960208487010111156107c557600080fd5b8260208601602083013760006020848301015280955050505050509250925092565b6000806000604084860312156107fc57600080fd5b610805846106d7565b9250602084013567ffffffffffffffff8082111561082257600080fd5b818601915086601f83011261083657600080fd5b81358181111561084557600080fd5b87602082850101111561085757600080fd5b6020830194508093505050509250925092565b8183823760009101908152919050565b6000825160005b8181101561089b5760208186018101518583015201610881565b818111156108aa576000828501525b509190910192915050565b6020808252601a908201527f43616c6c6572206973206e6f742074686520476f7665726e6f72000000000000604082015260600190565b60008282101561090c57634e487b7160e01b600052601160045260246000fd5b500390565b634e487b7160e01b600052600160045260246000fd5b634e487b7160e01b600052604160045260246000fdfe83f34c88ec39d54d1e423bd8a181ebc59ede5dcc9996c2df334668b4f89fdd73360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbca264697066735822122060022d1b5933e491f8fe7f548ad9aa6ffcaef001a55074ef9e2e27fc2cb2133164736f6c63430008060033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {
+      "admin()": {
+        "returns": {
+          "_0": "The address of the proxy admin/it's also the governor."
+        }
+      },
+      "claimGovernance()": {
+        "details": "Claim Governance of the contract to a new account (`newGovernor`). Can only be called by the new Governor."
+      },
+      "governor()": {
+        "details": "Returns the address of the current Governor."
+      },
+      "implementation()": {
+        "returns": {
+          "_0": "The address of the implementation."
+        }
+      },
+      "initialize(address,address,bytes)": {
+        "details": "Contract initializer with Governor enforcement",
+        "params": {
+          "_data": "Data to send as msg.data to the implementation to initialize the proxied contract. It should include the signature and the parameters of the function to be called, as described in https://solidity.readthedocs.io/en/v0.4.24/abi-spec.html#function-selector-and-argument-encoding. This parameter is optional, if no data is given the initialization call to proxied contract will be skipped.",
+          "_initGovernor": "Address of the initial Governor.",
+          "_logic": "Address of the initial implementation."
+        }
+      },
+      "isGovernor()": {
+        "details": "Returns true if the caller is the current Governor."
+      },
+      "transferGovernance(address)": {
+        "details": "Transfers Governance of the contract to a new account (`newGovernor`). Can only be called by the current Governor. Must be claimed for this to complete",
+        "params": {
+          "_newGovernor": "Address of the new Governor"
+        }
+      },
+      "upgradeTo(address)": {
+        "details": "Upgrade the backing implementation of the proxy. Only the admin can call this function.",
+        "params": {
+          "newImplementation": "Address of the new implementation."
+        }
+      },
+      "upgradeToAndCall(address,bytes)": {
+        "details": "Upgrade the backing implementation of the proxy and call a function on the new implementation. This is useful to initialize the proxied contract.",
+        "params": {
+          "data": "Data to send as msg.data in the low level call. It should include the signature and the parameters of the function to be called, as described in https://solidity.readthedocs.io/en/v0.4.24/abi-spec.html#function-selector-and-argument-encoding.",
+          "newImplementation": "Address of the new implementation."
+        }
+      }
+    },
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "notice": "CASHProxy delegates calls to an CASH implementation",
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [],
+    "types": null
+  }
+}

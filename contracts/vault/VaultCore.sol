@@ -130,6 +130,7 @@ contract VaultCore is VaultStorage, MiniBalancerExchange  {
         // Transfer the deposited coins to the vault
         IERC20 asset = IERC20(_asset);
         asset.safeTransferFrom(msg.sender, address(this), _amount);
+        lastMints[msg.sender] = block.number;
     }
 
     // In memoriam
@@ -155,6 +156,7 @@ contract VaultCore is VaultStorage, MiniBalancerExchange  {
     function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal {
         require(_amount > 0, "Amount must be greater than 0");
         require( cash.balanceOf(msg.sender) >=  _amount, "Insufficient Amount!");
+        require(block.number > lastMints[msg.sender], "Wait after mint");
         (
             uint256 output,
             uint256 backingValue,

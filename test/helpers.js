@@ -155,7 +155,7 @@ const isSmokeTest = process.env.SMOKE_TEST === "true";
 const isMainnetOrFork = isMainnet || isFork;
 const isMainnetButNotFork = isMainnet && !isFork;
 const isMainnetOrRinkebyOrFork = isMainnetOrFork || isRinkeby;
-const isVerificationRequired = process.env.VERIFY_ON_EXPLORER;
+const isVerificationRequired = false || process.env.VERIFY_ON_EXPLORER;
 const forceStorageLayoutCheck = process.env.FORCE_STORAGE_LAYOUT_CHECK;
 
 // Fixture loader that is compatible with Ganache

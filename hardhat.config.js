@@ -45,23 +45,26 @@ const {
   collectAndRebase
 } = require("./tasks/vault");
 
-const MAINNET_DEPLOYER = "0x442bB41E499bB21aFc6a42327C9E257a7d09872e";
+const MAINNET_DEPLOYER = process.env.DEPLOYER_ADDR || "0x442bB41E499bB21aFc6a42327C9E257a7d09872e";
 // Mainnet contracts are governed by the Governor contract (which derives off Timelock).
-const MAINNET_GOVERNOR = "0x442bB41E499bB21aFc6a42327C9E257a7d09872e";
+const MAINNET_GOVERNOR = MAINNET_DEPLOYER;
 // Multi-sig that controls the Governor. Aka "Guardian".
-const MAINNET_MULTISIG = "0x442bB41E499bB21aFc6a42327C9E257a7d09872e";
+const MAINNET_MULTISIG = MAINNET_DEPLOYER;
 const MAINNET_CLAIM_ADJUSTER = MAINNET_DEPLOYER;
-const MAINNET_STRATEGIST = "0x442bB41E499bB21aFc6a42327C9E257a7d09872e";
+const MAINNET_STRATEGIST = MAINNET_DEPLOYER;
 
-const mnemonic =
-  "about dismiss pony claim little cradle wild force fun meat awkward make";
+const mnemonic = process.env.MNEMONIC
 
 let privateKeys = [];
 
-let derivePath = "m/44'/60'/0'/0/";
-for (let i = 0; i <= 10; i++) {
-  const wallet = new ethers.Wallet.fromMnemonic(mnemonic, `${derivePath}${i}`);
-  privateKeys.push(wallet.privateKey);
+if (mnemonic) {
+  let derivePath = "m/44'/60'/0'/0/";
+  for (let i = 0; i <= 10; i++) {
+    const wallet = new ethers.Wallet.fromMnemonic(mnemonic, `${derivePath}${i}`);
+    privateKeys.push(wallet.privateKey);
+  }
+} else {
+  privateKeys = [null, null]
 }
 
 // Environment tasks.
@@ -179,9 +182,7 @@ module.exports = {
       },
       chainId: 1337,
       initialBaseFeePerGas: 0,
-      
       timeout: 30*200000,
-
     },
     localhost: {
       timeout: 30*200000,
@@ -198,10 +199,8 @@ module.exports = {
       url: `${process.env.PROVIDER_URL}`,
       accounts: [
         process.env.DEPLOYER_PK || privateKeys[0],
-        privateKeys[1],
-        privateKeys[2],
       ],
-      // gas: 24500000,
+      gasMultiplier: 1.25
     },
   },
   mocha: {
@@ -222,6 +221,7 @@ module.exports = {
       hardhat: process.env.FORK === "true" ? MAINNET_GOVERNOR : 0,
       mainnet: MAINNET_GOVERNOR,
     },
+    // NOT USED
     guardianAddr: {
       default: 0,
       // On mainnet and fork, the guardian is the multi-sig.
@@ -229,6 +229,7 @@ module.exports = {
       hardhat: process.env.FORK === "true" ? MAINNET_MULTISIG : 0,
       mainnet: MAINNET_MULTISIG,
     },
+    // NOT USED
     adjusterAddr: {
       default: 0,
       localhost: process.env.FORK === "true" ? MAINNET_CLAIM_ADJUSTER : 0,

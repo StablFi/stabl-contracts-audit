@@ -68,6 +68,7 @@ const deployWithConfirmation = async (
       args,
       contract,
       fieldsToCompare: null,
+      // skipIfAlreadyDeployed: true,
       ...(await getTxOpts()),
     })
   );
@@ -88,14 +89,16 @@ const verifyContract = async(result, args, _contract) => {
   if (!args) args = [];
   console.log("Verifying", _contract, "contract...");
   if (_contract.endsWith("Proxy")) {
-    console.log("Proxy contract skipped! Manually verify it from Explorer.")
-    return;
+    console.log("You also need to link this proxy to its implementation from the frontend.")
   }
+
+  const contract = _contract.endsWith("Proxy") ? "contracts/proxies/Proxies.sol:" + _contract : undefined;
 
   try {
     await hre.run('verify:verify', {
       address: result.address,
-      constructorArguments: args
+      constructorArguments: args,
+      contract: contract
     })
   } catch (error) {
     console.warn("Warning: verification of deployed contract failed." , error.message);

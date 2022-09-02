@@ -258,9 +258,9 @@ addresses.polygon.BinanceAll =
 
 // Harvest Treasury & Team
 addresses.polygon.redeemFeeBps = 25; // 0.25%
-addresses.polygon.Labs = "0x7fdbf3ca9160AfEAaca3b13905F4C4319CEAc63E"; // Account 8
+addresses.polygon.Labs = "0xA2a067351C977113B98096F75c9685a3d51614eC"; // Account 8
 addresses.polygon.LabsFeeBps = 750;
-addresses.polygon.Team = "0x0328EC9A41bD4Dca687aE2D6B4569b88B71F0498"; // Account 9
-addresses.polygon.TeamFeeBps = 250; 
+addresses.polygon.Team = "0xA2a067351C977113B98096F75c9685a3d51614eC"; // Account 9
+addresses.polygon.TeamFeeBps = 250;
 
 module.exports = addresses;

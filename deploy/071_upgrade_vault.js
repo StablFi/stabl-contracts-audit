@@ -1,9 +1,9 @@
-const { isFork } = require("../test/helpers");
+const { isFork, isMainnet } = require("../test/helpers");
 const { deploymentWithProposal, withConfirmation, deployWithConfirmation } = require("../utils/deploy");
 const { MAX_UINT256 } = require("../utils/constants");
 
 module.exports = deploymentWithProposal(
-  { deployName: "071_upgrade_vault" , forceDeploy: isFork, tags: ["test", "main", "upgrade_vault"],  dependencies: ["001_core"] },
+  { deployName: "071_upgrade_vault" , forceDeploy: isMainnet, tags: ["test", "main", "upgrade_vault"],  dependencies: ["001_core"] },
   async ({ ethers, assetAddresses }) => {
 
     // Deploy a new vault core contract.

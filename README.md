@@ -39,5 +39,5 @@ npx kill-port 8545
 
 ## Export JSON for Production
 ```
- npx --no-install hardhat export --export-all '../dapp/prod.network.json' --network mainnet
+npx --no-install hardhat export --export '../dapp/prod.network.json' --network mainnet
 ```
