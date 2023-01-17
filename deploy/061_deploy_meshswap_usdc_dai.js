@@ -82,17 +82,28 @@ module.exports = deploymentWithProposal(
        )
      );
  
-     // 4.1 Setting the _setRouter
-     console.log("4.2. Setting the setBalancer")
-     const setBalancer = "setBalancer(address,bytes32)";
-     await withConfirmation(
-       cMeshSwapStrategyDual.connect(sDeployer)[setBalancer](
-         assetAddresses.balancerVault,
-         assetAddresses.balancerPoolIdUsdcTusdDaiUsdt,
-         await getTxOpts()
-       )
-     );
-    
+    // 5. Setting setOracleRouterPriceProvider
+    console.log("5. Setting setOracleRouterPriceProvider")
+    const setOracleRouterPriceProvider = "setOracleRouterPriceProvider()";
+    await withConfirmation(
+      cMeshSwapStrategyDual.connect(sDeployer)[setOracleRouterPriceProvider](await getTxOpts())
+    );
+
+    console.log("4.3. Set the thresholds");
+    await withConfirmation(
+      cMeshSwapStrategyDual
+        .connect(sDeployer)
+        .setThresholds(
+          [
+            "1000", // token0 - 18 decimals = (1/1000) USDC
+            "100000000000000", // token1 - 6 decimals  = (1/1000) DAI
+            "1000", // PS - 6 decimals  = (1/1000) USDT
+            "0", // MeshPair - 6 decimals  = (1/1000) MeshPair
+            "10000000000000", // MeshToken - 18 decimals  = (1/10000) Mesh
+          ], 
+          await getTxOpts())
+    );
+
     // 5. Transfer governance
     console.log("5. Transfer governance")
     await withConfirmation(

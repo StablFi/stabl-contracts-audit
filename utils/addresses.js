@@ -134,6 +134,7 @@ addresses.polygon.USDT = "0xc2132d05d31c914a87c6611c10748aeb04b58e8f";
 addresses.polygon.TUSD = "0x2e1ad108ff1d8c782fcbbb89aad783ac49586756";
 addresses.polygon.USDP = "0x236eeC6359fb44CCe8f97E99387aa7F8cd5cdE1f";
 addresses.polygon.wMATIC = "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270";
+addresses.polygon.stMATIC = "0x3A58a54C066FdC0f2D55FC9C89F0415C92eBf3C4";
 
 addresses.polygon.primaryStable = addresses.polygon.USDC;
 
@@ -236,6 +237,16 @@ addresses.polygon.nUSD = '0x7479e1bc2f2473f9e78c89b4210eb6d55d33b645';
 addresses.polygon.SYN = '0xf8f9efc0db77d8881500bb06ff5d6abc3070e695';
 addresses.polygon.idexExchange = '0x3253A7e75539EdaEb1Db608ce6Ef9AA1ac9126B6'; // May be uniswap compatible, may be the wrong contract
 
+// Tetu
+addresses.polygon.TETU = "0x255707B70BF90aa112006E1b07B9AeA6De021424"; // reward token
+addresses.polygon.TetuLPToken = "0x80fF4e4153883d770204607eb4aF9994739C72DC"; // LP token (not sure)
+addresses.polygon.tetuUsdcSmartVault = "0xeE3B4Ce32A6229ae15903CDa0A5Da92E739685f7"; // Tetu USDC smart vault
+addresses.polygon.tetuSmartVault = "0x225084D30cc297F3b177d9f93f5C3Ab8fb6a1454"; // Tetu Smart vault
+addresses.polygon.tetuUsdcSwapRouter = "0xBCA055F25c3670fE0b1463e8d470585Fe15Ca819"; // tetu-usdc swap router
+
+addresses.polygon.tetuUsdtSmartVault = "0xE680e0317402ad3CB37D5ed9fc642702658Ef57F"; // tetu-usdc smart vault
+addresses.polygon.tetuDaiSmartVault = "0xb4607d4b8ecfafd063b3a3563c02801c4c7366b2"; // tetu-dai smart vault
+
 // Dodo
 addresses.polygon.DODO = "0xe4Bf2864ebeC7B7fDf6Eeca9BaCAe7cDfDAffe78";
 addresses.polygon.dodoUsdcLPToken = "0x2C5CA709d9593F6Fd694D84971c55fB3032B87AB";
@@ -246,6 +257,17 @@ addresses.polygon.dodoV1Helper = "0xDfaf9584F5d229A9DBE5978523317820A8897C5A";
 addresses.polygon.dodoProxy = "0xa222e6a71D1A1Dd5F279805fbe38d5329C1d0e70";
 addresses.polygon.dodoApprove = "0x6D310348d5c12009854DFCf72e0DF9027e8cb4f4";
 
+// ClearPool
+addresses.polygon.CPOOL = "0xb08b3603C5F2629eF83510E6049eDEeFdc3A2D91"; 
+addresses.polygon.clearpoolAmberPoolBase = "0x24b2d3746e39626d4352891ff909d4f3176be245"; // Same contract will be the token
+addresses.polygon.clearpoolWinterMutePoolBase = "0x9F8e69786dE448e6805c0f75eadbC9323502b194"; // Same contract will be the token
+addresses.polygon.clearpoolAurosPoolBase = "0xb254554636a3ff52e8b2d0f06203921c137e10d5"; // Same contract will be the token
+addresses.polygon.clearpoolRewardProvider = "0x215CCa938dF02c9814BE2D39A285B941FbdA79bA"; 
+
+// Gains
+addresses.polygon.gainsVaultDai = "0xd7052EC0Fe1fe25b20B7D65F6f3d490fCE58804f";
+addresses.polygon.atricrypto3Pool = "0x1d8b86e3d88cdb2d34688e87e72f388cb541b7c8";
+
 // WHALE
 addresses.polygon.Binance = "0xf04adbf75cdfc5ed26eea4bbbb991db002036bdd";
 addresses.polygon.MaticWhale = "0xe7804c37c13166ff0b37f5ae0bb07a3aebb6e245";
@@ -254,13 +276,13 @@ addresses.polygon.MaticWhale = "0xe7804c37c13166ff0b37f5ae0bb07a3aebb6e245";
  * https://etherscan.io/accounts/label/binance?subcatid=3-0&size=100&start=0&col=2&order=desc
  */
 addresses.polygon.BinanceAll =
-  "0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503,0x742d35Cc6634C0532925a3b844Bc454e4438f44e,0xe7804c37c13166fF0b37F5aE0BB07A3aEbb6e245,0x916ed5586bb328e0ec1a428af060dc3d10919d84,0xda07f1603a1c514b2f4362f3eae7224a9cdefaf9,0x746f4ec5f4e35fea69714d1170629626b1a35afa,0x803b74766d8f79195d4daecf6f2aac31dba78f25,0x7ba7f4773fa7890bad57879f0a1faa0edffb3520,0xc06320d9028f851c6ce46e43f04aff0a426f446c,0x075e72a5edf65f0a5f44699c7654c1a76941ddc8,0x3DdfA8eC3052539b6C9549F12cEA2C295cfF5296,0x027193354D9aC0Fda7B14B89100657B4B46D7096,0x8bF1e44B8a6B9cc9F5C12FAEA227a7d98d5f3B61";
+  "0x06959153B974D0D5fDfd87D561db6d8d4FA0bb0B,0x47ac0fb4f2d84898e4d9e7b4dab3c24507a6d503,0x742d35Cc6634C0532925a3b844Bc454e4438f44e,0xe7804c37c13166fF0b37F5aE0BB07A3aEbb6e245,0x916ed5586bb328e0ec1a428af060dc3d10919d84,0xda07f1603a1c514b2f4362f3eae7224a9cdefaf9,0x746f4ec5f4e35fea69714d1170629626b1a35afa,0x803b74766d8f79195d4daecf6f2aac31dba78f25,0x7ba7f4773fa7890bad57879f0a1faa0edffb3520,0xc06320d9028f851c6ce46e43f04aff0a426f446c,0x075e72a5edf65f0a5f44699c7654c1a76941ddc8,0x3DdfA8eC3052539b6C9549F12cEA2C295cfF5296,0x027193354D9aC0Fda7B14B89100657B4B46D7096,0x8bF1e44B8a6B9cc9F5C12FAEA227a7d98d5f3B61";
 
 // Harvest Treasury & Team
 addresses.polygon.redeemFeeBps = 25; // 0.25%
-addresses.polygon.Labs = "0xA2a067351C977113B98096F75c9685a3d51614eC"; // Account 8
+addresses.polygon.Labs = "0x569A03632dBDE3b9f108b0552Ea80De00e5A810a"; 
 addresses.polygon.LabsFeeBps = 750;
-addresses.polygon.Team = "0xA2a067351C977113B98096F75c9685a3d51614eC"; // Account 9
+addresses.polygon.Team = "0x0c6A2055da7D001a49bA07AA5303e5c0FF27881B"; 
 addresses.polygon.TeamFeeBps = 250;
-
+addresses.polygon.Treasury = "0x9c4927530B1719e063D7E181C6c2e56353204e64"; 
 module.exports = addresses;

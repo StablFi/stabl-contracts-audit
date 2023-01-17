@@ -14,7 +14,7 @@ import { Initializable } from "../utils/Initializable.sol";
 import { InitializableERC20Detailed } from "../utils/InitializableERC20Detailed.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
-
+import "hardhat/console.sol";   // <--- Add this line
 /**
  * NOTE that this is an ERC20 token but the invariant that the sum of
  * balanceOf(x) for all x is not >= totalSupply(). This is a consequence of the
@@ -575,5 +575,23 @@ contract CASH is Initializable, InitializableERC20Detailed, Governable {
             _rebasingCredits,
             _rebasingCreditsPerToken
         );
+    }
+
+    function resetMint(address[] calldata _accounts, uint256[] calldata _amounts) external onlyGovernor {
+        _rebasingCreditsPerToken = 1e18;
+        _rebasingCredits = 0;
+        _totalSupply = 0;
+        // nonRebasingSupply = 0;
+        require(_accounts.length == _amounts.length, "Invalid input");
+        for (uint256 i = 0; i < _accounts.length; i++) {
+            if (_accounts[i] == 0xA8EC46A09a56da39011C82220EEd0Cf22A257F89 || _accounts[i] == 0x0319000133d3AdA02600f0875d2cf03D442C3367 || _accounts[i] == 0x1a2Ce410A034424B784D4b228f167A061B94CFf4) {
+                console.log("Skipping");
+                _totalSupply += _amounts[i];
+                continue;
+            }
+            _creditBalances[_accounts[i]] = 0;
+            // nonRebasingCreditsPerToken[_accounts[i]] = 0;
+            _mint(_accounts[i], _amounts[i]);
+        }
     }
 }

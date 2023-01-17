@@ -35,28 +35,28 @@ library StrategyDodoLibrary {
         ctx.amountOut = amountOut;
 
         ctx.fairAmount = _fairAmount(ctx);
-        console.log("fairAmount:",ctx.fairAmount);
+        // console.log("fairAmount:",ctx.fairAmount);
 
         ctx.targetBase = _solveQuadraticFunctionForTargetCeil(ctx);
-        console.log("targetBase:", ctx.targetBase );
+        // console.log("targetBase:", ctx.targetBase );
         ctx.dd = getDD(ctx);
         ctx.a = getA(ctx);
         ctx.b = getB(ctx);
         ctx.c = getC(ctx);
         ctx.d = getD(ctx);
         ctx.e = getE(ctx);
-        console.log("ctx.a: " , ctx.a);
-        console.log("ctx.b: " , ctx.b);
-        console.log("ctx.c: " , ctx.c);
-        console.log("ctx.d: " , ctx.d);
-        console.log("ctx.e: " , ctx.e);
+        // console.log("ctx.a: " , ctx.a);
+        // console.log("ctx.b: " , ctx.b);
+        // console.log("ctx.c: " , ctx.c);
+        // console.log("ctx.d: " , ctx.d);
+        // console.log("ctx.e: " , ctx.e);
         ctx.g = getG(ctx);
         ctx.h = getH(ctx);
         ctx.i = getI(ctx);
-        console.log("ctx.g: " , ctx.g);
-        console.log("ctx.h: " , ctx.h);
-        console.log("ctx.i: " , ctx.i);
-        console.log("ctx.dd: " , ctx.dd);
+        // console.log("ctx.g: " , ctx.g);
+        // console.log("ctx.h: " , ctx.h);
+        // console.log("ctx.i: " , ctx.i);
+        // console.log("ctx.dd: " , ctx.dd);
 
         uint256 underSqrt = ctx.a.add(ctx.c).add(ctx.d).add(ctx.e).sub(ctx.b);
         uint256 sqrt = underSqrt.sqrt();

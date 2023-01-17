@@ -32,6 +32,10 @@ interface IVault {
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
+    event MintFeeChanged(address _sender, uint256 _previousFeeBps, uint256 _newFeeBps);
+    event MintFeeCharged(address _address, uint256 _fee);
+    event FeeAddressesChanged(address _labsAddress, address _teamAddress, address _treasuryAddress);
+    event HarvesterFeeParamsChanged(address _labsAddress,uint256 _labsFeeBps, address _teamAddress, uint256 _teamFeeBps);
 
     // Governable.sol
     function transferGovernance(address _newGovernor) external;
@@ -67,6 +71,8 @@ interface IVault {
     function strategistAddr() external view returns (address);
 
     function setMaxSupplyDiff(uint256 _maxSupplyDiff) external;
+
+    function changeCASHSupply(uint256 _newTotalSupply) external;
 
     function maxSupplyDiff() external view returns (uint256);
 
@@ -111,6 +117,8 @@ interface IVault {
 
     function priceUSDRedeem(address asset) external view returns (uint256);
 
+    function withdrawFromStrategy(address _strategyAddr, uint256 _amount) external;
+    
     function withdrawAllFromStrategy(address _strategyAddr) external;
 
     function withdrawAllFromStrategies() external;
@@ -187,7 +195,11 @@ interface IVault {
 
 
     function getFeeParams() external view returns  (address, uint256, address, uint256);
-    function setFeeParams(address _labsAddress, uint256 _labsFeeBps, address _teamAddress, uint256 _teamFeeBps) external;
+    function setFeeParams(address _labsAddress, address _teamAddress, address _treasuryAddress) external;
+    function setHarvesterFeeParams(uint256 _labsFeeBps, uint256 _teamFeeBps) external;
+
+    function setMintFeeBps(uint256 _mintFeeBps) external;
+    function mintFeeBps() external view returns (uint256);
 
     function setNextPayoutTime(uint256 _nextPayoutTime) external;
     function setPayoutIntervals(uint256 _payoutPeriod, uint256 _payoutTimeRange) external;

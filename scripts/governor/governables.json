@@ -1,0 +1,11 @@
+[{
+        "name": "TetuStrategy",
+        "governor": "0x442bB41E499bB21aFc6a42327C9E257a7d09872e",
+        "address": "0x730eEaf008379eBCb0dF0066eD47106e5b0027bb"
+    },
+    {
+        "name": "VaultCore",
+        "governor": "0x442bB41E499bB21aFc6a42327C9E257a7d09872e",
+        "address": "0x325731C5051a6cD938604752DBe238a7F1477251"
+    }
+]

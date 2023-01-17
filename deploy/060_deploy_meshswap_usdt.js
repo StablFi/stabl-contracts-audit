@@ -76,15 +76,10 @@ module.exports = deploymentWithProposal(
         await getTxOpts()
       )
     );
-    // 4.1 Setting the _setRouter
-    console.log("4.2. Setting the setBalancer")
-    const setBalancer = "setBalancer(address,bytes32)";
+    // 4.1 Setting the setOracleRouterSwappingPool
+    console.log("4.2. Setting the Swapping")
     await withConfirmation(
-      cMeshSwapStrategyUSDT.connect(sDeployer)[setBalancer](
-        assetAddresses.balancerVault,
-        assetAddresses.balancerPoolIdUsdcTusdDaiUsdt,
-        await getTxOpts()
-      )
+      cMeshSwapStrategyUSDT.connect(sDeployer).setOracleRouterSwappingPool()
     );
     // 5. Transfer governance
     await withConfirmation(

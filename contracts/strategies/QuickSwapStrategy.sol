@@ -6,19 +6,23 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for investing stablecoins via QuickSwap Strategy
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol"  ;
-
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import { OvnMath } from "../utils/OvnMath.sol";
 import { StableMath } from "../utils/StableMath.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol"  ;
 import "../exchanges/UniswapV2Exchange.sol";
-import "../exchanges/BalancerExchange.sol";
+import "../exchanges/CurveExchange.sol";
 import "../connectors/uniswap/v2/interfaces/IUniswapV2Router02.sol";
 import "../connectors/quickswap/IStakingRewards.sol";
 import "../connectors/uniswap/v2/interfaces/IUniswapV2Pair.sol";
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
+import "../interfaces/IMiniVault.sol";
 import "hardhat/console.sol";
 
 
-contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, BalancerExchange   {
+contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, CurveExchange   {
+    using SafeMath for uint256;
+    using OvnMath for uint256;
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -30,12 +34,15 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
     IERC20 public quickDragon;
 
     IUniswapV2Pair public quickSwapPair;
-    bytes32 public poolId;
+    bytes32 public poolId; //UNUSED
 
     mapping(address => uint256 ) public assetToDenominator;
     IStakingRewards public quickSwapPairStaker;
 
-    address public balancerVault;
+    address public swappingPool;
+    uint256[] public minThresholds;
+    address public oracleRouter;
+
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -84,17 +91,29 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         );
         _abstractSetPToken(_assets[0],_pTokens[0]);
         _abstractSetPToken(_assets[1],_pTokens[1]);
+        for (uint8 i = 0; i < 5; i++) {
+            minThresholds.push(0);
+        }
     }
-    function setBalancer(address _balancerVault, bytes32 _balancerPoolId) external onlyGovernor {
-        require(_balancerVault != address(0), "Zero address not allowed");
-        require(_balancerPoolId != "", "Empty pool id not allowed");
-        balancerVault = _balancerVault;
-        poolId = _balancerPoolId;
+    function setOracleRouterPriceProvider() external onlyGovernor {
+        swappingPool = IMiniVault(vaultAddress).swappingPool();
+        oracleRouter = IMiniVault(vaultAddress).priceProvider();
     }
     function getReserves() internal view returns (uint256,uint256) {
         ( uint256 reserve0, uint256  reserve1,) = quickSwapPair.getReserves();
         require(reserve0 > (10 ** (IERC20Metadata(address(token0) ).decimals() - 3))  && reserve1 > (10 ** (IERC20Metadata(address(token1) ).decimals() - 3)), "Reserves too low");
         return (reserve0, reserve1) ;
+
+    }
+    function divideBasedOnReserves(uint256 _psAmount) internal view returns (uint256,uint256) {
+        ( uint256 reserve0, uint256  reserve1) = getReserves();
+        // Scale both reserves to 18 decimals
+        reserve0 = reserve0.scaleBy(18,IERC20Metadata(address(token0) ).decimals());
+        reserve1 = reserve1.scaleBy(18,IERC20Metadata(address(token1) ).decimals());
+        // Divide _psAmount in the ratio of reserve 0 and reserve 1
+        uint256 amount0ToSwap = _psAmount.mul(reserve0).div(reserve0.add(reserve1));
+        uint256 amount1ToSwap = _psAmount.sub(amount0ToSwap);
+        return (amount0ToSwap, amount1ToSwap);
 
     }
     // TODO: _amount is not being used.
@@ -103,54 +122,29 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         uint256 _amount
     )  internal {
         require(_asset == address(primaryStable), "Token not supported.");
-        (uint256 reserve0, uint256 reserve1) = getReserves();
-
-        _swapPrimaryStableToToken0();
-
-        // count amount token1 to swap
-        uint256 token1Balance = token1.balanceOf(address(this));
-        uint256 amount0From1;
-        if (token1Balance > 0) {
-            amount0From1 = onSwap(
-                balancerVault,
-                poolId,
-                IVault.SwapKind.GIVEN_IN,
-                token1,
-                token0,
-                token1Balance
+        (uint256 _amount0ToSwap,uint256 _amount1ToSwap) = divideBasedOnReserves(_amount);
+        if (_amount0ToSwap > 0 && address(token0) != address(primaryStable)) {
+            swap(
+                swappingPool,
+                address(primaryStable),
+                address(token0),
+                _amount0ToSwap,
+                oracleRouter
             );
         }
-        uint256 token0Balance = token0.balanceOf(address(this));
-        //TODO add parameter to _getAmountToSwap() second token amount
-        uint256 amount0ToSwap = _getAmountToSwap(
-            balancerVault,
-            token0Balance - (amount0From1 / 2),
-            reserve0,
-            reserve1,
-            assetToDenominator[address(token0)],
-            assetToDenominator[address(token1)],
-            1,
-            poolId,
-            token0,
-            token1
-        );
-
-        // swap token0 to other token
-        swap(
-            balancerVault,
-            poolId,
-            IVault.SwapKind.GIVEN_IN,
-            IAsset(address(token0)),
-            IAsset(address(token1)),
-            address(this),
-            address(this),
-            amount0ToSwap,
-            0
-        );
-
+        if (_amount1ToSwap > 0 && address(token1) != address(primaryStable)) {
+             swap(
+                swappingPool,
+                address(primaryStable),
+                address(token1),
+                _amount1ToSwap,
+                oracleRouter
+            );
+        }
+    
         // add liquidity
-        token0Balance = token0.balanceOf(address(this));
-        token1Balance = token1.balanceOf(address(this));
+        uint256 token0Balance = token0.balanceOf(address(this));
+        uint256 token1Balance = token1.balanceOf(address(this));
         _addLiquidity(
             address(token0),
             address(token1),
@@ -176,40 +170,31 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
     function depositAll() external override onlyVault nonReentrant {
         _deposit(address(primaryStable), primaryStable.balanceOf(address(this)));
     }
-
+    function _lpToWithdraw(uint256 _amount0ToSwap, uint256 _amount1ToSwap, uint256 _totalLP, uint256 _r0, uint256 _r1) internal pure returns (uint256) {
+        uint256 lpForA0 = _amount0ToSwap.mul(_totalLP).div(_r0);
+        uint256 lpForA1 = _amount1ToSwap.mul(_totalLP).div(_r1);
+        uint256 lpToWithdraw =  lpForA0 > lpForA1 ? lpForA0 : lpForA1;
+        return lpToWithdraw;
+    }
     function withdraw(
         address _beneficiary,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant  {
+    ) external override onlyVaultOrGovernor nonReentrant  {
         require(_asset == address(primaryStable), "Token not supported.");
         (uint256 reserve0, uint256 reserve1,) = quickSwapPair.getReserves();
-        uint256 lpTokenBalance = quickSwapPairStaker.balanceOf(address(this)); //quickSwapPair.balanceOf(address(this));
-        // console.log("lpTokenBalance: ", lpTokenBalance);
-
-        if (lpTokenBalance > 0) {
+        (uint256 _amount0ToSwap,uint256 _amount1ToSwap) = divideBasedOnReserves(_amount.sub(primaryStable.balanceOf(address(this))));
+        uint256 lpTokenBalance = quickSwapPairStaker.balanceOf(address(this)) + quickSwapPair.balanceOf(address(this));
+        if (lpTokenBalance > minThresholds[3]) {
             // count amount to unstake
             uint256 totalLpBalance = quickSwapPair.totalSupply();
-            uint256 lpTokensToWithdraw = _getAmountLpTokensToWithdraw(
-                balancerVault,
-                OvnMath.addBasisPoints(_amount, BASIS_POINTS_FOR_SLIPPAGE),
-                reserve0,
-                reserve1,
-                totalLpBalance,
-                assetToDenominator[address(token0)],
-                assetToDenominator[address(token1)],
-                poolId,
-                token0,
-                token1
-            );
+            uint256 lpTokensToWithdraw = _lpToWithdraw(_amount0ToSwap, _amount1ToSwap, totalLpBalance, reserve0, reserve1).addBasisPoints(200);
             if (lpTokensToWithdraw > lpTokenBalance) {
                 lpTokensToWithdraw = lpTokenBalance;
             }
             uint256 amountOut0Min = reserve0 * lpTokensToWithdraw / totalLpBalance;
             uint256 amountOut1Min = reserve1 * lpTokensToWithdraw / totalLpBalance;
-            // console.log("lpTokensToWithdraw: ", lpTokensToWithdraw);
-            unstakeDragonForLP(lpTokensToWithdraw);
-            // remove liquidity
+            unstakeDragonForLP(lpTokensToWithdraw-quickSwapPair.balanceOf(address(this)));
             _removeLiquidity(
                 address(token0),
                 address(token1),
@@ -221,17 +206,15 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
             );
         }
         _swapAssetsToPrimaryStable();
-        uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
-        // console.log("Withdraw USDC: ", primaryStableBalance);
-        primaryStable.safeTransfer(_beneficiary, primaryStableBalance);
+        primaryStable.safeTransfer(_beneficiary, _amount);
     }
 
-    function withdrawAll() external override onlyVaultOrGovernor nonReentrant  {
+    function withdrawAll() external override onlyVault nonReentrant  {
         (uint256 reserve0, uint256 reserve1,) = quickSwapPair.getReserves();
 
         unstakeDragonForLP();
         uint256 lpTokenBalance = quickSwapPair.balanceOf(address(this));
-        if (lpTokenBalance > 0) {
+        if (lpTokenBalance > minThresholds[3]) {
             uint256 totalLpBalance = quickSwapPair.totalSupply();
             uint256 amountOut0Min = reserve0 * lpTokenBalance / totalLpBalance;
             uint256 amountOut1Min = reserve1 * lpTokenBalance / totalLpBalance;
@@ -255,7 +238,6 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
         // console.log("Withdraw Primary Stable: ", primaryStableBalance);
         primaryStable.safeTransfer(vaultAddress, primaryStableBalance);
-        _collectRewards();
     }
     function checkBalance()
         external
@@ -266,8 +248,8 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         uint256 token0Balance = token0.balanceOf(address(this));
         uint256 token1Balance = token1.balanceOf(address(this));
 
-        uint256 lpTokenBalance = quickSwapPairStaker.balanceOf(address(this));
-        if (lpTokenBalance > 0) {
+        uint256 lpTokenBalance = quickSwapPairStaker.balanceOf(address(this)).add(quickSwapPair.balanceOf(address(this)));
+        if (lpTokenBalance > minThresholds[3]) {
             uint256 totalLpBalance = quickSwapPair.totalSupply();
             (uint256 reserve0, uint256 reserve1,) = quickSwapPair.getReserves();
             token0Balance += reserve0 * lpTokenBalance / totalLpBalance;
@@ -276,16 +258,13 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
 
         uint256 primaryStableBalanceFromToken0;
         if ( (address(token0) != address(primaryStable))  ) {
-            if (token0Balance > 0) {
+            if (token0Balance > minThresholds[0]) {
                 primaryStableBalanceFromToken0 = onSwap(
-                    balancerVault,
-                    poolId,
-                    IVault.SwapKind.GIVEN_IN,
-                    token0,
-                    primaryStable,
+                    swappingPool,
+                    address(token0),
+                    address(primaryStable),
                     token0Balance
                 );
-                // console.log("Token0 swap -  primaryStableBalanceFromToken0 ", primaryStableBalanceFromToken0);
             }
         } else {
             primaryStableBalanceFromToken0 += token0Balance;
@@ -293,22 +272,17 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
 
         uint256 primaryStableBalanceFromToken1;
         if ( (address(token1) != address(primaryStable))  ) {
-            if (token1Balance > 0) {
+            if (token1Balance > minThresholds[1]) {
                 primaryStableBalanceFromToken1 = onSwap(
-                    balancerVault,
-                    poolId,
-                    IVault.SwapKind.GIVEN_IN,
-                    token1,
-                    primaryStable,
+                    swappingPool,
+                    address(token1),
+                    address(primaryStable),
                     token1Balance
                 );
-                // console.log("Token1 swap -  primaryStableBalanceFromToken1 ", primaryStableBalanceFromToken1);
             }
         } else {
             primaryStableBalanceFromToken1 += token1Balance;
         }
-        // console.log("primaryStableBalanceFromToken0: ", primaryStableBalanceFromToken0);
-        // console.log("primaryStableBalanceFromToken1: ", primaryStableBalanceFromToken1);
         return primaryStableBalanceFromToken0 + primaryStableBalanceFromToken1;
     }
     function stakeLPForDragon() internal {
@@ -330,7 +304,8 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         // sell rewards
         uint256 totalRewards = 0;
         uint256 quickDragonBalance = quickDragon.balanceOf(address(this));
-        if (quickDragonBalance > 0) {
+        console.log("RewardCollection - QUICKDRAGON Balance: ", quickDragonBalance);
+        if (quickDragonBalance > minThresholds[4]) {
             uint256 quickReward = _swapExactTokensForTokens(
                 address(quickDragon),
                 address(primaryStable),
@@ -340,6 +315,7 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
             totalRewards += quickReward;
         }
         uint256 balance = primaryStable.balanceOf(address(this));
+        console.log("RewardCollection - QUICKDRAGON -> USDC Balance: ", balance);
         if (balance > 0) {
             emit RewardTokenCollected(
                 harvesterAddress,
@@ -358,51 +334,49 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         _collectRewards();
     }
     function _swapAssetsToPrimaryStable() internal {
-        if ( (address(token0) != address(primaryStable)) && (token0.balanceOf(address(this)) > 0) )  {
-            // console.log("Swapping token0");
+        if ( (address(token0) != address(primaryStable)) && (token0.balanceOf(address(this)) > minThresholds[0]) )  {
             swap(
-                balancerVault,
-                poolId,
-                IVault.SwapKind.GIVEN_IN,
-                IAsset(address(token0)),
-                IAsset(address(primaryStable)),
-                address(this),
-                address(this),
+                swappingPool,
+                address(token0),
+                address(primaryStable),
                 token0.balanceOf(address(this)),
-                0
+                oracleRouter
             );
         }
-        if ( (address(token1) != address(primaryStable)) && (token1.balanceOf(address(this)) > 0) )  {
-            // console.log("Swapping token1");
+        if ( (address(token1) != address(primaryStable)) && (token1.balanceOf(address(this)) > minThresholds[1])  )  {
             swap(
-                balancerVault,
-                poolId,
-                IVault.SwapKind.GIVEN_IN,
-                IAsset(address(token1)),
-                IAsset(address(primaryStable)),
-                address(this),
-                address(this),
+                swappingPool,
+                address(token1),
+                address(primaryStable),
                 token1.balanceOf(address(this)),
-                0
+                oracleRouter
             );
         }
     }
-    function _swapPrimaryStableToToken0() internal {
+     function _swapPrimaryStableToToken0() internal {
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
         if (address(primaryStable) != address(token0)) {
-            swap(
-                balancerVault,
-                poolId,
-                IVault.SwapKind.GIVEN_IN,
-                IAsset(address(primaryStable)),
-                IAsset(address(token0)),
-                address(this),
-                address(this),
+           swap(
+                swappingPool,
+                address(primaryStable),
+                address(token0),
                 primaryStableBalance,
-                0
+                oracleRouter
             );
         }
     }
+
+    function setThresholds(uint256[] calldata _minThresholds) external onlyVaultOrGovernor nonReentrant {
+        require(_minThresholds.length == 5, "5 thresholds needed");
+        // minThresholds[0] - token0 minimum swapping threshold
+        // minThresholds[1] - token1 minimum swapping threshold
+        // minThresholds[2] - primaryStable to token0 minimum swapping threshold
+        // minThresholds[3] - lp token minimum swapping threshold
+        // minThresholds[4] - reward token (QUICKDRAGON) minimum swapping threshold
+        minThresholds = _minThresholds;
+    }
+
+
      /**
      * @dev Retuns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset

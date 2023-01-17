@@ -5,7 +5,6 @@ const { usdcUnits, loadFixture, isFork } = require("../helpers");
 
 describe("Vault deposit pausing @mock", async () => {
   
-
   it("Governor can pause and unpause  @fast @mock", async () => {
     const { anna, governor, vault } = await loadFixture(defaultFixture);
     await vault.connect(governor).pauseCapital();
@@ -59,4 +58,23 @@ describe("Vault deposit pausing @mock", async () => {
     const { anna, vault } = await loadFixture(defaultFixture);
     expect(await vault.connect(anna).capitalPaused()).to.be.false;
   });
+
+  it("Only governor can set the mint fee @mock", async  () => {
+    const { anna, matt,  governor, vault } = await loadFixture(
+      defaultFixture
+    );
+    await expect(vault.connect(matt).setMintFeeBps(100)).to.be.revertedWith("Caller is not the Governor");
+    await vault.connect(governor).setMintFeeBps(100);
+    expect(await vault.connect(anna).mintFeeBps()).to.equal(100);
+  });
+
+  it("Mint fee change should relay an event @mock", async  () => {
+    const { governor, vault } = await loadFixture(
+      defaultFixture
+    );
+    await expect(vault.connect(governor).setMintFeeBps(100))
+      .to.emit(vault, "MintFeeChanged(address,uint256,uint256)")
+      .withArgs(governor.address, 0, 100);
+  });
+
 });

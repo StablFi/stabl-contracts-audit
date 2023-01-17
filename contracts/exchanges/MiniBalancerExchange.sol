@@ -32,8 +32,6 @@ abstract contract MiniBalancerExchange {
         uint256 limit
     ) internal returns (uint256) {
         IVault balancerVault = IVault(_balancerVault);
-        // console.log("BalancerVault: swapping 1", address(balancerVault));
-        // console.log("BalancerVault: swapping 1", address(tokenIn),  IERC20(address(tokenIn)).balanceOf(address(this)) );
         IERC20(address(tokenIn)).approve(address(balancerVault), IERC20(address(tokenIn)).balanceOf(address(this)));
         if (limit == 0) {
             limit =  onSwap(_balancerVault, poolId, kind,  IERC20(address(tokenIn)),  IERC20(address(tokenOut)), amount);

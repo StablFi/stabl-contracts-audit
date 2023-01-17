@@ -20,12 +20,12 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
-import { IBuyback } from "../interfaces/IBuyback.sol";
-import "../exchanges/MiniBalancerExchange.sol";
+import { IRebaseHandler } from "../interfaces/IRebaseHandler.sol";
+import "../exchanges/MiniCurveExchange.sol";
 import "./VaultStorage.sol";
 import "hardhat/console.sol";
 
-contract VaultCore is VaultStorage, MiniBalancerExchange  {
+contract VaultCore is VaultStorage, MiniCurveExchange  {
     using SafeERC20 for IERC20;
     using StableMath for uint256;
     using SafeMath for uint256;
@@ -69,9 +69,8 @@ contract VaultCore is VaultStorage, MiniBalancerExchange  {
         uint256 _amount,
         uint256 _minimumCASHAmount
     ) external whenNotCapitalPaused nonReentrant {
+       
         _mint(_asset, _amount, _minimumCASHAmount);
-        // Swap to primaryStable, if needed
-        _swapAsset(_asset, primaryStableAddress);
         _quickAllocate();
     }
 
@@ -97,17 +96,48 @@ contract VaultCore is VaultStorage, MiniBalancerExchange  {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
-        uint256 price = IOracle(priceProvider).price(_asset);
+        // Rebase must happen before any transfers occur.
+        if (!rebasePaused) { 
+            _rebase();
+        }
+        // Transfer the deposited coins to the vault
+        IERC20 asset = IERC20(_asset);
+        asset.safeTransferFrom(msg.sender, address(this), _amount);
+
+        uint256 PSDecimals = Helpers.getDecimals(primaryStableAddress);
+
+        // Get the value of asset equivalent to PS
+        uint256 primaryStableAmount = _amount;
+        if (_asset != primaryStableAddress) {
+            // If the asset is not PS, swap it to PS
+            primaryStableAmount = _swapAsset(_asset, primaryStableAddress);
+            // If the amount after swapping is more than provided amount, we need to max out the primaryStableAmount to the amount provided
+            if (primaryStableAmount.scaleBy(18, PSDecimals) > _amount.scaleBy(18, Helpers.getDecimals(_asset))) {
+                primaryStableAmount = _amount.scaleBy(PSDecimals, Helpers.getDecimals(_asset));
+            }
+        }
+
+        // Get the current price of PS
+        uint256 price = IOracle(priceProvider).price(primaryStableAddress);
+        // If price of PS is above USD, pull to max $1
         if (price > 1e8) {
             price = 1e8;
         }
         require(price >= MINT_MINIMUM_ORACLE, "Asset price below Peg");
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
-        // Scale up to 18 decimal
-        uint256 unitAdjustedDeposit = _amount.scaleBy(18, assetDecimals);
-        uint256 priceAdjustedDeposit = _amount.mulTruncateScale(
+
+
+        // Mint fee
+        if (mintFeeBps > 0 && treasuryAddress != address(0)) {
+            uint256 mintFee = primaryStableAmount.mul(mintFeeBps).div(10000);
+            primaryStableAmount = primaryStableAmount.sub(mintFee);
+            IERC20(primaryStableAddress).safeTransfer(treasuryAddress, mintFee);
+            emit MintFeeCharged(msg.sender, mintFee);
+        }
+
+        // Multiply the amount by price &  Scale up to 18 decimal
+        uint256 priceAdjustedDeposit = primaryStableAmount.mulTruncateScale(
             price.scaleBy(18, 8), // Oracles have 8 decimal precision
-            10**assetDecimals
+            10**PSDecimals
         );
 
         if (_minimumCASHAmount > 0) {
@@ -119,17 +149,8 @@ contract VaultCore is VaultStorage, MiniBalancerExchange  {
 
         emit Mint(msg.sender, priceAdjustedDeposit);
 
-        // Rebase must happen before any transfers occur.
-        if (unitAdjustedDeposit >= rebaseThreshold && !rebasePaused) {
-            _rebase();
-        }
-
         // Mint matching CASH
         cash.mint(msg.sender, priceAdjustedDeposit);
-
-        // Transfer the deposited coins to the vault
-        IERC20 asset = IERC20(_asset);
-        asset.safeTransferFrom(msg.sender, address(this), _amount);
         lastMints[msg.sender] = block.number;
     }
 
@@ -187,7 +208,7 @@ contract VaultCore is VaultStorage, MiniBalancerExchange  {
 
         // Send output
         require(output > 0, "Nothing to redeem");
-        console.log("Total redeemable: ",  redeemFee+output);
+        // console.log("Total redeemable: ",  redeemFee+output);
         IERC20 primaryStable = IERC20(primaryStableAddress);
         address[] memory strategiesToWithdrawFrom = new address[](strategyWithWeights.length);
         uint256[] memory amountsToWithdraw = new uint256[](strategyWithWeights.length);
@@ -199,7 +220,7 @@ contract VaultCore is VaultStorage, MiniBalancerExchange  {
         uint8  index = 0;
         while((totalAmount < (output + redeemFee)) && (strategyIndex < strategyWithWeights.length)) {
             uint256 currentStratBal = IStrategy(strategyWithWeights[strategyIndex].strategy).checkBalance();
-            console.log("Current strategy balance:", strategyWithWeights[strategyIndex].strategy, currentStratBal);
+            // console.log("Current strategy balance:", strategyWithWeights[strategyIndex].strategy, currentStratBal);
             if (currentStratBal > 0) {
                 if ( (currentStratBal + totalAmount) > (output + redeemFee) ) {
                     strategiesToWithdrawFrom[index] = strategyWithWeights[strategyIndex].strategy;
@@ -212,11 +233,11 @@ contract VaultCore is VaultStorage, MiniBalancerExchange  {
                 }
                 index++;
             }
-            console.log("Total amount after:", strategyWithWeights[strategyIndex].strategy, totalAmount);
+            // console.log("Total amount after:", strategyWithWeights[strategyIndex].strategy, totalAmount);
 
             strategyIndex++;
         }
-        console.log("Total amount:", totalAmount);
+        // console.log("Total amount:", totalAmount);
         require(totalAmount >= (output + redeemFee), "Not enough funds anywhere to redeem.");
 
         // Withdraw from strategies
@@ -224,12 +245,12 @@ contract VaultCore is VaultStorage, MiniBalancerExchange  {
             if (strategiesToWithdrawFrom[i] == address(0)) {
                 break;
             }
-            console.log("VaultCore - Redeem - Balance in strategy: ",IStrategy(strategiesToWithdrawFrom[i]).checkBalance() );
+            // console.log("VaultCore - Redeem - Balance in strategy: ",IStrategy(strategiesToWithdrawFrom[i]).checkBalance() );
             if (amountsToWithdraw[i] > 0) {
-                console.log("VaultCore - Redeem - Withdraw from strategy: ", strategiesToWithdrawFrom[i], amountsToWithdraw[i]);
+                // console.log("VaultCore - Redeem - Withdraw from strategy: ", strategiesToWithdrawFrom[i], amountsToWithdraw[i]);
                 IStrategy(strategiesToWithdrawFrom[i]).withdraw(address(this), primaryStableAddress, amountsToWithdraw[i]);
             } else {
-                console.log("VaultCore - Redeem - Withdraw all from strategy: ",IStrategy(strategiesToWithdrawFrom[i]).checkBalance() );
+                // console.log("VaultCore - Redeem - Withdraw all from strategy: ",IStrategy(strategiesToWithdrawFrom[i]).checkBalance() );
                 IStrategy(strategiesToWithdrawFrom[i]).withdrawAll();
             }
             
@@ -310,19 +331,25 @@ contract VaultCore is VaultStorage, MiniBalancerExchange  {
      */
     function _rebase() internal whenNotRebasePaused {
         uint256 cashSupply = cash.totalSupply();
-        console.log("Total CASH Supply: ", cashSupply);
+        // console.log("Total CASH Supply: ", cashSupply);
         if (cashSupply == 0) {
             return;
         }
         uint256 primaryStableDecimals = Helpers.getDecimals(primaryStableAddress);
         uint256 vaultValue = _checkBalance().scaleBy(18, primaryStableDecimals);
-        console.log("vaultValue " , vaultValue);
+        // console.log("vaultValue " , vaultValue);
 
         // Only rachet CASH supply upwards
         cashSupply = cash.totalSupply(); // Final check should use latest value
         if (vaultValue > cashSupply) {
-            // console.log("Still vault value greater than supply, changing supply of CASH for vaultValue " , vaultValue);
+            // // console.log("Still vault value greater than supply, changing supply of CASH for vaultValue " , vaultValue);
             cash.changeSupply(vaultValue);
+            if (rebaseHandler != address(0)) {
+                try IRebaseHandler(rebaseHandler).process()  {
+                } catch  {
+                    console.log("HANDLER_FAILED");
+                }
+            }
         }
     }
 
@@ -351,7 +378,6 @@ contract VaultCore is VaultStorage, MiniBalancerExchange  {
 
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
-            console.log("Checking Balance of ", allStrategies[i]);
             balance = balance.add(strategy.checkBalance());
         }
     }
@@ -444,22 +470,19 @@ contract VaultCore is VaultStorage, MiniBalancerExchange  {
      * @param tokenFrom address of token to swap from
      * @param tokenTo address of token to swap to
      */    
-    function _swapAsset(address tokenFrom, address tokenTo) internal {
-        require(balancerVault != address(0), "Empty Swapper Address");
+    function _swapAsset(address tokenFrom, address tokenTo) internal returns (uint256) {
+        require(swappingPool != address(0), "Empty Swapper Address");
         if ( ( tokenFrom != tokenTo) && (IERC20(tokenFrom).balanceOf(address(this)) > 0) )  {
-            // console.log("VaultCore: Swapping from ", tokenFrom, tokenTo);
-            swap(
-                balancerVault,
-                balancerPoolId,
-                IVault.SwapKind.GIVEN_IN,
-                IAsset(address(tokenFrom)),
-                IAsset(address(tokenTo)),
-                address(this),
-                address(this),
+            // // console.log("VaultCore: Swapping from ", tokenFrom, tokenTo);
+            return swap(
+                swappingPool,
+                tokenFrom,
+                tokenTo,
                 IERC20(tokenFrom).balanceOf(address(this)),
-                0
+                priceProvider
             );
         }
+        return IERC20(tokenFrom).balanceOf(address(this));
     }
 
     /***************************************

@@ -1,0 +1,68 @@
+[
+  {
+    "to": "0x9aFebb44BD7028697C6bBB014F4f2B4CB3971fA3",
+    "value": "0",
+    "data": null,
+    "contractMethod": {
+      "inputs": [],
+      "name": "claimGovernance",
+      "payable": false
+    },
+    "contractInputsValues": null
+  },
+  {
+    "to": "0x0B76799f1Fe8859E03EE84E2AD8F7D8950b3a8d6",
+    "value": "0",
+    "data": null,
+    "contractMethod": {
+      "inputs": [],
+      "name": "claimGovernance",
+      "payable": false
+    },
+    "contractInputsValues": null
+  },
+  {
+    "to": "0x21a5683b28D732479958A16f32485ff8474138EC",
+    "value": "0",
+    "data": null,
+    "contractMethod": {
+      "inputs": [],
+      "name": "claimGovernance",
+      "payable": false
+    },
+    "contractInputsValues": null
+  },
+  {
+    "to": "0xC87A68d140Dba5BEF1B4fa1acDb89FD4C2547d40",
+    "value": "0",
+    "data": null,
+    "contractMethod": {
+      "inputs": [],
+      "name": "claimGovernance",
+      "payable": false
+    },
+    "contractInputsValues": null
+  },
+  {
+    "to": "0x730eEaf008379eBCb0dF0066eD47106e5b0027bb",
+    "value": "0",
+    "data": null,
+    "contractMethod": {
+      "inputs": [],
+      "name": "claimGovernance",
+      "payable": false
+    },
+    "contractInputsValues": null
+  },
+  {
+    "to": "0x325731C5051a6cD938604752DBe238a7F1477251",
+    "value": "0",
+    "data": null,
+    "contractMethod": {
+      "inputs": [],
+      "name": "claimGovernance",
+      "payable": false
+    },
+    "contractInputsValues": null
+  }
+]

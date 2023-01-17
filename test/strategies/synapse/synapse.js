@@ -41,7 +41,7 @@ describe("Synapse Strategy", function () {
     wmatic,
     syn,
     nusd,
-    synapseStrategyProxy
+    synapseStrategy
     ;
 
   beforeEach(async function () {
@@ -72,7 +72,7 @@ describe("Synapse Strategy", function () {
     console.log("Setting the SynapseStrategy as default strategy for USDC");
     await vault
       .connect(governor)
-      .setAssetDefaultStrategy(usdc.address, synapseStrategy.address);
+      .setQuickDepositStrategies([synapseStrategy.address]);
 });
 
   describe("SynapseStrategy Strategy", function () {
@@ -84,17 +84,8 @@ describe("Synapse Strategy", function () {
         console.log("Matt USDC Balance: ", usdcUnitsFormat(await usdc.balanceOf(matt.address)));
 
         console.log("Adding USDC")
-        await usdc.connect(matt).approve(vault.address, usdcUnits("500.0"));
-        await vault.connect(matt).justMint(usdc.address, usdcUnits("500.0"), 0);
-
-        await expectApproxSupply(cash, cashUnits("700"));
-
-        expect(await usdc.balanceOf(vault.address)).to.be.within(usdcUnits("699.0"), usdcUnits("700.0"));;
-
-        console.log("Before Allocation - SynapseStrategy - USDC in Vault:", usdcUnitsFormat(await usdc.balanceOf(vault.address)).toString());
-        console.log("Auto allocating funds from vault")
-
-        await vault.allocate();
+        await usdc.connect(matt).approve(vault.address, usdcUnits("700.0"));
+        await vault.connect(matt).mint(usdc.address, usdcUnits("700.0"), 0);
 
         console.log("After Allocation - SynapseStrategy - USDC in Vault:", usdcUnitsFormat(await usdc.balanceOf(vault.address)).toString());
         console.log("After Allocation - SynapseStrategy - USDC in SynapseStrategy:", usdcUnitsFormat(await usdc.balanceOf(synapseStrategy.address)).toString());
@@ -114,19 +105,9 @@ describe("Synapse Strategy", function () {
 
         console.log("Adding USDC")
         await usdc.connect(matt).approve(vault.address, usdcUnits("1000.0"));
-        await vault.connect(matt).justMint(usdc.address, usdcUnits("1000.0"), 0);
-
-        await expectApproxSupply(cash, cashUnits("1200"));
-
-        expect(await usdc.balanceOf(vault.address)).to.be.within(usdcUnits("1199.0"), usdcUnits("1200.0"));;
+        await vault.connect(matt).mint(usdc.address, usdcUnits("1000.0"), 0);
 
         console.log("Before Allocation - SynapseStrategy - USDC in Vault:", usdcUnitsFormat(await usdc.balanceOf(vault.address)).toString());
-        console.log("Auto allocating funds from vault")
-        try {
-          await vault.allocate();
-        } catch (error) {
-          console.error("Allocation failed", error.message);          
-        }
         console.log("After Allocation - SynapseStrategy - USDC in Vault:", usdcUnitsFormat(await usdc.balanceOf(vault.address)).toString());
         console.log("After Allocation - SynapseStrategy - USDC in SynapseStrategy:", usdcUnitsFormat(await usdc.balanceOf(synapseStrategy.address)).toString());
         console.log("After Allocation - SynapseStrategy - nUSD in SynapseStrategy:", daiUnitsFormat(await nUSD.balanceOf(synapseStrategy.address)).toString());
@@ -157,7 +138,7 @@ describe("Synapse Strategy", function () {
 
         console.log("Adding USDC")
         await usdc.connect(matt).approve(vault.address, usdcUnits("1000.0"));
-        await vault.connect(matt).justMint(usdc.address, usdcUnits("1000.0"), 0);
+        await vault.connect(matt).mint(usdc.address, usdcUnits("1000.0"), 0);
 
         await expectApproxSupply(cash, cashUnits("1200"));
 

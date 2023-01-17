@@ -79,15 +79,26 @@ module.exports = deploymentWithProposal(
       )
     );
 
-    // 5. Setting Balancer
-    console.log("5. Setting Balancer")
-    const setBalancerFunction = "setBalancer(address,bytes32)";
+    // 5. Setting setOracleRouterPriceProvider
+    console.log("5. Setting setOracleRouterPriceProvider")
+    const setOracleRouterPriceProvider = "setOracleRouterPriceProvider()";
     await withConfirmation(
-      cQuickSwapStrategy.connect(sDeployer)[setBalancerFunction](
-        assetAddresses.balancerVault,
-        assetAddresses.balancerPoolIdUsdcTusdDaiUsdt,
-        await getTxOpts()
-      )
+      cQuickSwapStrategy.connect(sDeployer)[setOracleRouterPriceProvider](await getTxOpts())
+    );
+
+    console.log("5.1. Set the thresholds");
+    await withConfirmation(
+      cQuickSwapStrategy
+        .connect(sDeployer)
+        .setThresholds(
+          [
+            "1000", // token0 - 6 decimals = (1/1000) USDC
+            "100000000000000", // token1 - 18 decimals  = (1/1000) DAI
+            "1000", // PS - 6 decimals  = (1/1000) USDT
+            "0", // QuickPair - 0 LP seems to working fine with QuickSwap
+            "1000", // QUICKDRAGON TOKEN - 18 decimals  = (1/100000000000000) QUICKDRAGON
+          ],
+          await getTxOpts())
     );
     
     // 6. Transfer governance

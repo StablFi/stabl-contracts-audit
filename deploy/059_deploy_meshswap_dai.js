@@ -76,15 +76,10 @@ module.exports = deploymentWithProposal(
         await getTxOpts()
       )
     );
-    // 4.1 Setting the _setRouter
-    console.log("4.2. Setting the setBalancer")
-    const setBalancer = "setBalancer(address,bytes32)";
+    // 4.1 Setting the setOracleRouterSwappingPool
+    console.log("4.2. Setting the Swapping")
     await withConfirmation(
-      cMeshSwapStrategyDAI.connect(sDeployer)[setBalancer](
-        assetAddresses.balancerVault,
-        assetAddresses.balancerPoolIdUsdcTusdDaiUsdt,
-        await getTxOpts()
-      )
+      cMeshSwapStrategyDAI.connect(sDeployer).setOracleRouterSwappingPool()
     );
     
     // 5. Transfer governance
@@ -124,7 +119,7 @@ module.exports = deploymentWithProposal(
             args: [cMeshSwapStrategyDAI.address],
         },
         
-        // 10. Set harvester address
+        // 3. Set harvester address
         {
             contract: cMeshSwapStrategyDAI,
             signature: "setHarvesterAddress(address)",

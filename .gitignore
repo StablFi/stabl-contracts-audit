@@ -71,7 +71,7 @@ contracts/harvest/artifacts/Harvester_metadata.json
 contracts/harvest/artifacts/Harvester.json
 contracts/strategies/artifacts/DystopiaStrategy_metadata.json
 contracts/strategies/artifacts/DystopiaStrategy.json
-
+help.txt
 contracts/Box.sol
 contracts/**/artifacts/**
 artifacts/**
@@ -237,4 +237,6 @@ artifacts/contracts/vault/VaultStorage.sol/VaultStorage.dbg.json
 artifacts/hardhat/console.sol/console.dbg.json
 artifacts/lib/openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol/ERC4626.dbg.json
 artifacts/lib/openzeppelin/interfaces/IERC4626.sol/IERC4626.dbg.json
-.sync-gits-env
+
+
+safe/master.sync-gits-env

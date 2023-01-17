@@ -14,6 +14,8 @@ const {
   loadFixture,
   getOracleAddresses,
   isFork,
+  usdcUnitsFormat,
+  cashUnitsFormat,
 } = require("../helpers");
 
 // Support BigNumber and all that with ethereum-waffle
@@ -40,7 +42,21 @@ describe("Vault", function () {
     expect(await vault.isSupportedAsset(cash.address)).to.be.true;
   });
 
-  it("Should allow DAI minting (with swapping) @fork", async function () {
+  it("Should allow USDC minting  mint_imp @fork", async function () {
+    const { vault, usdc, anna, cash } = await loadFixture(defaultFixture);
+    expect(await vault.isSupportedAsset(usdc.address)).to.be.true;
+
+    await expect(anna).has.a.approxBalanceOf("0.00", cash);
+
+    await usdc.connect(anna).approve(vault.address, usdcUnits("100"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("100"), 0);
+
+    // Print CASH of anna
+    console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
+    expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits("100.0"),cashUnits("1"));
+  });
+
+  it("Should allow DAI minting (with swapping) mint_imp @fork", async function () {
     const { vault, dai, anna, cash } = await loadFixture(defaultFixture);
     expect(await vault.isSupportedAsset(dai.address)).to.be.true;
 
@@ -48,11 +64,12 @@ describe("Vault", function () {
 
     await dai.connect(anna).approve(vault.address, daiUnits("100"));
     await vault.connect(anna).mint(dai.address, daiUnits("100"), 0);
-
+    // Print CASH of anna
+    console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
     expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits("100.0"),cashUnits("1"));
   });
 
-  it("Should allow USDT minting (with swapping) @fork", async function () {
+  it("Should allow USDT minting (with swapping) mint_imp @fork", async function () {
     const { vault, usdt, anna, cash } = await loadFixture(defaultFixture);
     expect(await vault.isSupportedAsset(usdt.address)).to.be.true;
 
@@ -60,8 +77,29 @@ describe("Vault", function () {
 
     await usdt.connect(anna).approve(vault.address, usdtUnits("100"));
     await vault.connect(anna).mint(usdt.address, usdtUnits("100"), 0);
-
+    // Print CASH of anna
+    console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
     expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits("100.0"),cashUnits("1"));
+  });
+
+  it("Should revert when minimum CASH not satisfied mint_imp @fork", async function () {
+    const { vault, usdt, anna, cash } = await loadFixture(defaultFixture);
+    expect(await vault.isSupportedAsset(usdt.address)).to.be.true;
+
+    await expect(anna).has.a.approxBalanceOf("0.00", cash);
+    console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
+    console.log("Anna USDT balance: ", usdcUnitsFormat(await usdt.balanceOf(anna.address)));
+
+    const initialUSDTBalance = await usdt.balanceOf(anna.address);
+
+    await usdt.connect(anna).approve(vault.address, usdtUnits("100"));
+    await expect(
+      vault.connect(anna).mint(usdt.address, usdtUnits("100"), cashUnits("100")) 
+    ).to.be.revertedWith("Mint amount lower than minimum");
+    // Print CASH of anna
+    console.log("Anna USDT balance: ", usdcUnitsFormat(await usdt.balanceOf(anna.address)));
+    console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
+    expect(await usdt.balanceOf(anna.address)).to.be.equal(initialUSDTBalance);
   });
 
   it("Should revert when adding an asset that is already supported  @mock", async function () {
@@ -384,7 +422,7 @@ describe("Vault", function () {
     ).to.be.revertedWith("Invalid value");
   });
 
-  it("Should remove strategy from all points @fork", async () => {
+  it("Should remove strategy from all points @removeStrategy  @fork", async () => {
     const { vault, governor, cMeshSwapStrategyUSDC } = await loadFixture(defaultFixture);
     
     await expect(
@@ -411,11 +449,69 @@ describe("Vault", function () {
     let allStrategies = await vault.getAllStrategies();
     let allWeights = await vault.getAllStrategyWithWeights();
     let allWeightStrats = [];
+    let totalWeights = 0;
+
     for (let index = 0; index < allWeights.length; index++) {
       const element = allWeights[index];
       allWeightStrats[index] = element.strategy;
-
+      totalWeights += element.targetWeight;
     }
+    console.log("Total Weights: ", totalWeights);
+    let allQuickDeposit = await vault.getQuickDepositStrategies();
+    expect(totalWeights).to.equal(0);
+    expect(allStrategies.includes(cMeshSwapStrategyUSDC.address)).to.be.false;
+    expect(allWeightStrats.includes(cMeshSwapStrategyUSDC.address)).to.be.false;
+    expect(allQuickDeposit.includes(cMeshSwapStrategyUSDC.address)).to.be.false;
+    
+    // TODO: Need better way to test this, mapping deletion
+    // await expect(vault.strategyWithWeightPositions(cMeshSwapStrategyUSDC.address)).to.equal(0); 
+    
+  });
+
+  it("Should remove strategy from all points when two strategies are present @removeStrategy @fork", async () => {
+    const { vault, governor, cMeshSwapStrategyUSDC, cSynapseStrategy } = await loadFixture(defaultFixture);
+    
+    await expect(
+      vault.connect(governor).approveStrategy(cMeshSwapStrategyUSDC.address)
+    ).to.be.revertedWith("Strategy already approved");
+    console.log("Setting the Quick Deposit Strategies...")
+    await vault.connect(governor).setQuickDepositStrategies([cMeshSwapStrategyUSDC.address]);
+    console.log("Setting the Strategies Weights...")
+    await vault.connect(governor).setStrategyWithWeights([
+      {
+          "strategy": cSynapseStrategy.address,
+          "minWeight": 0,
+          "targetWeight": 70*1000,
+          "maxWeight": 100*1000,
+          "enabled": true,
+          "enabledReward": true
+      },
+      {
+          "strategy": cMeshSwapStrategyUSDC.address,
+          "minWeight": 0,
+          "targetWeight": 30*1000,
+          "maxWeight": 100*1000,
+          "enabled": true,
+          "enabledReward": true
+      }
+    ]);
+
+    console.log("Remove Strategy...")
+    await vault.connect(governor).removeStrategy(cMeshSwapStrategyUSDC.address);
+    
+    console.log("Pulling new strategy data...")
+    let allStrategies = await vault.getAllStrategies();
+    let allWeights = await vault.getAllStrategyWithWeights();
+    let allWeightStrats = [];
+    let totalWeights = 0;
+    for (let index = 0; index < allWeights.length; index++) {
+      const element = allWeights[index];
+      allWeightStrats[index] = element.strategy;
+      totalWeights += parseInt(element.targetWeight);
+    }
+    console.log("Total Weights: ", totalWeights);
+    // Expect total weight to be 100k
+    expect(totalWeights).to.equal(100*1000);
     let allQuickDeposit = await vault.getQuickDepositStrategies();
 
     expect(allStrategies.includes(cMeshSwapStrategyUSDC.address)).to.be.false;
@@ -423,8 +519,26 @@ describe("Vault", function () {
     expect(allQuickDeposit.includes(cMeshSwapStrategyUSDC.address)).to.be.false;
     
     // TODO: Need better way to test this, mapping deletion
-    await expect(vault.strategyWithWeightPositions(cMeshSwapStrategyUSDC.address)).to.equal(0); 
+    // await expect(vault.strategyWithWeightPositions(cMeshSwapStrategyUSDC.address)).to.equal(0); 
     
+  });
+
+  it("Should allow negative changeSupply of CASH", async () => {
+    const { vault, governor, matt, josh, cash } = await loadFixture(defaultFixture);
+    // Output CASH total supply
+    console.log("CASH total supply: ", cashUnitsFormat(await cash.totalSupply()));
+    // Output CASH balance of Josh and MATT
+    console.log("Josh CASH balance: ", cashUnitsFormat(await cash.balanceOf(josh.address)));
+    console.log("Matt CASH balance: ", cashUnitsFormat(await cash.balanceOf(matt.address)));
+
+    console.log("Changing CASH supply to 100 CASH...");
+    await vault.connect(governor).changeCASHSupply(cashUnits("100"));
+
+    // Output CASH total supply
+    console.log("CASH total supply: ", cashUnitsFormat(await cash.totalSupply()));
+    // Output CASH balance of Josh and MATT
+    console.log("Josh CASH balance: ", cashUnitsFormat(await cash.balanceOf(josh.address)));
+    console.log("Matt CASH balance: ", cashUnitsFormat(await cash.balanceOf(matt.address)));
   });
 
   // it("Should only allow Governor and Strategist to call withdrawAllFromStrategies @fork", async () => {

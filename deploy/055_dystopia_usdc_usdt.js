@@ -2,7 +2,7 @@ const { deploymentWithProposal } = require("../utils/deploy");
 const { isFork } = require("../test/helpers");
 
 module.exports = deploymentWithProposal(
-  { deployName: "055_dystopia_usdc_usdt", forceDeploy: isFork , tags: ["test", "main", "mainnet"] ,  dependencies: ["001_core"]},
+  { deployName: "055_dystopia_usdc_usdt", forceDeploy: isFork, tags: ["test", "main", "mainnet"], dependencies: ["001_core"] },
   async ({
     oracleAddresses,
     assetAddresses,
@@ -53,12 +53,12 @@ module.exports = deploymentWithProposal(
     await withConfirmation(
       cDystopiaStrategyUsdcUsdtProxy
         .connect(sDeployer)
-        ["initialize(address,address,bytes)"](
-          dDystopiaStrategyImpl.address,
-          deployerAddr,
-          [],
-          await getTxOpts()
-        )
+      ["initialize(address,address,bytes)"](
+        dDystopiaStrategyImpl.address,
+        deployerAddr,
+        [],
+        await getTxOpts()
+      )
     );
     // 4. Init and configure new Dystopia strategy
     console.log("4. Init and configure new Dystopia strategy")
@@ -69,7 +69,7 @@ module.exports = deploymentWithProposal(
         assetAddresses.dystopiaDystToken,
         cVaultProxy.address,
         [assetAddresses.USDC],
-        [ assetAddresses.USDC, assetAddresses.USDT],
+        [assetAddresses.USDC, assetAddresses.USDT],
         [
           assetAddresses.dystopiaDystPairUsdcUsdt,
           assetAddresses.dystopiaDystPairUsdcUsdt,
@@ -79,7 +79,7 @@ module.exports = deploymentWithProposal(
         await getTxOpts()
       )
     );
-    
+
     // 5. Setting params
     console.log("5. Setting params")
     await withConfirmation(
@@ -95,6 +95,24 @@ module.exports = deploymentWithProposal(
           assetAddresses.dystopiaPenroseLens,
           assetAddresses.dystopiaPenroseToken,
 
+          await getTxOpts())
+    );
+    // 5. Setting setOracleRouterPriceProvider
+    console.log("5. Setting setOracleRouterPriceProvider")
+    const setOracleRouterPriceProvider = "setOracleRouterPriceProvider()";
+    await withConfirmation(
+      cDystopiaStrategy.connect(sDeployer)[setOracleRouterPriceProvider](await getTxOpts())
+    );
+    console.log("6. Set the thresholds");
+    await withConfirmation(
+      cDystopiaStrategy
+        .connect(sDeployer)
+        .setThresholds(
+          [
+            "1000", // token0 - 6 decimals
+            "1000", // token1 - 6 decimals
+            "1000", // PS - 6 decimals
+            "1000000"], // DystPair - 18 decimals = (1/1000000000000) DystPair
           await getTxOpts())
     );
 
@@ -135,14 +153,14 @@ module.exports = deploymentWithProposal(
           args: [dDystopiaStrategyUsdcUsdtProxy.address, true],
         },
         {
-            contract: cDystopiaStrategy,
-            signature: "setHarvesterAddress(address)",
-            args: [harvesterProxy.address],
+          contract: cDystopiaStrategy,
+          signature: "setHarvesterAddress(address)",
+          args: [harvesterProxy.address],
         },
         {
-            contract: cHarvester,
-            signature: "setSupportedStrategy(address,bool)",
-            args: [dDystopiaStrategyUsdcUsdtProxy.address, true],
+          contract: cHarvester,
+          signature: "setSupportedStrategy(address,bool)",
+          args: [dDystopiaStrategyUsdcUsdtProxy.address, true],
         },
       ],
     };

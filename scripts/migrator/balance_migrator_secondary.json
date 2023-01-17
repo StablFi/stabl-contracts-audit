@@ -1,0 +1,21 @@
+[{
+        "name": "USDC",
+        "balance": "1288581",
+        "address": "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"
+    },
+    {
+        "name": "wMATIC",
+        "balance": "137704644895164953",
+        "address": "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270"
+    },
+    {
+        "name": "meshToken",
+        "balance": "6201043963857",
+        "address": "0x82362Ec182Db3Cf7829014Bc61E9BE8a2E82868a"
+    },
+    {
+        "name": "amUSDC",
+        "balance": "31940",
+        "address": "0x1a13F4Ca1d028320A707D99520AbFefca3998b7F"
+    }
+]

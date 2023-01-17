@@ -14,7 +14,7 @@ describe("Token", function () {
 
   it("Should return the token name and symbol @mock", async () => {
     const { cash } = await loadFixture(defaultFixture);
-    expect(await cash.name()).to.equal("Stabl");
+    expect(await cash.name()).to.equal("CASH");
     expect(await cash.symbol()).to.equal("CASH");
   });
 

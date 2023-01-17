@@ -8,7 +8,7 @@ const {
 
 const addresses = require("../utils/addresses");
 const { fundAccounts } = require("../utils/funding");
-const { getAssetAddresses, daiUnits, usdcUnits, isFork } = require("./helpers");
+const { getAssetAddresses, daiUnits, usdcUnits, isFork, runStrategyLogic } = require("./helpers");
 
 const { utils } = require("ethers");
 const { loadFixture, getOracleAddresses } = require("./helpers");
@@ -40,6 +40,7 @@ async function defaultFixture() {
   const cashProxy = await ethers.getContract("CASHProxy");
   const vaultProxy = await ethers.getContract("VaultProxy");
   const harvesterProxy = await ethers.getContract("HarvesterProxy");
+  const rebaseToNonEoaHandlerProxy = await ethers.getContract("RebaseToNonEoaHandlerProxy");
 
   const cash = await ethers.getContractAt("CASH", cashProxy.address);
   const vault = await ethers.getContractAt(
@@ -60,6 +61,11 @@ async function defaultFixture() {
     "IHarvester",
     harvesterProxy.address
   );
+  const rebaseToNonEoaHandler = await ethers.getContractAt(
+    "RebaseToNonEoaHandler",
+    rebaseToNonEoaHandlerProxy.address
+  );
+
   const dripperProxy = await ethers.getContract("DripperProxy");
   const dripper = await ethers.getContractAt("Dripper", dripperProxy.address);
   const wcashProxy = await ethers.getContract("WrappedCASHProxy");
@@ -69,7 +75,11 @@ async function defaultFixture() {
 
   const oracleRouter = await ethers.getContract("OracleRouter");
 
-  await fundAccounts();
+  try {
+    await fundAccounts();
+  } catch(error) {
+    console.log("Error funding accounts:", error.message);
+  }
 
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   
@@ -116,6 +126,7 @@ async function defaultFixture() {
     chainlinkOracleFeedUSDT,
     chainlinkOracleFeedUSDC,
     chainlinkOracleFeedETH,
+    uniswapV2PairCASHUSDC,
     crv;
 
   if (isFork) {
@@ -123,6 +134,8 @@ async function defaultFixture() {
       dai = await ethers.getContractAt(daiAbi, addresses.polygon.DAI);
       tusd = await ethers.getContractAt(tusdAbi, addresses.polygon.TUSD);
       usdc = await ethers.getContractAt(usdcAbi, addresses.polygon.USDC);
+      tetu = await ethers.getContractAt(usdcAbi, addresses.polygon.TETU);
+      TetuLPToken = await ethers.getContractAt(usdcAbi, addresses.polygon.TetuLPToken);
       primaryStable = await ethers.getContractAt(usdcAbi, addresses.polygon.primaryStable);
       crv = await ethers.getContractAt(crvAbi, addresses.polygon.CRV);
       ogn = await ethers.getContractAt(ognAbi, addresses.polygon.OGN);
@@ -145,6 +158,7 @@ async function defaultFixture() {
       quickSwapUSDCUSDTPair = await ethers.getContractAt(uniswapV2PairAbi,addresses.polygon.quickSwapUSDCUSDTPair);
       quickSwapStakingReward = await ethers.getContractAt(quickSwapStakingRewardAbi,addresses.polygon.quickSwapStakingReward);
       quickSwapStakingRewardUSDCUSDT = await ethers.getContractAt(quickSwapStakingRewardAbi,addresses.polygon.quickSwapStakingRewardUSDCUSDT);
+      CPOOL = await ethers.getContractAt(erc20Abi, addresses.polygon.CPOOL);
       amDAI = await ethers.getContractAt(erc20Abi, addresses.polygon.amDAI);
       amUSDC = await ethers.getContractAt(erc20Abi, addresses.polygon.amUSDC);
       amUSDT = await ethers.getContractAt(erc20Abi, addresses.polygon.amUSDT);
@@ -160,6 +174,11 @@ async function defaultFixture() {
       DODO = await ethers.getContractAt(erc20Abi, addresses.polygon.DODO);
       Labs = await ethers.getContractAt(erc20Abi, addresses.polygon.Labs);
       Team = await ethers.getContractAt(erc20Abi, addresses.polygon.Team);
+      Team = await ethers.getContractAt(erc20Abi, addresses.polygon.Team);
+
+      clearpoolAmberPoolBase = await ethers.getContractAt(erc20Abi, addresses.polygon.clearpoolAmberPoolBase);
+      clearpoolWinterMutePoolBase = await ethers.getContractAt(erc20Abi, addresses.polygon.clearpoolWinterMutePoolBase);
+      clearpoolAurosPoolBase = await ethers.getContractAt(erc20Abi, addresses.polygon.clearpoolAurosPoolBase);
   } else {
       usdt = await ethers.getContract("MockUSDT");
       dai = await ethers.getContract("MockDAI");
@@ -195,11 +214,8 @@ async function defaultFixture() {
       Team = await ethers.getContractAt(erc20Abi, addresses.polygon.Team);
       primaryStable = await ethers.getContract("MockUSDC");
 
-  }
-  // Matt and Josh each have $100 CASH
-  for (const user of [matt, josh]) {
-    await usdc.connect(user).approve(vault.address, usdcUnits("100"));
-    await vault.connect(user).justMint(usdc.address, usdcUnits("100"), 0);
+      uniswapV2PairCASHUSDC = await ethers.getContract("UniswapV2PairCASHUSDC");
+
   }
 
   let stratesgiesWithDependencies = {};
@@ -356,8 +372,53 @@ async function defaultFixture() {
       "DodoStrategy",
       cDodoStrategyProxy.address
     );
-    console.log("cDodoStrategyProxy.address", cDodoStrategyProxy.address);
+    // console.log("cDodoStrategyProxy.address", cDodoStrategyProxy.address);
 
+    const cClearpoolWintermuteStrategyProxy = await ethers.getContract(
+      "ClearpoolWintermuteStrategyProxy"
+    );
+    const cClearpoolWintermuteStrategy= await ethers.getContractAt(
+      "ClearpoolStrategy",
+      cClearpoolWintermuteStrategyProxy.address
+    );
+    // console.log("cClearpoolStrategy.address", cClearpoolStrategy.address);
+
+    const cGainsDAIStrategyProxy = await ethers.getContract(
+      "GainsDAIStrategyProxy"
+    );
+    const cGainsDAIStrategy= await ethers.getContractAt(
+      "GainsStrategy",
+      cGainsDAIStrategyProxy.address
+    );
+
+    const cTetuUsdcStrategyProxy = await ethers.getContract(
+      "TetuStrategyUSDCProxy"
+    );
+    const cTetuUsdcStrategy= await ethers.getContractAt(
+      "TetuStrategy",
+      cTetuUsdcStrategyProxy.address
+    );
+
+    const cTetuUsdtStrategyProxy = await ethers.getContract(
+      "TetuStrategyUSDTProxy"
+    );
+    const cTetuUsdtStrategy= await ethers.getContractAt(
+      "TetuStrategy",
+      cTetuUsdtStrategyProxy.address
+    );
+
+    const cTetuDaiStrategyProxy = await ethers.getContract(
+      "TetuStrategyDAIProxy"
+    );
+    const cTetuDaiStrategy= await ethers.getContractAt(
+      "TetuStrategy",
+      cTetuDaiStrategyProxy.address
+    );
+    // console.log("cClearpoolStrategy.address", cClearpoolStrategy.address);
+
+    await runStrategyLogic(governor, "Tetu Strategy", cTetuUsdcStrategy.address); 
+    await runStrategyLogic(governor, "Tetu Strategy", cTetuDaiStrategy.address); 
+    await runStrategyLogic(governor, "Tetu Strategy", cTetuUsdtStrategy.address); 
     strategiesWithDependencies = {
       dystToken: dystToken,
       cDystopiaStrategyUsdcDai: cDystopiaStrategyUsdcDai,
@@ -410,6 +471,20 @@ async function defaultFixture() {
       cDodoStrategy: cDodoStrategy,
       usdcLPToken: usdcLPToken,
       DODO: DODO,
+      TETU: tetu,
+      TetuLPToken: TetuLPToken,
+      cTetuUsdcStrategyProxy: cTetuUsdcStrategy,
+      cTetuUsdtStrategyProxy: cTetuUsdtStrategy,
+      cTetuDaiStrategyProxy: cTetuDaiStrategy,
+
+      CPOOL: CPOOL,
+      clearpoolWintermuteStrategy: cClearpoolWintermuteStrategy,
+      
+      clearpoolWinterMutePoolBase: clearpoolWinterMutePoolBase,
+      clearpoolAmberPoolBase: clearpoolAmberPoolBase,
+      clearpoolAurosPoolBase: clearpoolAurosPoolBase,
+
+      gainsDAIStrategy: cGainsDAIStrategy
       
     };
     
@@ -427,9 +502,16 @@ async function defaultFixture() {
     };
 
   }
+
+  // Matt and Josh each have $100 CASH
+  for (const user of [matt, josh]) {
+    console.log("Depositing 100 USDC to", user.address);
+    await usdc.connect(user).approve(vault.address, usdcUnits("100"));
+    await vault.connect(user).mint(usdc.address, usdcUnits("100"), 0);
+  }
   
   let contracts = { cash, vault, vaultAdmin, vaultCore, harvester, dripper, governorContract, wcash, oracleRouter, chainlinkOracleFeedDAI, chainlinkOracleFeedUSDT, chainlinkOracleFeedUSDC, 
-                chainlinkOracleFeedETH};
+                chainlinkOracleFeedETH, rebaseToNonEoaHandler, uniswapV2PairCASHUSDC};
   let assets = {usdt, dai, tusd, usdc, primaryStable, wmatic, nonStandardToken, mockNonRebasing, mockNonRebasingTwo};
   let abis = {erc20Abi};
   let accounts = { matt, josh, rio, anna, governor, strategist, adjuster};

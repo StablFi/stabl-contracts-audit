@@ -3,8 +3,10 @@ const chai = require("chai");
 const { parseUnits, formatUnits } = require("ethers").utils;
 const BigNumber = require("ethers").BigNumber;
 const { createFixtureLoader } = require("ethereum-waffle");
+const IController = require("./abi/IController.json");
 
 const addresses = require("../utils/addresses");
+const { utils } = require("ethers");
 
 chai.Assertion.addMethod("approxEqual", function (expected, message) {
   const actual = this._obj;
@@ -150,12 +152,13 @@ const isFork = process.env.FORK === "true";
 const isLocalhost = !isFork && hre.network.name === "localhost";
 const isRinkeby = hre.network.name === "rinkeby";
 const isMainnet = hre.network.name === "mainnet";
+const isPolygonStaging = hre.network.name === "polygon_staging";
 const isTest = process.env.IS_TEST === "true";
 const isSmokeTest = process.env.SMOKE_TEST === "true";
 const isMainnetOrFork = isMainnet || isFork;
 const isMainnetButNotFork = isMainnet && !isFork;
 const isMainnetOrRinkebyOrFork = isMainnetOrFork || isRinkeby;
-const isVerificationRequired = false || process.env.VERIFY_ON_EXPLORER;
+const isVerificationRequired =  process.env.VERIFY_ON_EXPLORER;
 const forceStorageLayoutCheck = process.env.FORCE_STORAGE_LAYOUT_CHECK;
 
 // Fixture loader that is compatible with Ganache
@@ -270,6 +273,7 @@ const getAssetAddresses = async (deployments) => {
       TUSD: addresses.polygon.TUSD,
       USDP: addresses.polygon.USDP,
       DODO: addresses.polygon.DODO,
+      TETU: addresses.polygon.TETU,
       primaryStable: addresses.polygon.primaryStable,
 
       DAI: addresses.polygon.DAI,
@@ -364,6 +368,22 @@ const getAssetAddresses = async (deployments) => {
       dodoProxy: addresses.polygon.dodoProxy,
       dodoApprove: addresses.polygon.dodoApprove,
 
+      tetuUsdcSmartVault: addresses.polygon.tetuUsdcSmartVault,
+      tetuUsdtSmartVault: addresses.polygon.tetuUsdtSmartVault,
+      tetuDaiSmartVault: addresses.polygon.tetuDaiSmartVault,
+      tetuSmartVault: addresses.polygon.tetuSmartVault,
+      tetuUsdcLPToken: addresses.polygon.TetuLPToken,
+      tetuUsdcSwapRouter: addresses.polygon.tetuUsdcSwapRouter,
+
+      CPOOL: addresses.polygon.CPOOL,
+      clearpoolAmberPoolBase: addresses.polygon.clearpoolAmberPoolBase,
+      clearpoolWinterMutePoolBase: addresses.polygon.clearpoolWinterMutePoolBase,
+      clearpoolAurosPoolBase: addresses.polygon.clearpoolAurosPoolBase,
+      clearpoolRewardProvider: addresses.polygon.clearpoolRewardProvider,
+
+      gainsVaultDai: addresses.polygon.gainsVaultDai,
+      atricrypto3Pool: addresses.polygon.atricrypto3Pool,
+
       balancerVault: addresses.polygon.balancerVault,
       balancerPoolIdUsdcTusdDaiUsdt: addresses.polygon.balancerPoolIdUsdcTusdDaiUsdt,
       balancerPoolIdWmaticUsdcWethBal: addresses.polygon.balancerPoolIdWmaticUsdcWethBal,
@@ -374,6 +394,7 @@ const getAssetAddresses = async (deployments) => {
       LabsFeeBps: addresses.polygon.LabsFeeBps,
       Team: addresses.polygon.Team,
       TeamFeeBps: addresses.polygon.TeamFeeBps,
+      Treasury: addresses.polygon.Treasury,
 
     };
   } else {
@@ -409,6 +430,7 @@ const getAssetAddresses = async (deployments) => {
       LabsFeeBps: addresses.polygon.LabsFeeBps,
       Team: addresses.polygon.Team,
       TeamFeeBps: addresses.polygon.TeamFeeBps,
+      Treasury: addresses.polygon.Treasury,
 
       meshSwapRouter: (await deployments.get("MockMeshSwapRouter")).address,
       meshSwapUsdc: (await deployments.get("MockMeshSwapUniPoolLP")).address,
@@ -482,6 +504,31 @@ async function propose(fixture, governorArgsArray, description) {
   return proposalId;
 }
 
+async function runStrategyLogic(governor, strategyName, strategyAddress) {
+  if (strategyName == 'Tetu Strategy') {
+
+    let governanceAddress = "0xcc16d636dD05b52FF1D8B9CE09B09BC62b11412B"; // governance addr
+    // Send some MATIC to governance
+    await governor.sendTransaction({
+      to: governanceAddress,
+      value: utils.parseEther("100"),
+    });
+    
+    console.log("whitelisting Tetu Strategy");
+    await hre.network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: [governanceAddress],
+    });
+    const governance = await ethers.getSigner(governanceAddress);
+    let controller = await ethers.getContractAt(IController, "0x6678814c273d5088114B6E40cC49C8DB04F9bC29"); // controller addr
+    await controller.connect(governance).changeWhiteListStatus([strategyAddress], true);
+    await hre.network.provider.request({
+        method: "hardhat_stopImpersonatingAccount",
+        params: [governanceAddress],
+    });
+  }
+}
+
 async function proposeAndExecute(fixture, governorArgsArray, description) {
   const { governorContract, governor } = fixture;
   const proposalId = await propose(fixture, governorArgsArray, description);
@@ -534,10 +581,12 @@ module.exports = {
   proposeArgs,
   propose,
   proposeAndExecute,
+  runStrategyLogic,
   advanceBlocks,
   isWithinTolerance,
   changeInBalance,
   isMainnetButNotFork,
   isVerificationRequired,
-  forceStorageLayoutCheck
+  forceStorageLayoutCheck,
+  isPolygonStaging
 };

@@ -21,7 +21,7 @@ const {
 const configureVault = async (harvesterProxy) => {
 
   const assetAddresses = await getAssetAddresses(deployments);
-  const { governorAddr, strategistAddr } = await getNamedAccounts();
+  const { governorAddr } = await getNamedAccounts();
   // Signers
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
@@ -37,9 +37,9 @@ const configureVault = async (harvesterProxy) => {
       await ethers.getContract("VaultProxy")
     ).address
   );
-  log("Set the balancer to the vault");
+  log("Set the CurvePool to the vault");
   await withConfirmation(
-    cVault.connect(sGovernor).setSwapper(assetAddresses.balancerVault, assetAddresses.balancerPoolIdUsdcTusdDaiUsdt)
+    cVault.connect(sGovernor).setSwapper(assetAddresses.am3crvSwap, assetAddresses.balancerPoolIdUsdcTusdDaiUsdt)
   );
 
   log("Adding  DAI asset " +assetAddresses.DAI +" to Vault");
@@ -78,16 +78,13 @@ const configureVault = async (harvesterProxy) => {
   log(
     "Set the Fees to the vault " );
   await withConfirmation(
-    cVault.connect(sGovernor).setFeeParams(assetAddresses.Labs, assetAddresses.LabsFeeBps, assetAddresses.Team, assetAddresses.TeamFeeBps)
+    cVault.connect(sGovernor).setFeeParams(assetAddresses.Labs, assetAddresses.Team, assetAddresses.Treasury)
   );
   
   // Unpause deposits
   await withConfirmation(cVault.connect(sGovernor).unpauseCapital());
   log("Unpaused deposits on Vault");
-  // Set Strategist address.
-  await withConfirmation(
-    cVault.connect(sGovernor).setStrategistAddr(strategistAddr)
-  );
+  
 };
 
 /**
@@ -222,7 +219,7 @@ const deployOracles = async () => {
  */
 const deployCore = async () => {
   const { governorAddr } = await hre.getNamedAccounts();
-
+  console.log("Governor Address: ",governorAddr);
   const assetAddresses = await getAssetAddresses(deployments);
   log(`Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`);
 
@@ -301,6 +298,9 @@ const deployVaultVaultChecker = async () => {
 };
 
 const main = async () => {
+  const {governorAddr, deployerAddr} = await hre.getNamedAccounts();
+  console.log("Governor Address: ",governorAddr);
+  console.log("Deployer Address: ",deployerAddr);
   console.log("IS FORK: ", isFork)
   console.log("isMainnetOrRinkebyOrFork: ", isMainnetOrRinkebyOrFork)
   console.log("Running 001_core deployment...");

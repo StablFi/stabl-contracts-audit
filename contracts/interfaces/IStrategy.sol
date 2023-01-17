@@ -39,6 +39,11 @@ interface IStrategy {
         external
         view
         returns (uint256 balance);
+        
+    function lpBalance()
+        external
+        view
+        returns (uint256 balance);
 
     /**
      * @dev Returns bool indicating whether strategy supports asset.
@@ -54,4 +59,6 @@ interface IStrategy {
      * @dev The address array of the reward tokens for the Strategy.
      */
     function getRewardTokenAddresses() external view returns (address[] memory);
+
+    function setThresholds(address[] calldata _minThresholds) external;
 }

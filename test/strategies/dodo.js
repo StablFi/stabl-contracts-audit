@@ -24,6 +24,7 @@ const {
   advanceTime
 } = require("../helpers");
 const { min } = require("lodash");
+const { ethers } = require("hardhat");
 
 const strategyNameMain  = "DodoStrategy";
 
@@ -75,6 +76,10 @@ describe(strategyNameMain , function () {
     await vault
       .connect(governor)
       .setAssetDefaultStrategy(usdc.address, strategy.address);
+
+    await vault
+      .connect(governor)
+      .setQuickDepositStrategies([strategy.address]);
 });
 
   describe(strategyName  + " Strategy", function () {
@@ -108,7 +113,7 @@ describe(strategyNameMain , function () {
         expect(await strategy.checkBalance()).to.be.within(usdcUnits("699.0"), usdcUnits("700.0"));
 
     });
-    it("Should be able to withdrawAll"+ " @fast  @fork", async function () {
+    it("Should be able to withdrawAll"+ " @fast @see  @fork", async function () {
         console.log("---------------------------------------------------------------------------")
         console.log("                       Should be able to withdrawAll")
         console.log("---------------------------------------------------------------------------")
@@ -147,6 +152,76 @@ describe(strategyNameMain , function () {
 
         expect(await usdc.balanceOf(vault.address)).to.be.within(usdcUnits("1199.0"), usdcUnits("1200.0"));
     });
+    it("Testing DODO library with failing amount"+ " @see @fork", async function () {
+      console.log("---------------------------------------------------------------------------")
+      console.log("                Testing DODO library with failing amount")
+      console.log("---------------------------------------------------------------------------")
+      console.log("Matt USDC Balance: ", usdcUnitsFormat(await usdc.balanceOf(matt.address)));
+      const libary = await ethers.getContract("StrategyDodoLibrary");
+      const output  = await libary._getAmountIn(248639, strategy.address)
+      console.log("Output from Library: ", output);
+    });
+
+    it("Should be able to withdraw arbitrary amount"+ " @see @fork", async function () {
+        console.log("---------------------------------------------------------------------------")
+        console.log("                Should be able to withdraw arbitrary amount")
+        console.log("---------------------------------------------------------------------------")
+        console.log("Matt USDC Balance: ", usdcUnitsFormat(await usdc.balanceOf(matt.address)));
+
+        console.log("Adding USDC")
+        await usdc.connect(matt).approve(vault.address, usdcUnits("1000.0"));
+        await vault.connect(matt).mint(usdc.address, usdcUnits("1000.0"), 0);
+
+        await expectApproxSupply(cash, cashUnits("1200"));
+
+        console.log("After Allocation -",strategyName ,"- USDC in Vault:", usdcUnitsFormat(await usdc.balanceOf(vault.address)).toString());
+        console.log("After Allocation -",strategyName ,"- USDC in ", strategyName ,":", usdcUnitsFormat(await usdc.balanceOf(strategy.address)).toString());
+        console.log("After Allocation -",strategyName ,"- usdcLPToken in ", strategyName ,":", daiUnitsFormat(await usdcLPToken.balanceOf(strategy.address)).toString());
+        console.log("After Allocation -",strategyName ,"- DODO in ", strategyName ,":", daiUnitsFormat(await DODO.balanceOf(strategy.address)).toString());
+        expect(await usdcLPToken.balanceOf(strategy.address)).to.be.equal(0); // All usdcLPToken should be staked
+
+        console.log("Withdrawing 100 through Vault")
+        await strategy.connect(governor)["withdraw(address,address,uint256)"](vault.address, usdc.address, usdcUnits("100.0"));
+
+        console.log("Withdrawing 900 through Vault")
+        await strategy.connect(governor)["withdraw(address,address,uint256)"](vault.address, usdc.address, usdcUnits("900.0"));
+          
+        console.log("After Withdrawal -",strategyName ,"- USDC in Vault:", usdcUnitsFormat(await usdc.balanceOf(vault.address)).toString());
+        console.log("After Withdrawal -",strategyName ,"- USDC in ", strategyName ,":", usdcUnitsFormat(await usdc.balanceOf(strategy.address)).toString());
+        console.log("After Withdrawal -",strategyName ,"- usdcLPToken in ", strategyName ,":", daiUnitsFormat(await usdcLPToken.balanceOf(strategy.address)).toString());
+        console.log("After Withdrawal -",strategyName ,"- DODO in ", strategyName ,":", daiUnitsFormat(await DODO.balanceOf(strategy.address)).toString());
+
+        expect(await usdc.balanceOf(vault.address)).to.be.within(usdcUnits("999.0"), usdcUnits("1001.0"));
+    });
+
+    it("Should NOT be able to withdraw more amount than it holds"+ " @see @fork", async function () {
+      console.log("---------------------------------------------------------------------------")
+      console.log("               Should NOT be able to withdraw more amount than it holds")
+      console.log("---------------------------------------------------------------------------")
+      console.log("Matt USDC Balance: ", usdcUnitsFormat(await usdc.balanceOf(matt.address)));
+
+      console.log("Adding USDC")
+      await usdc.connect(matt).approve(vault.address, usdcUnits("1000.0"));
+      await vault.connect(matt).mint(usdc.address, usdcUnits("1000.0"), 0);
+
+      await expectApproxSupply(cash, cashUnits("1200"));
+
+      console.log("After Allocation -",strategyName ,"- USDC in Vault:", usdcUnitsFormat(await usdc.balanceOf(vault.address)).toString());
+      console.log("After Allocation -",strategyName ,"- USDC in ", strategyName ,":", usdcUnitsFormat(await usdc.balanceOf(strategy.address)).toString());
+      console.log("After Allocation -",strategyName ,"- usdcLPToken in ", strategyName ,":", daiUnitsFormat(await usdcLPToken.balanceOf(strategy.address)).toString());
+      console.log("After Allocation -",strategyName ,"- DODO in ", strategyName ,":", daiUnitsFormat(await DODO.balanceOf(strategy.address)).toString());
+      expect(await usdcLPToken.balanceOf(strategy.address)).to.be.equal(0); // All usdcLPToken should be staked
+
+      console.log("Withdrawing 100 through Vault")
+      await strategy.connect(governor)["withdraw(address,address,uint256)"](vault.address, usdc.address, usdcUnits("100.0"));
+      expect(await usdc.balanceOf(vault.address)).to.be.within(usdcUnits("99.0"), usdcUnits("101.0"));
+      console.log("After Withdrawal -",strategyName ,"- USDC in Vault:", usdcUnitsFormat(await usdc.balanceOf(vault.address)).toString());
+
+      console.log("Trying to Withdrawing 1000 through Vault")
+      await strategy.connect(governor)["withdraw(address,address,uint256)"](vault.address, usdc.address, usdcUnits("1000.0"));
+        
+      console.log("After Withdrawal -",strategyName ,"- USDC in Vault:", usdcUnitsFormat(await usdc.balanceOf(vault.address)).toString());
+  });
 
     it("Should collect rewards"+ " @slow  @fork", async () => {
         console.log("---------------------------------------------------------------------------")

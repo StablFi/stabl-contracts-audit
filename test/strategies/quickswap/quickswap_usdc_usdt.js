@@ -27,7 +27,8 @@ let {
   quickSwapPair,
   usdcUnitsFormat,
   usdtUnits,
-  usdtUnitsFormat
+  usdtUnitsFormat,
+  advanceTime
 
 } = require("../../helpers");
 const { min } = require("lodash");
@@ -60,9 +61,9 @@ describe("QuickSwap Strategy", function () {
   };
 
   const mint = async (amount, asset) => {
-    await asset.connect(anna).justMint(units(amount, asset));
+    await asset.connect(anna).mint(units(amount, asset));
     await asset.connect(anna).approve(vault.address, units(amount, asset));
-    await vault.connect(anna).justMint(asset.address, units(amount, asset), 0);
+    await vault.connect(anna).mint(asset.address, units(amount, asset), 0);
   };
 
   beforeEach(async function () {
@@ -100,10 +101,10 @@ describe("QuickSwap Strategy", function () {
     harvester = fixture.harvester;
     dripper = fixture.dripper;
 
-    console.log("Setting the", strategyName ,"as default strategy for ", primaryStableName);
+    console.log("Setting the", strategyName ,"as quick deposit strategy");
     await vault
       .connect(governor)
-      .setAssetDefaultStrategy(primaryStable.address, strategy.address);
+      .setQuickDepositStrategies([strategy.address]);
 
 });
 
@@ -114,15 +115,12 @@ describe("QuickSwap Strategy", function () {
         console.log("---------------------------------------------------------------------------")
 
         await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("100.0"));
-        await vault.connect(matt).justMint(primaryStable.address, primaryStableUnits("100.0"), 0);
+        await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("100.0"), 0);
 
         await expectApproxSupply(cash, cashUnits("300"));
 
-        expect(await primaryStable.balanceOf(vault.address)).to.be.within(primaryStableUnits("299.0"), primaryStableUnits("300.0"));;
 
         console.log("Auto allocating funds from vault")
-        await vault.allocate();
-
         console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "in", strategyName, "Strategy:", (await primaryStable.balanceOf(strategy.address)).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " - quickSwapPair in", strategyName, "Strategy:", (await quickSwapPair.balanceOf(strategy.address)).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " - quickSwapStakingReward in", strategyName, "Strategy:", (await quickSwapStakingReward.balanceOf(strategy.address)).toString());
@@ -142,11 +140,11 @@ describe("QuickSwap Strategy", function () {
       console.log("Initial", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
  
       await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("10.0"));
-      await vault.connect(matt).justMint(primaryStable.address, primaryStableUnits("10.0"), 0);
+      await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("10.0"), 0);
 
       console.log("Before Allocation of", primaryStableName , "to",strategyName,"- ", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
       console.log("Auto allocating funds from vault")
-      await vault.allocate();
+      
 
       console.log("After Allocation of", primaryStableName , "to ",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
       console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
@@ -167,6 +165,69 @@ describe("QuickSwap Strategy", function () {
 
     });
 
+    it("Should be able to deposit when there is 1 GWei of token1 present in the strategy"+ " @fast @fork", async function () {
+      console.log("-----------------------------------------------------------------------------------------")
+      console.log("    Should be able to deposit when there is 1 GWei of token1 present in the strategy")
+      console.log("-----------------------------------------------------------------------------------------")
+      await expectApproxSupply(cash, cashUnits("200"));
+
+      console.log("Initial", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
+   
+      console.log("Adding 0.000000000000000001 DAI to the Startegy")
+      await dai.connect(matt).transfer(strategy.address,"1");
+      
+      await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("1000.0"));
+      await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("1000.0"), 0);
+
+
+      console.log("Before Allocation of", primaryStableName , "to",strategyName,"- ", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
+      console.log("Auto allocating funds from vault")
+
+      console.log("After Allocation of", primaryStableName , "to ",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " - quickSwapPair in", strategyName, " Strategy:", usdcUnitsFormat(await quickSwapPair.balanceOf(strategy.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " - quickSwapStakingReward in", strategyName, " Strategy:", (await quickSwapStakingReward.balanceOf(strategy.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "equivalent in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
+    });
+
+
+    it("Should be able to withdraw when there is 1 GWei of token1 present in the strategy"+ " @fast @fork", async function () {
+      // REQUIRE withdraw function to be available with Governor
+      console.log("-----------------------------------------------------------------------------------------")
+      console.log("    Should be able to withdraw when there is 1 GWei of token1 present in the strategy")
+      console.log("-----------------------------------------------------------------------------------------")
+      await expectApproxSupply(cash, cashUnits("200"));
+
+      console.log("Initial", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
+
+      await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("1000.0"));
+      await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("1000.0"), 0);
+
+      console.log("Adding 0.000000000000000001 DAI to the Startegy")
+      await dai.connect(matt).transfer(strategy.address,"1");
+
+      console.log("Before Allocation of", primaryStableName , "to",strategyName,"- ", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
+      console.log("Auto allocating funds from vault")
+      
+      console.log("After Allocation of", primaryStableName , "to ",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " - quickSwapPair in", strategyName, " Strategy:", usdcUnitsFormat(await quickSwapPair.balanceOf(strategy.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " - quickSwapStakingReward in", strategyName, " Strategy:", (await quickSwapStakingReward.balanceOf(strategy.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "equivalent in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
+     
+      await strategy
+        .connect(governor)
+        .withdraw(vault.address, usdc.address, primaryStableUnits("30.0"));
+
+      console.log("After Withdrawal from",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString() );
+      console.log("After Withdrawal from",strategyName," -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
+      console.log("After Withdrawal from",strategyName," - quickSwapPair in", strategyName, " Strategy:", usdcUnitsFormat(await quickSwapPair.balanceOf(strategy.address)).toString());
+      console.log("After Withdrawal from",strategyName," - quickSwapStakingReward in", strategyName, " Strategy:", (await quickSwapStakingReward.balanceOf(strategy.address)).toString());
+      console.log("After Withdrawal from",strategyName," -", primaryStableName , "equivalent in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
+      
+      expect(await strategy.checkBalance()).to.be.within(primaryStableUnits("969.0"), primaryStableUnits("971.0"));
+    });
+
     it("Should collect rewards"+ " @slow", async () => {
         console.log("---------------------------------------------------------------------------")
         console.log("                        Should collect rewards")
@@ -181,11 +242,11 @@ describe("QuickSwap Strategy", function () {
 
         console.log("Adding", primaryStableName , "to Vault: ", primaryStableUnits("500.0").toString());
         await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("500.0"));
-        await vault.connect(matt).justMint(primaryStable.address, primaryStableUnits("500.0"), 0);
+        await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("500.0"), 0);
 
         console.log("Before Allocation of", primaryStableName , "to ", strategyName, "- ", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
         console.log("Auto allocating funds from vault")
-        await vault.allocate();
+        
 
         console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
         console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in ", strategyName , ":",primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());

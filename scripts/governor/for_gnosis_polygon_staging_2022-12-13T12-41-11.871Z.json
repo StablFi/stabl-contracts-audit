@@ -1,0 +1,13 @@
+[
+  {
+    "to": "0x0ABfa7e306789ebb331e878e2c54038E40Bd6A62",
+    "value": "0",
+    "data": null,
+    "contractMethod": {
+      "inputs": [],
+      "name": "claimGovernance",
+      "payable": false
+    },
+    "contractInputsValues": null
+  }
+]

@@ -1,9 +1,9 @@
-const { isFork, isMainnet } = require("../test/helpers");
+const { isFork, isMainnet, isPolygonStaging } = require("../test/helpers");
 const { deploymentWithProposal, withConfirmation, deployWithConfirmation } = require("../utils/deploy");
 const { MAX_UINT256 } = require("../utils/constants");
 
 module.exports = deploymentWithProposal(
-  { deployName: "071_upgrade_vault" , forceDeploy: isMainnet, tags: ["test", "main", "upgrade_vault"],  dependencies: ["001_core"] },
+  { deployName: "071_upgrade_vault" , forceDeploy: isMainnet || isPolygonStaging, tags: ["test", "main", "upgrade_vault"],  dependencies: ["001_core"] },
   async ({ ethers, assetAddresses }) => {
 
     // Deploy a new vault core contract.
@@ -18,6 +18,10 @@ module.exports = deploymentWithProposal(
     "VaultCore",
     cVaultProxy.address
     );
+    const cVaultAdminProxy = await ethers.getContractAt(
+      "VaultAdmin",
+      cVaultProxy.address
+      );
     const cVaultCore = await ethers.getContract("VaultCore");
     const cVaultAdmin = await ethers.getContract("VaultAdmin");
 
@@ -26,14 +30,19 @@ module.exports = deploymentWithProposal(
       name: "Upgrade Vault",
       actions: [
         {
-            contract: cVaultProxy,
-            signature: "upgradeTo(address)",
-            args: [cVaultCore.address],
+          contract: cVaultProxy,
+          signature: "upgradeTo(address)",
+          args: [cVaultCore.address],
         },
         {
-        contract: cVaultCoreProxy,
-        signature: "setAdminImpl(address)",
-        args: [cVaultAdmin.address],
+          contract: cVaultCoreProxy,
+          signature: "setAdminImpl(address)",
+          args: [cVaultAdmin.address],
+        },
+        {
+          contract: cVaultAdminProxy,
+          signature: "setSwapper(address,bytes32)",
+          args: [assetAddresses.am3crvSwap, assetAddresses.balancerPoolIdUsdcTusdDaiUsdt],
         }
       ],
     };

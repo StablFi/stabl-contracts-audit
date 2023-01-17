@@ -15,6 +15,5 @@ abstract contract IDystopiaLP is IUniswapV2Pair {
 
     function getReward(address account, address[] memory tokens) external virtual;
 
-    function token0() external virtual view returns (address);
 
 }

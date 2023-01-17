@@ -7,10 +7,12 @@ const {
   usdcUnits,
   usdtUnits,
   tusdUnits,
+  cashUnitsFormat,
   getOracleAddress,
   setOracleTokenPriceUsd,
   expectApproxSupply,
   loadFixture,
+  usdcUnitsFormat,
 } = require("../helpers");
 
 describe("Vault rebase pausing @fast @mock", async () => {
@@ -232,4 +234,46 @@ describe("Vault rebasing @fast @mock", async () => {
     await vault.connect(governor).setPriceProvider(oracle);
     await expect(await vault.priceProvider()).to.be.equal(oracle);
   });
+  
+  it("Should not allow double rebasing when minting @fork mint_imp", async function () {
+    const {cash,  anna, usdc, vault } = await loadFixture(defaultFixture);
+    
+    expectApproxSupply(cash, cashUnits("200"));
+    console.log("CASH total supply: ", cashUnitsFormat(await cash.totalSupply())); // Initial CASH Total Supply= 200
+
+    // Anna mint 10000 USDC
+    console.log("Mintng 10000 USDC");
+    await usdc.connect(anna).approve(vault.address, usdcUnits("10000"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("10000"), 0);
+
+    console.log("CASH total supply: ", cashUnitsFormat(await cash.totalSupply()));
+    expect(await cash.totalSupply()).to.be.closeTo(cashUnits("10200.00"), cashUnits("1.00"));
+
+  });
+
+  it("Should not allow double rebasing when minting (with mint fee) @fork mint_imp", async function () {
+    const {cash,  anna, usdc, vault, governor, Team} = await loadFixture(defaultFixture);
+    
+    await expect(vault.connect(governor).setMintFeeBps(100))
+    .to.emit(vault, "MintFeeChanged(address,uint256,uint256)")
+    .withArgs(governor.address, 0, 100);
+
+    console.log("Mint Fee: ", (await vault.mintFeeBps())/100, "%");
+    expectApproxSupply(cash, cashUnits("200"));
+    console.log("CASH total supply: ", cashUnitsFormat(await cash.totalSupply())); // Initial CASH Total Supply= 200
+    console.log("Treasury (Team) USDC Balance: ", usdcUnitsFormat(await usdc.balanceOf(Team.address)));
+    console.log("Anna CASH: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
+
+    // Anna mint 10000 USDC
+    console.log("Anna: Minting 10000 USDC");
+    await usdc.connect(anna).approve(vault.address, usdcUnits("10000"));
+    await expect(vault.connect(anna).mint(usdc.address, usdcUnits("10000"), 0)).to.emit(vault, "MintFeeCharged(address,uint256)").withArgs(anna.address, usdcUnits("100"));
+
+    console.log("Anna CASH: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
+    console.log("CASH total supply: ", cashUnitsFormat(await cash.totalSupply()));
+    console.log("Treasury (Team) USDC Balance: ", usdcUnitsFormat(await usdc.balanceOf(Team.address)));
+    expect(await cash.totalSupply()).to.be.closeTo(cashUnits("10100.00"), cashUnits("1.00"));
+
+  });
+
 });

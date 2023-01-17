@@ -62,9 +62,9 @@ describe("MeshSwap Strategy", function () {
   };
 
   const mint = async (amount, asset) => {
-    await asset.connect(anna).justMint(units(amount, asset));
+    await asset.connect(anna).mint(units(amount, asset));
     await asset.connect(anna).approve(vault.address, units(amount, asset));
-    await vault.connect(anna).justMint(asset.address, units(amount, asset), 0);
+    await vault.connect(anna).mint(asset.address, units(amount, asset), 0);
   };
 
   beforeEach(async function () {
@@ -98,10 +98,10 @@ describe("MeshSwap Strategy", function () {
     harvester = fixture.harvester;
     dripper = fixture.dripper;
 
-    console.log("Setting the", strategyName ,"as default strategy for ", primaryStableName);
+    console.log("Setting the", strategyName ,"as quick deposit strategy");
     await vault
       .connect(governor)
-      .setAssetDefaultStrategy(primaryStable.address, strategy.address);
+      .setQuickDepositStrategies([strategy.address]);;
 
 });
 
@@ -112,15 +112,11 @@ describe("MeshSwap Strategy", function () {
         console.log("---------------------------------------------------------------------------")
 
         await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("100.0"));
-        await vault.connect(matt).justMint(primaryStable.address, primaryStableUnits("100.0"), 0);
+        await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("100.0"), 0);
 
         await expectApproxSupply(cash, cashUnits("300"));
 
-        expect(await primaryStable.balanceOf(vault.address)).to.be.within(primaryStableUnits("299.0"), primaryStableUnits("300.0"));;
-
         console.log("Auto allocating funds from vault")
-        await vault.allocate();
-
         console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "in", strategyName, "Strategy:", (await primaryStable.balanceOf(strategy.address)).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " - MeshUniToken in", strategyName, "Strategy:", (await MeshUniToken.balanceOf(strategy.address)).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " - meshToken in", strategyName, "Strategy:", (await meshToken.balanceOf(strategy.address)).toString());
@@ -140,11 +136,11 @@ describe("MeshSwap Strategy", function () {
       console.log("Initial", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
  
       await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("10.0"));
-      await vault.connect(matt).justMint(primaryStable.address, primaryStableUnits("10.0"), 0);
+      await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("10.0"), 0);
 
       console.log("Before Allocation of", primaryStableName , "to",strategyName,"- ", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
       console.log("Auto allocating funds from vault")
-      await vault.allocate();
+      
 
       console.log("After Allocation of", primaryStableName , "to ",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
       console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
@@ -179,11 +175,11 @@ describe("MeshSwap Strategy", function () {
 
         console.log("Adding", primaryStableName , "to Vault: ", primaryStableUnits("500.0").toString());
         await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("500.0"));
-        await vault.connect(matt).justMint(primaryStable.address, primaryStableUnits("500.0"), 0);
+        await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("500.0"), 0);
 
         console.log("Before Allocation of", primaryStableName , "to ", strategyName, "- ", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
         console.log("Auto allocating funds from vault")
-        await vault.allocate();
+        
 
         console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
         console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in MeshSwap", primaryStableName , "Strategy:",primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());

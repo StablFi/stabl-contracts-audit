@@ -25,6 +25,7 @@ const defaultRedeemAmount = 1000;
  * Prints test accounts.
  */
 async function accounts(taskArguments, hre, privateKeys) {
+  console.log("Network:", hre.network.name);
   const accounts = await hre.ethers.getSigners();
   const roles = ["Deployer", "Governor"];
 

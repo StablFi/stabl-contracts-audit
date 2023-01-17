@@ -8,7 +8,10 @@ async function allocate(taskArguments, hre) {
   const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
 
   const vaultProxy = await hre.ethers.getContract("VaultProxy");
-  const vault = await hre.ethers.getContractAt("contracts/interfaces/IVault.sol:IVault", vaultProxy.address);
+  const vault = await hre.ethers.getContractAt(
+    "contracts/interfaces/IVault.sol:IVault",
+    vaultProxy.address
+  );
 
   console.log(
     "Sending a transaction to call allocate() on",
@@ -27,7 +30,10 @@ async function rebalance(taskArguments, hre) {
   const sGovernor = hre.ethers.provider.getSigner(governorAddr);
 
   const vaultProxy = await hre.ethers.getContract("VaultProxy");
-  const vault = await hre.ethers.getContractAt("contracts/interfaces/IVault.sol:IVault", vaultProxy.address);
+  const vault = await hre.ethers.getContractAt(
+    "contracts/interfaces/IVault.sol:IVault",
+    vaultProxy.address
+  );
 
   console.log(
     "Sending a transaction to call rebalance() on",
@@ -42,6 +48,41 @@ async function rebalance(taskArguments, hre) {
 }
 
 async function harvest(taskArguments, hre) {
+  const {
+    isMainnet,
+    isRinkeby,
+    isFork,
+    isPolygonStaging,
+  } = require("../test/helpers");
+  const { executeProposal } = require("../utils/deploy");
+  const { proposeArgs } = require("../utils/governor");
+
+  if (isMainnet || isRinkeby) {
+    throw new Error("The harvest task can not be used on mainnet or rinkeby");
+  }
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = hre.ethers.provider.getSigner(governorAddr);
+
+  const vaultProxy = await hre.ethers.getContract("VaultProxy");
+  const vault = await hre.ethers.getContractAt(
+    "contracts/interfaces/IVault.sol:IVault",
+    vaultProxy.address
+  );
+
+  const harvesterProxy = await hre.ethers.getContract("HarvesterProxy");
+  const harvester = await hre.ethers.getContractAt(
+    "Harvester",
+    harvesterProxy.address
+  );
+  let transaction;
+  transaction = await harvester.connect(sGovernor)["harvest()"]();
+  console.log("Sent. Transaction hash:", transaction.hash);
+  console.log("Waiting for confirmation...");
+  await hre.ethers.provider.waitForTransaction(transaction.hash);
+  console.log("Harvest transaction confirmed");
+}
+
+async function harvestSupportStrategy(taskArguments, hre) {
   const { isMainnet, isRinkeby, isFork } = require("../test/helpers");
   const { executeProposal } = require("../utils/deploy");
   const { proposeArgs } = require("../utils/governor");
@@ -53,27 +94,70 @@ async function harvest(taskArguments, hre) {
   const sGovernor = hre.ethers.provider.getSigner(governorAddr);
 
   const vaultProxy = await hre.ethers.getContract("VaultProxy");
-  const vault = await hre.ethers.getContractAt("contracts/interfaces/IVault.sol:IVault", vaultProxy.address);
+  const vault = await hre.ethers.getContractAt(
+    "contracts/interfaces/IVault.sol:IVault",
+    vaultProxy.address
+  );
 
-  if (isFork) {
-    // On the fork, impersonate the guardian and execute a proposal to call harvest.
-    const propDescription = "Call harvest on vault";
-    const propArgs = await proposeArgs([
-      {
-        contract: vault,
-        signature: "harvest()",
-      },
-    ]);
-    await executeProposal(propArgs, propDescription);
-  } else {
-    // Localhost network. Call harvest directly from the governor account.
-    console.log(
-      "Sending a transaction to call harvest() on",
-      vaultProxy.address
-    );
-    await vault.connect(sGovernor)["harvest()"]();
+  strategyAddress = taskArguments.strategy;
+  console.log("Setting harvester to support", strategyAddress);
+
+  const harvesterProxy = await hre.ethers.getContract("HarvesterProxy");
+  const harvester = await hre.ethers.getContractAt(
+    "Harvester",
+    harvesterProxy.address
+  );
+  let transaction;
+  transaction = await harvester
+    .connect(sGovernor)
+    ["setSupportedStrategy(address,bool)"](strategyAddress, true);
+  console.log("Sent. Transaction hash:", transaction.hash);
+  console.log("Waiting for confirmation...");
+  await hre.ethers.provider.waitForTransaction(transaction.hash);
+  console.log("Harvest transaction confirmed");
+}
+
+async function removeStrategy(taskArguments, hre) {
+  const { isMainnet, isRinkeby, isFork } = require("../test/helpers");
+  const { executeProposal } = require("../utils/deploy");
+  const { proposeArgs } = require("../utils/governor");
+
+  if (isMainnet || isRinkeby) {
+    throw new Error("The harvest task can not be used on mainnet or rinkeby");
   }
-  console.log("Harvest done");
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = hre.ethers.provider.getSigner(governorAddr);
+
+  const vaultProxy = await hre.ethers.getContract("VaultProxy");
+  const vault = await hre.ethers.getContractAt(
+    "contracts/interfaces/IVault.sol:IVault",
+    vaultProxy.address
+  );
+
+  strategyAddress = taskArguments.strategy;
+  console.log("Removing Strategy Support from the Vault", strategyAddress);
+
+  const harvesterProxy = await hre.ethers.getContract("HarvesterProxy");
+  const harvester = await hre.ethers.getContractAt(
+    "Harvester",
+    harvesterProxy.address
+  );
+  let transaction;
+  transaction = await harvester
+    .connect(sGovernor)
+    ["setSupportedStrategy(address,bool)"](strategyAddress, false);
+  console.log("Sent. Transaction hash:", transaction.hash);
+  console.log("Waiting for confirmation...");
+  await hre.ethers.provider.waitForTransaction(transaction.hash);
+  console.log("Harvester transaction confirmed");
+
+  transaction = await vault
+    .connect(sGovernor)
+    ["removeStrategy(address)"](strategyAddress);
+  console.log("Sent. Transaction hash:", transaction.hash);
+  console.log("Waiting for confirmation...");
+  await hre.ethers.provider.waitForTransaction(transaction.hash);
+  console.log("Vault transaction confirmed");
 }
 
 async function rebase(taskArguments, hre) {
@@ -83,7 +167,7 @@ async function rebase(taskArguments, hre) {
   const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
 
   const vaultProxy = await hre.ethers.getContract("VaultProxy");
-  const vault = await hre.ethers.getContractAt("contracts/interfaces/IVault.sol:IVault", vaultProxy.address);
+  const vault = await hre.ethers.getContractAt("VaultCore", vaultProxy.address);
 
   console.log("Sending a transaction to call rebase() on", vaultProxy.address);
   await withConfirmation(vault.connect(sDeployer).rebase());
@@ -121,7 +205,10 @@ async function yield(taskArguments, hre) {
   }
 
   const vaultProxy = await ethers.getContract("VaultProxy");
-  const vault = await ethers.getContractAt("contracts/interfaces/IVault.sol:IVault", vaultProxy.address);
+  const vault = await ethers.getContractAt(
+    "contracts/interfaces/IVault.sol:IVault",
+    vaultProxy.address
+  );
 
   const cashProxy = await ethers.getContract("CASHProxy");
   const cash = await ethers.getContractAt("CASH", cashProxy.address);
@@ -209,7 +296,10 @@ async function reallocate(taskArguments, hre) {
   const sStrategist = hre.ethers.provider.getSigner(strategistAddr);
 
   const vaultProxy = await hre.ethers.getContract("VaultProxy");
-  const vault = await hre.ethers.getContractAt("contracts/interfaces/IVault.sol:IVault", vaultProxy.address);
+  const vault = await hre.ethers.getContractAt(
+    "contracts/interfaces/IVault.sol:IVault",
+    vaultProxy.address
+  );
 
   const allAssets = [
     {
@@ -329,11 +419,20 @@ async function payout(taskArguments, hre) {
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = hre.ethers.provider.getSigner(governorAddr);
 
+  // Print ether balance of govenor
+  const balance = await sGovernor.getBalance();
+  console.log("Governor balance:", hre.ethers.utils.formatEther(balance)); 
+
   const vaultProxy = await hre.ethers.getContract("VaultProxy");
-  const vault = await hre.ethers.getContractAt("contracts/interfaces/IVault.sol:IVault", vaultProxy.address);
+  const vault = await hre.ethers.getContractAt(
+    "contracts/interfaces/IVault.sol:IVault",
+    vaultProxy.address
+  );
 
   console.log("Sending a transaction to call payout() on", vaultProxy.address);
-  await withConfirmation(vault.connect(sGovernor).payout());
+  await vault.connect(sGovernor).payout({
+    // gasLimit: 24000000,
+  });
   console.log("Payout transaction confirmed");
 }
 
@@ -344,11 +443,260 @@ async function collectAndRebase(taskArguments, hre) {
   const sGovernor = hre.ethers.provider.getSigner(governorAddr);
 
   const dripperProxy = await hre.ethers.getContract("DripperProxy");
-  const dripper = await hre.ethers.getContractAt("Dripper", dripperProxy.address);
+  const dripper = await hre.ethers.getContractAt(
+    "Dripper",
+    dripperProxy.address
+  );
 
-  console.log("Sending a transaction to call collectAndRebase() on", dripperProxy.address);
-  await withConfirmation(dripper.connect(sGovernor).collectAndRebase());
+  console.log(
+    "Sending a transaction to call collectAndRebase() on",
+    dripperProxy.address
+  );
+  await withConfirmation(dripper.connect(sGovernor).collectAndRebase(), {
+    gasLimit: 40000000,
+  });
   console.log("collectAndRebase transaction confirmed");
+}
+
+async function setMaxSupplyDiff(taskArguments, hre) {
+  const {
+    isMainnet,
+    isRinkeby,
+    isFork,
+    isPolygonStaging,
+  } = require("../test/helpers");
+  const { executeProposal } = require("../utils/deploy");
+  const { proposeArgs } = require("../utils/governor");
+
+  const { governorAddr } = await getNamedAccounts();
+  let sGovernor = hre.ethers.provider.getSigner(governorAddr);
+
+  const vaultProxy = await hre.ethers.getContract("VaultProxy");
+  const vault = await hre.ethers.getContractAt(
+    "contracts/interfaces/IVault.sol:IVault",
+    vaultProxy.address
+  );
+
+  percent = taskArguments.value;
+  console.log("Setting MaxSupplyDiff to ", percent);
+  if (!(isMainnet || isPolygonStaging)) {
+    const prodGovernor = await vault.governor();
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [prodGovernor],
+    });
+    sGovernor = await ethers.provider.getSigner(prodGovernor);
+  }
+  let transaction;
+  // Diff  = 2246344070078799 = 0.22%
+  // 0.05% =  500000000000000
+  // 0.5%  = 5000000000000000
+  // await vaultAdmin.connect(prodGovernorSigner).setMaxSupplyDiff("500000000000000");
+  transaction = await vault
+    .connect(sGovernor)
+    ["setMaxSupplyDiff(uint256)"](percent);
+  console.log("Sent. Transaction hash:", transaction.hash);
+  console.log("Waiting for confirmation...");
+  await hre.ethers.provider.waitForTransaction(transaction.hash);
+  console.log("MaxSupplyDiff transaction confirmed");
+}
+
+async function setQuickDepositStrategy(taskArguments, hre) {
+  const {
+    isMainnet,
+    isRinkeby,
+    isFork,
+    isPolygonStaging,
+  } = require("../test/helpers");
+  const { executeProposal } = require("../utils/deploy");
+  const { proposeArgs } = require("../utils/governor");
+
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = hre.ethers.provider.getSigner(governorAddr);
+
+  const vaultProxy = await hre.ethers.getContract("VaultProxy");
+  const vault = await hre.ethers.getContractAt(
+    "contracts/interfaces/IVault.sol:IVault",
+    vaultProxy.address
+  );
+
+  let allStrategies = await vault.getAllStrategies();
+
+  strategyAddress = taskArguments.strategy;
+  console.log("Setting Strategy as QuickDeposit: ", strategyAddress);
+  if (!allStrategies.includes(strategyAddress)) {
+    console.error("Strategy not approved: ", strategyAddress);
+    return;
+  } else {
+    console.log("Strategy pre-approved. Continuing...");
+  }
+
+  let transaction;
+  transaction = await vault
+    .connect(sGovernor)
+    ["setQuickDepositStrategies(address[])"]([strategyAddress]);
+  console.log("Sent. Transaction hash:", transaction.hash);
+  console.log("Waiting for confirmation...");
+  await hre.ethers.provider.waitForTransaction(transaction.hash);
+  console.log("QuickDeposit Strategy:  transaction confirmed");
+}
+
+async function setMintFeeBps(taskArguments, hre) {
+  const {
+    isMainnet,
+    isRinkeby,
+    isFork,
+    isPolygonStaging,
+  } = require("../test/helpers");
+  const { executeProposal } = require("../utils/deploy");
+  const { proposeArgs } = require("../utils/governor");
+
+  const { governorAddr } = await getNamedAccounts();
+  let sGovernor = hre.ethers.provider.getSigner(governorAddr);
+
+  const vaultProxy = await hre.ethers.getContract("VaultProxy");
+  const vault = await hre.ethers.getContractAt(
+    "contracts/interfaces/IVault.sol:IVault",
+    vaultProxy.address
+  );
+
+  let bps = taskArguments.value;
+  console.log("Setting setMintFeeBps to ", bps / 100, "%");
+  if (!(isMainnet || isPolygonStaging)) {
+    const prodGovernor = await vault.governor();
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [prodGovernor],
+    });
+    sGovernor = await ethers.provider.getSigner(prodGovernor);
+  }
+  let transaction;
+  // Diff  = 2246344070078799 = 0.22%
+  // 0.05% =  500000000000000
+  // 0.5%  = 5000000000000000
+  // await vaultAdmin.connect(prodGovernorSigner).setMaxSupplyDiff("500000000000000");
+  transaction = await vault.connect(sGovernor)["setMintFeeBps(uint256)"](bps);
+  console.log("Sent. Transaction hash:", transaction.hash);
+  console.log("Waiting for confirmation...");
+  await hre.ethers.provider.waitForTransaction(transaction.hash);
+  console.log("setMintFeeBps transaction confirmed");
+}
+
+async function setFeeCollectors(taskArguments, hre) {
+  const {
+    isMainnet,
+    isRinkeby,
+    isFork,
+    isPolygonStaging,
+  } = require("../test/helpers");
+  const { executeProposal } = require("../utils/deploy");
+  const { proposeArgs } = require("../utils/governor");
+
+  const { governorAddr } = await getNamedAccounts();
+  let sGovernor = hre.ethers.provider.getSigner(governorAddr);
+
+  const vaultProxy = await hre.ethers.getContract("VaultProxy");
+  const vault = await hre.ethers.getContractAt(
+    "contracts/interfaces/IVault.sol:IVault",
+    vaultProxy.address
+  );
+
+  let labs = taskArguments.labs;
+  let team = taskArguments.team;
+  let treasury = taskArguments.treasury;
+  console.log("Setting");
+  console.log("Labs: ", labs);
+  console.log("Team: ", team);
+  console.log("Treasury: ", treasury);
+
+  let transaction;
+  transaction = await vault
+    .connect(sGovernor)
+    ["setFeeParams(address,address,address)"](labs, team, treasury);
+  console.log("Sent. Transaction hash:", transaction.hash);
+  console.log("Waiting for confirmation...");
+  await hre.ethers.provider.waitForTransaction(transaction.hash);
+  console.log("setFeeParams transaction confirmed");
+}
+
+async function setPerformanceFee(taskArguments, hre) {
+  const {
+    isMainnet,
+    isRinkeby,
+    isFork,
+    isPolygonStaging,
+  } = require("../test/helpers");
+  const { executeProposal } = require("../utils/deploy");
+  const { proposeArgs } = require("../utils/governor");
+
+  const { governorAddr } = await getNamedAccounts();
+  let sGovernor = hre.ethers.provider.getSigner(governorAddr);
+
+  const vaultProxy = await hre.ethers.getContract("VaultProxy");
+  const vault = await hre.ethers.getContractAt(
+    "contracts/interfaces/IVault.sol:IVault",
+    vaultProxy.address
+  );
+
+  let labsBps = taskArguments.labsbps;
+  let teamBps = taskArguments.teambps;
+  console.log("Setting");
+  console.log("Labs: ", labsBps / 100, "%");
+  console.log("Team: ", teamBps / 100, "%");
+
+  let transaction;
+  transaction = await vault
+    .connect(sGovernor)
+    ["setHarvesterFeeParams(uint256,uint256)"](labsBps, teamBps);
+  console.log("Sent. Transaction hash:", transaction.hash);
+  console.log("Waiting for confirmation...");
+  await hre.ethers.provider.waitForTransaction(transaction.hash);
+  console.log("setFeeParams transaction confirmed");
+}
+
+async function withdrawAllFromStrategy(taskArguments, hre) {
+  const { governorAddr } = await getNamedAccounts();
+  let sGovernor = hre.ethers.provider.getSigner(governorAddr);
+
+  const vaultProxy = await hre.ethers.getContract("VaultProxy");
+  const vault = await hre.ethers.getContractAt(
+    "contracts/interfaces/IVault.sol:IVault",
+    vaultProxy.address
+  );
+
+  let strategyAddress = taskArguments.strategy;
+
+  let transaction;
+  transaction = await vault
+    .connect(sGovernor)
+    ["withdrawAllFromStrategy(address)"](strategyAddress);
+  console.log("Sent. Transaction hash:", transaction.hash);
+  console.log("Waiting for confirmation...");
+  await hre.ethers.provider.waitForTransaction(transaction.hash);
+  console.log("withdrawAllFromStrategy transaction confirmed");
+}
+
+async function withdrawFromStrategy(taskArguments, hre) {
+  const { governorAddr } = await getNamedAccounts();
+  let sGovernor = hre.ethers.provider.getSigner(governorAddr);
+
+  const vaultProxy = await hre.ethers.getContract("VaultProxy");
+  const vault = await hre.ethers.getContractAt(
+    "contracts/interfaces/IVault.sol:IVault",
+    vaultProxy.address
+  );
+
+  let strategyAddress = taskArguments.strategy;
+  let amount = taskArguments.amount;
+
+  let transaction;
+  transaction = await vault
+    .connect(sGovernor)
+    ["withdrawFromStrategy(address,uint256)"](strategyAddress, amount);
+  console.log("Sent. Transaction hash:", transaction.hash);
+  console.log("Waiting for confirmation...");
+  await hre.ethers.provider.waitForTransaction(transaction.hash);
+  console.log("withdrawAllFromStrategy transaction confirmed");
 }
 
 module.exports = {
@@ -360,5 +708,14 @@ module.exports = {
   rebase,
   yield,
   payout,
-  collectAndRebase
+  collectAndRebase,
+  harvestSupportStrategy,
+  removeStrategy,
+  setMaxSupplyDiff,
+  setQuickDepositStrategy,
+  setMintFeeBps,
+  setFeeCollectors,
+  setPerformanceFee,
+  withdrawAllFromStrategy,
+  withdrawFromStrategy
 };

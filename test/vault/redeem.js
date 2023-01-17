@@ -15,10 +15,17 @@ const {
   setOracleTokenPriceUsd,
   isFork,
   expectApproxSupply,
+  runStrategyLogic,
 } = require("../helpers");
 
 describe("Vault Redeem", function () {
-
+  beforeEach(async function () {
+    const fixture = await loadFixture(defaultFixture);
+    await runStrategyLogic(fixture.governor, "Tetu Strategy", fixture.cTetuUsdcStrategyProxy.address); // require whitelisting first.
+    await runStrategyLogic(fixture.governor, "Tetu Strategy", fixture.cTetuDaiStrategyProxy.address); // require whitelisting first.
+    await runStrategyLogic(fixture.governor, "Tetu Strategy", fixture.cTetuUsdtStrategyProxy.address); // require whitelisting first.
+    console.log("strategy set & whitelisted");
+  });
   it("Should allow a redeem with DAI @fork @special", async () => {
     const { cash, vault, dai, matt, Labs, Team, usdc } = await loadFixture(defaultFixture);
     console.log("")
@@ -191,6 +198,67 @@ describe("Vault Redeem", function () {
       cashUnits("200.0"),
       usdcUnits("0.025")
     ]);
+
+  });
+
+  it("Should correctly provide multiuser redeem outputs when CASH supply > Total Vault Value depreciates @fork", async () => {
+    const { cash, governor, vault, usdc, matt, josh, Labs, Team,  dai } = await loadFixture(defaultFixture);
+    
+    let totalCashSupply = await cash.totalSupply();
+    console.log("Total CASH Supply: ", cashUnitsFormat(totalCashSupply.toString()));
+    console.log("Vault.checkBalance(): ", usdcUnitsFormat((await vault.checkBalance()).toString()));
+    console.log("MATT CASH Balance: ", cashUnitsFormat((await cash.balanceOf(matt.address)).toString()))
+    console.log("MATT USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(matt.address)).toString()))
+    console.log("JOSH CASH Balance: ", cashUnitsFormat((await cash.balanceOf(josh.address)).toString()))
+    console.log("JOSH USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(josh.address)).toString()))
+    console.log("Labs USDC Balance: ", ((await usdc.balanceOf(Labs.address)).toString()))
+    console.log("Team USDC Balance: ", ((await usdc.balanceOf(Team.address)).toString()))
+    // Initial MATT USDC
+    let mattUSDCBalance = await usdc.balanceOf(matt.address);
+    // Initial JOSH USDC
+    let joshUSDCBalance = await usdc.balanceOf(josh.address);
+
+    console.log("MATT - Minting 100 USDC")
+    await usdc.connect(matt).approve(vault.address, usdcUnits("100.0"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("100.0"), 0);
+    // need to add this in quickdeposit - Meshswap
+  //   if (primaryStableBalanceFromToken0 + primaryStableBalance > 0) {
+  //     return (primaryStableBalanceFromToken0 + primaryStableBalance) /2;
+  // }
+    console.log("JOSH - Minting 200 USDC")
+    await usdc.connect(josh).approve(vault.address, usdcUnits("200.0"));
+    await vault.connect(josh).mint(usdc.address, usdcUnits("200.0"), 0);
+
+    totalCashSupply = await cash.totalSupply();
+    console.log("Total CASH Supply: ", cashUnitsFormat(totalCashSupply.toString()));
+    console.log("Vault.checkBalance(): ", usdcUnitsFormat((await vault.checkBalance()).toString()));
+    console.log("MATT CASH Balance: ", cashUnitsFormat((await cash.balanceOf(matt.address)).toString()))
+    console.log("MATT USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(matt.address)).toString()))
+    console.log("JOSH CASH Balance: ", cashUnitsFormat((await cash.balanceOf(josh.address)).toString()))
+    console.log("JOSH USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(josh.address)).toString()))
+    console.log("Labs USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(Labs.address)).toString()))
+    console.log("Team USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(Team.address)).toString()))
+
+    totalCashSupply = await cash.totalSupply();
+    console.log("Total CASH Supply: ", cashUnitsFormat(totalCashSupply.toString()));
+    console.log("MATT CASH Balance: ", cashUnitsFormat((await cash.balanceOf(matt.address)).toString()))
+    console.log("MATT USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(matt.address)).toString()))
+    console.log("JOSH CASH Balance: ", cashUnitsFormat((await cash.balanceOf(josh.address)).toString()))
+    console.log("JOSH USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(josh.address)).toString()))
+    console.log("Labs USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(Labs.address)).toString()))
+    console.log("Team USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(Team.address)).toString()))
+    
+    console.log("MATT - Redeeming 100 CASH")
+    await vault.connect(matt).redeem(cashUnits("100.0"), 0);
+
+    console.log("MATT CASH Balance: ", cashUnitsFormat((await cash.balanceOf(matt.address)).toString()))
+    console.log("MATT USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(matt.address)).toString()))
+    console.log("JOSH CASH Balance: ", cashUnitsFormat((await cash.balanceOf(josh.address)).toString()))
+    console.log("JOSH USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(josh.address)).toString()))
+    console.log("Labs USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(Labs.address)).toString()))
+    console.log("Team USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(Team.address)).toString()))
+    // expect(await usdc.balanceOf(matt.address)).closeTo(mattUSDCBalance.sub(usdcUnits("100")), usdcUnits("1"));
+    // expect(await usdc.balanceOf(josh.address)).closeTo(mattUSDCBalance.sub(usdcUnits("100")), usdcUnits("1"));
 
   });
 

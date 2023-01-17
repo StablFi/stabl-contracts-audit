@@ -7,13 +7,6 @@ import { InitializeGovernedUpgradeabilityProxy } from "./InitializeGovernedUpgra
 /**
  * @notice CASHProxy delegates calls to an CASH implementation
  */
-contract BoxProxy is InitializeGovernedUpgradeabilityProxy {
-
-}
-
-/**
- * @notice CASHProxy delegates calls to an CASH implementation
- */
 contract CASHProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
@@ -201,6 +194,40 @@ contract DodoStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 
+/**
+ * @notice TetuStrategyUSDCProxy delegates calls to a TetuStrategy implementation
+ */
+contract TetuStrategyUSDCProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice TetuStrategyUSDTProxy delegates calls to a TetuStrategy implementation
+ */
+contract TetuStrategyUSDTProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice TetuStrategyDAIProxy delegates calls to a TetuStrategy implementation
+ */
+contract TetuStrategyDAIProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice ClearpoolWintermuteStrategyProxy delegates calls to a ClearpoolStrategy implementation
+ */
+contract ClearpoolWintermuteStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice GainsDAIStrategyProxy delegates calls to a GainsStrategy implementation
+ */
+contract GainsDAIStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
 
 /**
  * @notice HarvesterProxy delegates calls to a Harvester implementation
@@ -213,5 +240,12 @@ contract HarvesterProxy is InitializeGovernedUpgradeabilityProxy {
  * @notice DripperProxy delegates calls to a Dripper implementation
  */
 contract DripperProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice RebaseToNonEoaHandlerProxy delegates calls to a RebaseToNonEoaHandler implementation
+ */
+contract RebaseToNonEoaHandlerProxy is InitializeGovernedUpgradeabilityProxy {
 
 }

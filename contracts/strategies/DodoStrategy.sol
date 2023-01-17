@@ -167,7 +167,7 @@ contract DodoStrategy is InitializableAbstractStrategy, BalancerExchange, DodoEx
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
+    function withdrawAll() external override onlyVault nonReentrant {
         // get all lp tokens
         uint256 userLPBalance = dodoMine.balanceOf(address(this));
         if (userLPBalance == 0) {
@@ -204,7 +204,7 @@ contract DodoStrategy is InitializableAbstractStrategy, BalancerExchange, DodoEx
         uint256 totalPrimaryStable;
 
         uint256 dodoBalance = dodoToken.balanceOf(address(this));
-        // console.log("dodoBalance", dodoBalance);
+        console.log("RewardCollection - DODO Balance: ", dodoBalance);
         if (dodoBalance > 0) {
             // swap v2 dodo -> usdt
             uint256 usdtTokenAmount = _useDodoSwapV2(
@@ -237,7 +237,7 @@ contract DodoStrategy is InitializableAbstractStrategy, BalancerExchange, DodoEx
         }
 
         uint256 wmaticBalance = wmaticToken.balanceOf(address(this));
-        // console.log("wmaticBalance", wmaticBalance);
+        console.log("RewardCollection - WMATIC Balance: ", wmaticBalance);
         if (wmaticBalance > 0) {
             uint256 wmaticPrimaryStable = swap(
                 balancerVault,
@@ -254,7 +254,8 @@ contract DodoStrategy is InitializableAbstractStrategy, BalancerExchange, DodoEx
 
             totalPrimaryStable += wmaticPrimaryStable;
         }
-        // console.log("totalPrimaryStable", totalPrimaryStable);
+        console.log("RewardCollection - (DODO+WMATIC) -> USDC Balance: ", totalPrimaryStable);
+
 
         if (totalPrimaryStable > 0) {
             emit RewardTokenCollected(

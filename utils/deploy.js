@@ -15,7 +15,8 @@ const {
   getAssetAddresses,
   isSmokeTest,
   isVerificationRequired,
-  forceStorageLayoutCheck
+  forceStorageLayoutCheck,
+  isPolygonStaging
 
 } = require("../test/helpers.js");
 
@@ -74,9 +75,48 @@ const deployWithConfirmation = async (
   );
 
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
-  if (isMainnet) {
+  if (isMainnet || isPolygonStaging) {
     await storeStorageLayoutForContract(hre, contractName);
     if (isVerificationRequired) {
+      await verifyContract(result, args, contract);
+    }
+  }
+
+  log(`Deployed ${contractName}`, result);
+  return result;
+};
+
+const deployWithConfirmationWhenNotAlreadyDeployed = async (
+  contractName,
+  args,
+  contract,
+  skipUpgradeSafety = false
+) => {
+  // check that upgrade doesn't corrupt the storage slots
+  if ((!skipUpgradeSafety) || forceStorageLayoutCheck) {
+    await assertUpgradeIsSafe(hre, contractName);
+  }
+
+  const { deploy } = deployments;
+  const { deployerAddr } = await getNamedAccounts();
+  if (!args) args = null;
+  if (!contract) contract = contractName;
+
+  const result = await withConfirmation(
+    deploy(contractName, {
+      from: deployerAddr,
+      args,
+      contract,
+      fieldsToCompare: null,
+      skipIfAlreadyDeployed: true,
+      ...(await getTxOpts()),
+    })
+  );
+
+  // if upgrade happened on the mainnet save the new storage slot layout to the repo
+  if (isMainnet || isPolygonStaging) {
+    await storeStorageLayoutForContract(hre, contractName);
+    if (isVerificationRequired == "true") {
       await verifyContract(result, args, contract);
     }
   }
@@ -321,12 +361,12 @@ function deploymentWithProposal(opts, fn) {
         const { contract, signature, args } = action;
 
         console.log(`Sending governance action ${signature} to ${contract.address}`);
-        await withConfirmation(
+        let tx = await withConfirmation(
           contract
             .connect(sGovernor)
             [signature](...args, await getTxOpts(gasLimit))
         );
-        console.log(`... ${signature} completed`);
+        console.log(`... ${signature} completed`, tx.hash);
       }
     // }
   };
@@ -358,4 +398,5 @@ module.exports = {
   executeProposalOnFork,
   sendProposal,
   deploymentWithProposal,
+  deployWithConfirmationWhenNotAlreadyDeployed,
 };

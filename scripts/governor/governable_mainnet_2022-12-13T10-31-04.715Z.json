@@ -1,0 +1,207 @@
+[
+  {
+    "name": "CASHProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x80487b4f8f70e793A81a42367c225ee0B94315DF"
+  },
+  {
+    "name": "Dripper",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0xF9eEfA6510e59B5A41a85f8a3ffcDC0198bC4Cb4"
+  },
+  {
+    "name": "DripperProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x4b2b1dC2ecc46551D88389f7F06ef2BEde77b4E1"
+  },
+  {
+    "name": "Harvester",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x12714BB9B4a4D1915aAdd869f3012413C5B0dA55"
+  },
+  {
+    "name": "HarvesterProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0xDbb57B33583fa86D4B31E88CF951CAF6FD561fFE"
+  },
+  {
+    "name": "Vault",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0xcf8DFaa8001E754EF7468988C7a4fb9091d360fe"
+  },
+  {
+    "name": "VaultProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0xd1bb7d35db39954d43e16f65F09DD0766A772cFF"
+  },
+  {
+    "name": "WrappedCASH",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x4a67c10FFDEDd194E19b8ed502f1c1876210d36F"
+  },
+  {
+    "name": "WrappedCASHProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x953Ad46adE32E1c2E76D725544811E4DD410cb50"
+  },
+  {
+    "name": "DodoStrategyProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x84eF43F0B0721a4535d796c865a2eaf1Fee721d3"
+  },
+  {
+    "name": "DystopiaStrategyDaiUsdtProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0xeFba08d4B24cF71be88EBa96a4da42dD6de785F0"
+  },
+  {
+    "name": "DystopiaStrategyUsdcDaiProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x098ec4e038a3B258C2EeAA95D0b8f29781dac5b4"
+  },
+  {
+    "name": "DystopiaStrategyUsdcUsdtProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0xD80d60619095501C075045DE147dBE29b991c221"
+  },
+  {
+    "name": "MeshSwapStrategyDAIProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x6B635942E2f800aA8E7478cf0EAe1eD64366492A"
+  },
+  {
+    "name": "MeshSwapStrategyUSDCDAIProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0xBeBA4F5C44Bb36DEBeAD3d2f6aFd51782162229e"
+  },
+  {
+    "name": "MeshSwapStrategyUSDCUSDTProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x6DE4da5Ad6447a1D32AccADD6AE1c415516d5CB8"
+  },
+  {
+    "name": "MeshSwapStrategyUSDTDAIProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x146d55185ea607BA591EC7A60e481ba2C8892453"
+  },
+  {
+    "name": "MeshSwapStrategyUSDTProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x58ac28Ae7989eb24Ff7AAcEBD3CA6119B099F07e"
+  },
+  {
+    "name": "QuickSwapStrategyUSDCDAIProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0xD80412eDDC13B1054f41b7DC73140Fd342467064"
+  },
+  {
+    "name": "SynapseStrategyProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x60ce9B4FBdbeAabc85f7A4652bAb117B8F8bB768"
+  },
+  {
+    "name": "Am3CurveStrategyProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0xAf41EC72bb9A913429506161089d4FF87d33C45b"
+  },
+  {
+    "name": "QuickSwapStrategyUSDCUSDTProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0xAF53C6C082Fd80f8a4493D034bd386E86f917c45"
+  },
+  {
+    "name": "MeshSwapStrategyUSDCProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0xcF8350ccf2A1bF3b0293721Be991176177410216"
+  },
+  {
+    "name": "DodoStrategy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0xfa5078C1Af3a2Fc277Ba3f65167f68a30AFc66a1"
+  },
+  {
+    "name": "MeshSwapStrategy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0xb78b407047Bc25895240578f352aF44ab3c06Af9"
+  },
+  {
+    "name": "QuickSwapStrategy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0xA7C2381F1B62E87AB3415937B1131d86b7Ac1713"
+  },
+  {
+    "name": "ClearpoolWintermuteStrategyProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x514D98ec0ca42FCB3cc2C140B38fe76cF3d11751"
+  },
+  {
+    "name": "ClearpoolStrategy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x7f0f9D1B4EF16c08B2e6a27f2ef64131E57be6D7"
+  },
+  {
+    "name": "GainsDAIStrategyProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0xbC69EB87c3C7772B1Fbc1c174f57669Fbb673858"
+  },
+  {
+    "name": "DystopiaStrategy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x242df46583A1E2A46E5cC9Ea828709545546106E"
+  },
+  {
+    "name": "MeshSwapStrategyDual",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0xF57D35c16710f107f40035b4dD2e937e421A55ee"
+  },
+  {
+    "name": "CASH",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x23c75957f125b65c0300a4d59c91fd8ebe9fdbd9"
+  },
+  {
+    "name": "GainsStrategy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x18D12CafDd107435092CceBd2846F9EE45ACBDE2"
+  },
+  {
+    "name": "VaultCore",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x04a4c0Fe34FD180fB1Fc0C0a44348a95869e13Ef"
+  },
+  {
+    "name": "Am3CurveStrategy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x2B95a509C53e5c9aAd89cb8853363DbA2e2a6360"
+  },
+  {
+    "name": "SynapseStrategy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0xc487eff9e78833875aaa9a42f3c2f0b8f196d9f2"
+  },
+  {
+    "name": "TetuStrategyDAIProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x58D85fAb1aE932244643E133e267b1952217E81a"
+  },
+  {
+    "name": "TetuStrategyUSDCProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x9D7416C2Ce07CB7a71335fbcdE2f89A30B262064"
+  },
+  {
+    "name": "TetuStrategyUSDTProxy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x407889eD44bEe744907675d52ae4d996e8425be2"
+  },
+  {
+    "name": "VaultAdmin",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x636FC07d158aa735875025C3cFA87C99cC621Eac"
+  },
+  {
+    "name": "TetuStrategy",
+    "governor": "0xA2a067351C977113B98096F75c9685a3d51614eC",
+    "address": "0x1d0ab84292d097E494B890E2C4994f4aC5Ff0a2A"
+  }
+]

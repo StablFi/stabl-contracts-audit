@@ -7,7 +7,6 @@ import "../interfaces/balancer/interfaces/IGeneralPool.sol";
 import "../interfaces/balancer/interfaces/IMinimalSwapInfoPool.sol";
 import "../interfaces/balancer/interfaces/IPoolSwapStructs.sol";
 import { StableMath } from "../utils/StableMath.sol";
-import "hardhat/console.sol";
 
 abstract contract BalancerExchange {
     using StableMath for uint256;
@@ -26,8 +25,6 @@ abstract contract BalancerExchange {
         uint256 limit
     ) internal returns (uint256) {
         IVault balancerVault = IVault(_balancerVault);
-        console.log("BalancerVault: swapping 1", address(balancerVault));
-        console.log("BalancerVault: swapping 1", address(tokenIn),  IERC20(address(tokenIn)).balanceOf(address(this)) );
         IERC20(address(tokenIn)).approve(address(balancerVault), IERC20(address(tokenIn)).balanceOf(address(this)));
 
         if (limit == 0) {
@@ -64,8 +61,6 @@ abstract contract BalancerExchange {
         uint256 amount
     ) internal returns (uint256) {
         IVault balancerVault = IVault(_balancerVault);
-        console.log("BalancerVault: swapping 2", address(tokenIn),  IERC20(address(tokenIn)).balanceOf(address(this)) );
-
         IERC20(address(tokenIn)).approve(address(balancerVault), IERC20(address(tokenIn)).balanceOf(address(this)));
 
         IVault.SingleSwap memory singleSwap;
@@ -222,9 +217,7 @@ abstract contract BalancerExchange {
     ) internal view returns (uint256) {
         IVault balancerVault = IVault(_balancerVault);
         uint256 amount0ToSwap = (amount0Total * reserve1) / (reserve0 * denominator1 / denominator0 + reserve1);
-        console.log("amount0ToSwap", amount0ToSwap);
         for (uint i = 0; i < precision; i++) {
-            console.log("onSwap", address(token0), address(token1));
             uint256 amount1 = onSwap(_balancerVault, poolId, IVault.SwapKind.GIVEN_IN, token0, token1, amount0ToSwap);
             amount0ToSwap = (amount0Total * reserve1) / (reserve0 * amount1 / amount0ToSwap + reserve1);
         }

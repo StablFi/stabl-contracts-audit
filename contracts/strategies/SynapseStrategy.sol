@@ -37,7 +37,7 @@ contract SynapseStrategy is InitializableAbstractStrategy, DystopiaExchange {
     IPool public synapsePool;
     IStakerPool public synapseStakerPool;
     uint256 public synapseStakerPoolId;
-    uint256 public fgfd;
+    uint256 public unused;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -101,7 +101,6 @@ contract SynapseStrategy is InitializableAbstractStrategy, DystopiaExchange {
         nonReentrant
     {
         require(_asset == address(primaryStable), "Token not supported.");
-        require(_amount >= IERC20(_asset).balanceOf(address(this)), "Not enough assets");
         require(_amount > 0, "Must deposit something");
         // console.log("Depositing ", _amount, " primaryStable tokens to Synapse");
         emit TransferLog("Depositing to Synapse: ", _asset, _amount);
@@ -162,8 +161,9 @@ contract SynapseStrategy is InitializableAbstractStrategy, DystopiaExchange {
 
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
         // console.log("Withdrawing from the Synapse: ", primaryStableBalance);
+        require(primaryStableBalance > _amount, "Not enough balance");
         if (primaryStableBalance > 0) {
-            primaryStable.safeTransfer(_beneficiary, primaryStableBalance);
+            primaryStable.safeTransfer(_beneficiary, _amount);
         }
 
     }
@@ -196,7 +196,6 @@ contract SynapseStrategy is InitializableAbstractStrategy, DystopiaExchange {
         nonReentrant
     {
         (uint256 amount,) = synapseStakerPool.userInfo(synapseStakerPoolId, address(this));
-        // console.log("synapseStakerPool.userInfo - Collecting reward tokens: ", amount);
         if (amount == 0) {
             return;
         }
@@ -205,7 +204,7 @@ contract SynapseStrategy is InitializableAbstractStrategy, DystopiaExchange {
         // sell rewards
         uint256 totalPrimaryStable;
         uint256 synBalance = synToken.balanceOf(address(this));
-        // console.log("Synapse balance: ", synBalance);
+        console.log("RewardCollection - SYN Balance: ", synBalance);
         if (synBalance > 0) {
             uint256 synToPrimaryStable = _swapExactTokensForTokens(
                 address(synToken),
@@ -216,13 +215,12 @@ contract SynapseStrategy is InitializableAbstractStrategy, DystopiaExchange {
                 synBalance,
                 address(this)
             );
-            // console.log( "USDP: " , intermediateToken.balanceOf(address(this)) );
-            // console.log( "USDC: " , primaryStable.balanceOf(address(this)) );
-            // console.log("Synapse usdc: ", synToPrimaryStable);
             totalPrimaryStable += synToPrimaryStable;
         }
 
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
+        console.log("RewardCollection - SYN -> USDP -> USDC Balance: ", primaryStableBalance);
+
         if (primaryStableBalance > 0) {
             emit RewardTokenCollected(
                 harvesterAddress,

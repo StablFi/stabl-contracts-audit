@@ -61,9 +61,9 @@ describe("Dystopia Strategy", function () {
   };
 
   const mint = async (amount, asset) => {
-    await asset.connect(anna).justMint(units(amount, asset));
+    await asset.connect(anna).mint(units(amount, asset));
     await asset.connect(anna).approve(vault.address, units(amount, asset));
-    await vault.connect(anna).justMint(asset.address, units(amount, asset), 0);
+    await vault.connect(anna).mint(asset.address, units(amount, asset), 0);
   };
 
   beforeEach(async function () {
@@ -101,10 +101,10 @@ describe("Dystopia Strategy", function () {
     harvester = fixture.harvester;
     dripper = fixture.dripper;
 
-    console.log("Setting the", strategyName ,"as default strategy for ", primaryStableName);
+    console.log("Setting the", strategyName ,"as quick deposit strategies");
     await vault
       .connect(governor)
-      .setAssetDefaultStrategy(primaryStable.address, strategy.address);
+      .setQuickDepositStrategies([strategy.address]);
 
 });
 
@@ -115,14 +115,13 @@ describe("Dystopia Strategy", function () {
         console.log("---------------------------------------------------------------------------")
 
         await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("100.0"));
-        await vault.connect(matt).justMint(primaryStable.address, primaryStableUnits("100.0"), 0);
+        await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("100.0"), 0);
 
         await expectApproxSupply(cash, cashUnits("300"));
 
-        expect(await primaryStable.balanceOf(vault.address)).to.be.within(primaryStableUnits("299.0"), primaryStableUnits("300.0"));;
 
         console.log("Auto allocating funds from vault")
-        await vault.allocate();
+        
 
         console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "in", strategyName, "Strategy:", (await primaryStable.balanceOf(strategy.address)).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " - dystPair in", strategyName, "Strategy:", (await dystPair.balanceOf(strategy.address)).toString());
@@ -138,7 +137,7 @@ describe("Dystopia Strategy", function () {
         console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "equivalent in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
         
         expect(await penroseToken.balanceOf(userProxyThis)).to.be.above("0");
-        expect(await strategy.checkBalance()).to.be.within(primaryStableUnits("299.0"), primaryStableUnits("300.0"));
+        expect(await strategy.checkBalance()).to.be.within(primaryStableUnits("99.0"), primaryStableUnits("100.0"));
 
     });
 
@@ -151,11 +150,11 @@ describe("Dystopia Strategy", function () {
       console.log("Initial", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
  
       await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("10.0"));
-      await vault.connect(matt).justMint(primaryStable.address, primaryStableUnits("10.0"), 0);
+      await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("10.0"), 0);
 
       console.log("Before Allocation of", primaryStableName , "to",strategyName,"- ", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
       console.log("Auto allocating funds from vault")
-      await vault.allocate();
+      
 
       console.log("After Allocation of", primaryStableName , "to ",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
       console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
@@ -170,6 +169,83 @@ describe("Dystopia Strategy", function () {
       await vault
         .connect(governor)
         .withdrawAllFromStrategy(strategy.address);
+      console.log("After Withdrawal from",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString() );
+      
+      console.log("After Withdrawal from",strategyName," -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
+      console.log("After Withdrawal from",strategyName," - dystPair in", strategyName, " Strategy:", usdcUnitsFormat(await dystPair.balanceOf(strategy.address)).toString());
+      
+      console.log("After Withdrawal from",strategyName," - penroseToken in", strategyName, " Strategy:", (await penroseToken.balanceOf(userProxyThis)).toString());
+      console.log("After Withdrawal from",strategyName," -", primaryStableName , "equivalent in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
+
+      await expect(strategy).to.have.a.balanceOf("0", primaryStable);
+
+    });
+    it("Should be able to deposit when there is 1 GWei of token1 present in the strategy"+ " @fast @fork", async function () {
+      // REQUIRE deposit function to be available with Governor
+      console.log("-----------------------------------------------------------------------------------------")
+      console.log("    Should be able to deposit when there is 1 GWei of token1 present in the strategy")
+      console.log("-----------------------------------------------------------------------------------------")
+      await expectApproxSupply(cash, cashUnits("200"));
+
+      console.log("Initial", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
+   
+      console.log("Adding 0.000001 USDT to the Startegy")
+      await usdt.connect(matt).transfer(strategy.address,"1");
+      
+      await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("1000.0"));
+      await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("1000.0"), 0);
+
+
+      console.log("Before Allocation of", primaryStableName , "to",strategyName,"- ", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
+      console.log("Auto allocating funds from vault")
+      
+
+      console.log("After Allocation of", primaryStableName , "to ",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " - dystPair in", strategyName, " Strategy:", usdcUnitsFormat(await dystPair.balanceOf(strategy.address)).toString());
+      let userProxyThis = await  penroseLens.userProxyByAccount(strategy.address);
+      let stakingAddress = await penroseLens.stakingRewardsByDystPool(dystPair.address);
+      penroseToken = await ethers.getContractAt(erc20Abi, stakingAddress);
+
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " - penroseToken in", strategyName, " Strategy:", (await penroseToken.balanceOf(userProxyThis)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "equivalent in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
+
+
+    });
+
+
+    it("Should be able to withdraw when there is 1 GWei of token1 present in the strategy"+ " @fast @fork", async function () {
+      // REQUIRE withdraw function to be available with Governor
+      console.log("-----------------------------------------------------------------------------------------")
+      console.log("    Should be able to withdraw when there is 1 GWei of token1 present in the strategy")
+      console.log("-----------------------------------------------------------------------------------------")
+      await expectApproxSupply(cash, cashUnits("200"));
+
+      console.log("Initial", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
+
+      await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("1000.0"));
+      await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("1000.0"), 0);
+
+      console.log("Adding 0.000001 USDT to the Startegy")
+      await usdt.connect(matt).transfer(strategy.address,"1");
+
+      console.log("Before Allocation of", primaryStableName , "to",strategyName,"- ", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
+      console.log("Auto allocating funds from vault")
+      
+
+      console.log("After Allocation of", primaryStableName , "to ",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " - dystPair in", strategyName, " Strategy:", usdcUnitsFormat(await dystPair.balanceOf(strategy.address)).toString());
+      let userProxyThis = await  penroseLens.userProxyByAccount(strategy.address);
+      let stakingAddress = await penroseLens.stakingRewardsByDystPool(dystPair.address);
+      penroseToken = await ethers.getContractAt(erc20Abi, stakingAddress);
+
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " - penroseToken in", strategyName, " Strategy:", (await penroseToken.balanceOf(userProxyThis)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "equivalent in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
+
+      await strategy
+        .connect(governor)
+        .withdraw(vault.address, usdc.address, primaryStableUnits("30.0"));
       console.log("After Withdrawal from",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString() );
       
       console.log("After Withdrawal from",strategyName," -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
@@ -196,11 +272,11 @@ describe("Dystopia Strategy", function () {
 
         console.log("Adding", primaryStableName , "to Vault: ", primaryStableUnits("500.0").toString());
         await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("500.0"));
-        await vault.connect(matt).justMint(primaryStable.address, primaryStableUnits("500.0"), 0);
+        await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("500.0"), 0);
 
         console.log("Before Allocation of", primaryStableName , "to ", strategyName, "- ", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
         console.log("Auto allocating funds from vault")
-        await vault.allocate();
+        
 
         console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
         console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in ", strategyName , ":",primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());

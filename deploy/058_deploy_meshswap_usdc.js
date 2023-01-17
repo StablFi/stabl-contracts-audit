@@ -47,7 +47,7 @@ module.exports = deploymentWithProposal(
       "MeshSwapStrategy",
       dMeshSwapStrategyUSDCProxy.address
     );
-
+    
     // 3. Init the proxy to point at the implementation
     console.log("3. Init the proxy to point at the implementation")
     await withConfirmation(
@@ -76,15 +76,10 @@ module.exports = deploymentWithProposal(
         await getTxOpts()
       )
     );
-    // 4.1 Setting the _setRouter
-    console.log("4.2. Setting the setBalancer")
-    const setBalancer = "setBalancer(address,bytes32)";
+    // 4.1 Setting the setOracleRouterSwappingPool
+    console.log("4.2. Setting the Swapping")
     await withConfirmation(
-    cMeshSwapStrategyUSDC.connect(sDeployer)[setBalancer](
-        assetAddresses.balancerVault,
-        assetAddresses.balancerPoolIdUsdcTusdDaiUsdt,
-        await getTxOpts()
-      )
+      cMeshSwapStrategyUSDC.connect(sDeployer).setOracleRouterSwappingPool()
     );
     
     // 5. Transfer governance

@@ -8,23 +8,24 @@ pragma solidity ^0.8.0;
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol"  ;
-
-import { IRewardStaking } from "./IRewardStaking.sol";
-import { DystopiaExchange } from "./DystopiaExchange.sol";
-import { IConvexDeposits } from "./IConvexDeposits.sol";
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import { OvnMath } from "../utils/OvnMath.sol";
 import { StableMath } from "../utils/StableMath.sol";
-import { Helpers } from "../utils/Helpers.sol";
-import { AaveBorrowLibrary } from "../utils/AaveBorrowLibrary.sol";
-import "../interfaces/IPriceFeed.sol";
+
+import { DystopiaExchange } from "./DystopiaExchange.sol";
 import "../interfaces/IDystopiaLP.sol";
-import "../interfaces/ISwapper.sol";
+import "../interfaces/IMiniVault.sol";
 import "../connectors/IUserProxy.sol";
 import "../connectors/IPenLens.sol";
-import "../exchanges/BalancerExchange.sol";
+import "../exchanges/CurveExchange.sol";
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
-import { OvnMath } from "../utils/OvnMath.sol";
+import "../utils/Helpers.sol";
 import "hardhat/console.sol";
-contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, BalancerExchange  {
+
+
+contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, CurveExchange  {
+    using SafeMath for uint256;
+    using OvnMath for uint256;
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -35,7 +36,7 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
 
     address public  dystRouter;
 
-    bytes32 public poolId;
+    bytes32 public poolId; // NOT USED
 
 
     IERC20 public primaryStable;
@@ -51,7 +52,9 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
     IUserProxy public userProxy;
     IPenLens public penLens;
 
-    address public balancerVault;
+    address public swappingPool;
+    uint256[] public minThresholds;
+    address public oracleRouter;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -98,7 +101,7 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
         address _penLens,
         address _penToken
     ) external onlyGovernor {
-        balancerVault = _balancerVault;
+
         poolId = _poolId;
         gauge = IDystopiaLP(_gauge);
         dystPair = IDystopiaLP(_dystPair);
@@ -106,70 +109,62 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
         userProxy = IUserProxy(_userProxy);
         penLens = IPenLens(_penLens);
         penToken = IERC20(_penToken);
+        // Putting Thresholds in Place
+        for (uint8 i = 0; i < 4; i++) {
+            minThresholds.push(0);
+        }
+        // minThresholds.push(10 ** (Helpers.getDecimals(address(token0)) - 1));  // 0.1 token0
+        // minThresholds.push(10 ** (Helpers.getDecimals(address(token1)) - 1));  // 0.1 token1
+        // minThresholds.push(10 ** (Helpers.getDecimals(address(primaryStable)) - 1));  // 0.1 PS
+        // minThresholds.push(10 ** (Helpers.getDecimals(address(dystPair)) - 1)); // 0.1 LP token
+    }
+    function setOracleRouterPriceProvider() external onlyGovernor {
+        swappingPool = IMiniVault(vaultAddress).swappingPool();
+        oracleRouter = IMiniVault(vaultAddress).priceProvider();
     }
 
     function getReserves() internal view returns (uint256,uint256) {
         (uint256 reserve0, uint256 reserve1,) = dystPair.getReserves();
-        require(reserve0 > (10 ** (IERC20Metadata(address(token0) ).decimals() - 3))  && reserve1 > (10 ** (IERC20Metadata(address(token1) ).decimals() - 3)), "Reserves too low");
+        require(reserve0 > (10 ** (Helpers.getDecimals(address(token0)) - 3))  && reserve1 > (10 ** (Helpers.getDecimals(address(token1)) - 3)), "Reserves too low");
         return (reserve0, reserve1) ;
+    }
+    function divideBasedOnReserves(uint256 _psAmount) internal view returns (uint256,uint256) {
+        ( uint256 reserve0, uint256  reserve1) = getReserves();
+        // Scale both reserves to 18 decimals
+        reserve0 = reserve0.scaleBy(18,IERC20Metadata(address(token0) ).decimals());
+        reserve1 = reserve1.scaleBy(18,IERC20Metadata(address(token1) ).decimals());
+        // Divide _psAmount in the ratio of reserve 0 and reserve 1
+        uint256 amount0ToSwap = _psAmount.mul(reserve0).div(reserve0.add(reserve1));
+        uint256 amount1ToSwap = _psAmount.sub(amount0ToSwap);
+        return (amount0ToSwap, amount1ToSwap);
+
     }
     // TODO: _amount is not being used.
     function _deposit(address _asset, uint256 _amount)  internal {
         require(_asset == address(primaryStable), "Token not supported.");
-        (uint256 reserve0, uint256 reserve1) = getReserves();
-        _swapPrimaryStableToToken0();
-
-        // count amount token1 to swap
-        uint256 token1Balance = token1.balanceOf(address(this));
-        uint256 amount0From1;
-        if (token1Balance > 0) {
-            amount0From1 = onSwap(
-                balancerVault,
-                poolId,
-                IVault.SwapKind.GIVEN_IN,
-                token1,
-                token0,
-                token1Balance
+        (uint256 _amount0ToSwap,uint256 _amount1ToSwap) = divideBasedOnReserves(_amount);
+        if (_amount0ToSwap > 0 && address(token0) != address(primaryStable)) {
+            swap(
+                swappingPool,
+                address(primaryStable),
+                address(token0),
+                _amount0ToSwap,
+                oracleRouter
             );
         }
-
-        uint256 token0Balance = token0.balanceOf(address(this));
-        // console.log("token0", address(token0));
-        // console.log("token1", address(token1));
-        // console.log("token0Balance", token0Balance);
-        // console.log("token1Balance", token1Balance);
-        // console.log("reserve0", reserve0);
-        // console.log("reserve1", reserve1);
-        uint256 amountToken0ToSwap = _getAmountToSwap(
-            balancerVault,
-            token0Balance,
-            reserve0,
-            reserve1,
-            assetToDenominator[address(token0)],
-            assetToDenominator[address(token1)],
-            1,
-            poolId,
-            token0,
-            token1
-        );
-        // console.log("amountToken0ToSwap", amountToken0ToSwap);
-        // swap some of token0 to token1
-        swap(
-            balancerVault,
-            poolId,
-            IVault.SwapKind.GIVEN_IN,
-            IAsset(address(token0)),
-            IAsset(address(token1)),
-            address(this),
-            address(this),
-            amountToken0ToSwap,
-            0
-        );
-
+        if (_amount1ToSwap > 0 && address(token1) != address(primaryStable)) {
+             swap(
+                swappingPool,
+                address(primaryStable),
+                address(token1),
+                _amount1ToSwap,
+                oracleRouter
+            );
+        }
+    
         // add liquidity
-        token0Balance = token0.balanceOf(address(this));
-        token1Balance = token1.balanceOf(address(this));
-
+        uint256 token0Balance = token0.balanceOf(address(this));
+        uint256 token1Balance = token1.balanceOf(address(this));
         _addLiquidity(
             address(token0),
             address(token1),
@@ -201,11 +196,17 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
     function depositAll() external override onlyVault nonReentrant {
         _deposit(address(primaryStable), primaryStable.balanceOf(address(this)));
     }
+    function _lpToWithdraw(uint256 _amount0ToSwap, uint256 _amount1ToSwap, uint256 _totalLP, uint256 _r0, uint256 _r1) internal pure returns (uint256) {
+        uint256 lpForA0 = _amount0ToSwap.mul(_totalLP).div(_r0);
+        uint256 lpForA1 = _amount1ToSwap.mul(_totalLP).div(_r1);
+        uint256 lpToWithdraw =  lpForA0 > lpForA1 ? lpForA0 : lpForA1;
+        return lpToWithdraw;
+    }
     function withdraw(
         address _beneficiary,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant  {
+    ) external override onlyVaultOrGovernor nonReentrant  {
 
         require(_asset == address(primaryStable), "Token not supported.");
         (uint256 reserve0, uint256 reserve1) = getReserves();
@@ -213,29 +214,22 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
         // Fetch amount of penPool LP currently staked
         address userProxyThis = penLens.userProxyByAccount(address(this));
         address stakingAddress = penLens.stakingRewardsByDystPool(address(dystPair));
-        uint256 lpTokenBalance = IERC20(stakingAddress).balanceOf(userProxyThis);
+        uint256 lpTokenBalance = IERC20(stakingAddress).balanceOf(userProxyThis) + dystPair.balanceOf(userProxyThis);
+        (uint256 _amount0ToSwap,uint256 _amount1ToSwap) = divideBasedOnReserves(_amount.sub(primaryStable.balanceOf(address(this))));
 
-        if (lpTokenBalance > 0) {
-            // count amount to unstake
+
+        if (lpTokenBalance > minThresholds[3]) {
             uint256 totalLpBalance = dystPair.totalSupply();
-            uint256 lpTokensToWithdraw = _getAmountLpTokensToWithdraw(
-                balancerVault,
-                OvnMath.addBasisPoints(_amount, BASIS_POINTS_FOR_SLIPPAGE),
-                reserve0,
-                reserve1,
-                totalLpBalance,
-                assetToDenominator[address(token0)],
-                assetToDenominator[address(token1)],
-                poolId,
-                token0,
-                token1
-            );
-
+            uint256 lpTokensToWithdraw = _lpToWithdraw(_amount0ToSwap, _amount1ToSwap, totalLpBalance, reserve0, reserve1).addBasisPoints(200);
             if (lpTokensToWithdraw > lpTokenBalance) {
                 lpTokensToWithdraw = lpTokenBalance;
             }
+            uint256 amountOut0Min = reserve0 * lpTokensToWithdraw / totalLpBalance;
+            uint256 amountOut1Min = reserve1 * lpTokensToWithdraw / totalLpBalance;
 
-            userProxy.unstakeLpAndWithdraw(address(dystPair), lpTokensToWithdraw);
+            if (dystPair.balanceOf(address(this)) < lpTokensToWithdraw) {
+                userProxy.unstakeLpAndWithdraw(address(dystPair), lpTokensToWithdraw - dystPair.balanceOf(address(this)));
+            }
             uint256 unstakedLPTokenBalance = dystPair.balanceOf(address(this));
             // remove liquidity
             _removeLiquidity(
@@ -243,19 +237,17 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
                 address(token1),
                 address(dystPair),
                 unstakedLPTokenBalance,
-                OvnMath.subBasisPoints(reserve0 * unstakedLPTokenBalance / totalLpBalance, BASIS_POINTS_FOR_SLIPPAGE),
-                OvnMath.subBasisPoints(reserve1 * unstakedLPTokenBalance / totalLpBalance, BASIS_POINTS_FOR_SLIPPAGE),
+                amountOut0Min,
+                amountOut1Min,
                 address(this)
             );
         }
         _swapAssetsToPrimaryStable();
-        uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
-         // console.log("Withdraw USDC: ", primaryStableBalance);
-        primaryStable.safeTransfer(_beneficiary, primaryStableBalance);
+        primaryStable.safeTransfer(_beneficiary, _amount);
        
     }
 
-    function withdrawAll() external override onlyVaultOrGovernor nonReentrant  {
+    function withdrawAll() external override onlyVault nonReentrant  {
         (uint256 reserve0, uint256 reserve1) = getReserves();
         _withdrawFromDystopiaAndStakeToPenrose();
         // Fetch amount of penPool LP currently staked
@@ -287,7 +279,6 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
          // console.log("Withdraw Primary Stable: ", primaryStableBalance);
         primaryStable.safeTransfer(vaultAddress, primaryStableBalance);
-        _collectRewards();
     }
 
 
@@ -297,37 +288,32 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
         override
         returns (uint256 balance)
     {
-        uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
+        // uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
         uint256 token0Balance = token0.balanceOf(address(this));
         uint256 token1Balance = token1.balanceOf(address(this));
 
-        // Fetch amount of penPool LP currently staked
         address userProxyThis = penLens.userProxyByAccount(address(this));
-         // console.log("dystPair", address(dystPair));
         address stakingAddress = penLens.stakingRewardsByDystPool(address(dystPair));
-         // console.log("stakingAddress: ", stakingAddress);
         uint256 lpTokenBalance = IERC20(stakingAddress).balanceOf(userProxyThis);
         lpTokenBalance += gauge.balanceOf(address(this));
+        lpTokenBalance += dystPair.balanceOf(address(this));
+
         if (lpTokenBalance > 0) {
             uint256 totalLpBalance = dystPair.totalSupply();
             (uint256 reserve0, uint256 reserve1) = getReserves();
             token0Balance += reserve0 * lpTokenBalance / totalLpBalance;
             token1Balance += reserve1 * lpTokenBalance / totalLpBalance;
         }
-        // console.log("tokenBalance", token0Balance, token1Balance);
 
-        uint256 primaryStableBalanceFromToken0;
+       uint256 primaryStableBalanceFromToken0;
         if ( (address(token0) != address(primaryStable))  ) {
-            if (token0Balance > 0) {
+            if (token0Balance > minThresholds[0]) {
                 primaryStableBalanceFromToken0 = onSwap(
-                    balancerVault,
-                    poolId,
-                    IVault.SwapKind.GIVEN_IN,
-                    token0,
-                    primaryStable,
+                    swappingPool,
+                    address(token0),
+                    address(primaryStable),
                     token0Balance
                 );
-                // console.log("Token0 swap -  primaryStableBalanceFromToken0 ", primaryStableBalanceFromToken0);
             }
         } else {
             primaryStableBalanceFromToken0 += token0Balance;
@@ -335,23 +321,18 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
 
         uint256 primaryStableBalanceFromToken1;
         if ( (address(token1) != address(primaryStable))  ) {
-            if (token1Balance > 0) {
+            if (token1Balance > minThresholds[1]) {
                 primaryStableBalanceFromToken1 = onSwap(
-                    balancerVault,
-                    poolId,
-                    IVault.SwapKind.GIVEN_IN,
-                    token1,
-                    primaryStable,
+                    swappingPool,
+                    address(token1),
+                    address(primaryStable),
                     token1Balance
                 );
-                // console.log("Token1 swap -  primaryStableBalanceFromToken1 ", primaryStableBalanceFromToken1);
             }
         } else {
             primaryStableBalanceFromToken1 += token1Balance;
         }
-         // console.log("primaryStableBalanceFromToken0: ", primaryStableBalanceFromToken0);
-         // console.log("primaryStableBalanceFromToken1: ", primaryStableBalanceFromToken1);
-        return primaryStableBalanceFromToken0 + primaryStableBalanceFromToken1 + primaryStableBalance;
+        return primaryStableBalanceFromToken0 + primaryStableBalanceFromToken1;
     }
 
     function collectRewardTokens()
@@ -363,18 +344,14 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
         _collectRewards();
     }
     function _collectRewards() internal {
-         console.log("Starting collection of rewards");
         _withdrawFromDystopiaAndStakeToPenrose();
-
-         console.log("_withdrawFromDystopiaAndStakeToPenrose called");
         // claim rewards
         userProxy.claimStakingRewards();
-         console.log("claimStakingRewards called");
         // sell rewards
         uint256 totalUsdc;
 
         uint256 dystBalance = dystToken.balanceOf(address(this));
-         console.log("dystBalance: ", dystBalance);
+        console.log("RewardCollection - DYST Balance: ", dystBalance);
         if (dystBalance > 0) {
             uint256 dystUsdc = _swapExactTokensForTokens(
                 address(dystToken),
@@ -387,9 +364,8 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
             );
             totalUsdc += dystUsdc;
         }
-         console.log("totalUsdc=",totalUsdc);
         uint256 penBalance = penToken.balanceOf(address(this));
-        console.log("penBalance: ", penBalance);
+        console.log("RewardCollection - PEN Balance: ", penBalance);
         if (penBalance > 0) {
             uint256 penUsdc = _swapExactTokensForTokens(
                 address(penToken),
@@ -400,11 +376,10 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
                 penBalance,
                 address(this)
             );
-            console.log("penUsdc",penUsdc);
             totalUsdc += penUsdc;
         }
         uint256 balance = primaryStable.balanceOf(address(this));
-        console.log("balance: ", balance);
+        console.log("RewardCollection - (DODO+WMATIC) -> USDC Balance: ", balance);
         emit RewardTokenCollected(
             harvesterAddress,
             address(primaryStable),
@@ -436,52 +411,46 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
     }
 
     function _swapAssetsToPrimaryStable() internal {
-        if ( (address(token0) != address(primaryStable)) && (token0.balanceOf(address(this)) > 0) )  {
-             // console.log("Swapping token0");
+        if ( (address(token0) != address(primaryStable)) && (token0.balanceOf(address(this)) > minThresholds[0]) )  {
             swap(
-                balancerVault,
-                poolId,
-                IVault.SwapKind.GIVEN_IN,
-                IAsset(address(token0)),
-                IAsset(address(primaryStable)),
-                address(this),
-                address(this),
+                swappingPool,
+                address(token0),
+                address(primaryStable),
                 token0.balanceOf(address(this)),
-                0
+                oracleRouter
             );
         }
-        if ( (address(token1) != address(primaryStable)) && (token1.balanceOf(address(this)) > 0) )  {
-             // console.log("Swapping token1");
+        if ( (address(token1) != address(primaryStable)) && (token1.balanceOf(address(this)) > minThresholds[1])  )  {
             swap(
-                balancerVault,
-                poolId,
-                IVault.SwapKind.GIVEN_IN,
-                IAsset(address(token1)),
-                IAsset(address(primaryStable)),
-                address(this),
-                address(this),
+                swappingPool,
+                address(token1),
+                address(primaryStable),
                 token1.balanceOf(address(this)),
-                0
+                oracleRouter
             );
         }
     }
     function _swapPrimaryStableToToken0() internal {
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
         if (address(primaryStable) != address(token0)) {
-            swap(
-                balancerVault,
-                poolId,
-                IVault.SwapKind.GIVEN_IN,
-                IAsset(address(primaryStable)),
-                IAsset(address(token0)),
-                address(this),
-                address(this),
+           swap(
+                swappingPool,
+                address(primaryStable),
+                address(token0),
                 primaryStableBalance,
-                0
+                oracleRouter
             );
         }
     }
 
+    function setThresholds(uint256[] calldata _minThresholds) external onlyVaultOrGovernor nonReentrant {
+        require(_minThresholds.length == 4, "4 thresholds needed");
+        // minThresholds[0] - token0 minimum swapping threshold
+        // minThresholds[1] - token1 minimum swapping threshold
+        // minThresholds[2] - primaryStable to token0 minimum swapping threshold
+        // minThresholds[3] - lp token minimum swapping threshold
+        minThresholds = _minThresholds;
+    }
 
      /**
      * @dev Retuns bool indicating whether asset is supported by strategy
@@ -503,6 +472,8 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Ba
     function safeApproveAllTokens() external override {
         // NOT NEEDED
     }
+
+    
 
     /**
      * @dev Internal method to respond to the addition of new asset / cTokens

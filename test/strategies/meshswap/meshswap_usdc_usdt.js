@@ -63,9 +63,9 @@ describe("MeshSwap Dual Strategy", function () {
   };
 
   const mint = async (amount, asset) => {
-    await asset.connect(anna).justMint(units(amount, asset));
+    await asset.connect(anna).mint(units(amount, asset));
     await asset.connect(anna).approve(vault.address, units(amount, asset));
-    await vault.connect(anna).justMint(asset.address, units(amount, asset), 0);
+    await vault.connect(anna).mint(asset.address, units(amount, asset), 0);
   };
 
   beforeEach(async function () {
@@ -103,10 +103,10 @@ describe("MeshSwap Dual Strategy", function () {
     harvester = fixture.harvester;
     dripper = fixture.dripper;
 
-    console.log("Setting the", strategyName ,"as default strategy for ", primaryStableName);
+    console.log("Setting the", strategyName ,"as quick deposit strategy");
     await vault
       .connect(governor)
-      .setAssetDefaultStrategy(primaryStable.address, strategy.address);
+      .setQuickDepositStrategies([strategy.address]);;
 
 });
 
@@ -117,24 +117,21 @@ describe("MeshSwap Dual Strategy", function () {
         console.log("---------------------------------------------------------------------------")
 
         await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("100.0"));
-        await vault.connect(matt).justMint(primaryStable.address, primaryStableUnits("100.0"), 0);
+        await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("100.0"), 0);
 
         await expectApproxSupply(cash, cashUnits("300"));
 
-        expect(await primaryStable.balanceOf(vault.address)).to.be.within(primaryStableUnits("299.0"), primaryStableUnits("300.0"));;
 
         console.log("Auto allocating funds from vault")
-        await vault.allocate();
-
         console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "in", strategyName, "Strategy:", (await primaryStable.balanceOf(strategy.address)).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " - meshSwapPair in", strategyName, "Strategy:", (await meshSwapPair.balanceOf(strategy.address)).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " - meshToken in", strategyName, "Strategy:", (await meshToken.balanceOf(strategy.address)).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "equivalent in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "equivalent via Oracle in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
         
-        expect(await meshSwapPair.balanceOf(strategy.address)).to.be.within(usdcUnits("149.0"), usdcUnits("150.0"));
-        expect(await strategy.checkBalance()).to.be.within(primaryStableUnits("299.0"), primaryStableUnits("300.0"));
-        expect(await strategy.netAssetValue()).to.be.within(primaryStableUnits("299.0"), primaryStableUnits("300.0"));
+        expect(await meshSwapPair.balanceOf(strategy.address)).to.be.within(usdcUnits("49.0"), usdcUnits("50.0"));
+        expect(await strategy.checkBalance()).to.be.within(primaryStableUnits("99.0"), primaryStableUnits("100.0"));
+        expect(await strategy.netAssetValue()).to.be.within(primaryStableUnits("99.0"), primaryStableUnits("100.0"));
 
     });
 
@@ -147,11 +144,11 @@ describe("MeshSwap Dual Strategy", function () {
       console.log("Initial", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
  
       await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("10.0"));
-      await vault.connect(matt).justMint(primaryStable.address, primaryStableUnits("10.0"), 0);
+      await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("10.0"), 0);
 
       console.log("Before Allocation of", primaryStableName , "to",strategyName,"- ", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
       console.log("Auto allocating funds from vault")
-      await vault.allocate();
+      
 
       console.log("After Allocation of", primaryStableName , "to ",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
       console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
@@ -174,6 +171,76 @@ describe("MeshSwap Dual Strategy", function () {
 
     });
 
+    it("Should be able to deposit when there is 1 GWei of token1 present in the strategy"+ " @fast @fork", async function () {
+      console.log("-----------------------------------------------------------------------------------------")
+      console.log("    Should be able to deposit when there is 1 GWei of token1 present in the strategy")
+      console.log("-----------------------------------------------------------------------------------------")
+      await expectApproxSupply(cash, cashUnits("200"));
+
+      console.log("Initial", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
+   
+      console.log("Adding 0.000001 USDT to the Startegy")
+      await usdc.connect(matt).transfer(strategy.address,"1");
+      
+      await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("1000.0"));
+      await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("1000.0"), 0);
+
+
+      console.log("Before Allocation of", primaryStableName , "to",strategyName,"- ", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
+      console.log("Auto allocating funds from vault")
+
+      console.log("After Allocation of", primaryStableName , "to ",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " - meshSwapPair in", strategyName, " Strategy:", usdcUnitsFormat(await meshSwapPair.balanceOf(strategy.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " - meshToken in", strategyName, " Strategy:", (await meshToken.balanceOf(strategy.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "equivalent in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
+      console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "equivalent via Oracle in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
+
+    });
+
+
+    it("Should be able to withdraw when there is 1 GWei of token1 present in the strategy"+ " @fast @fork", async function () {
+      // REQUIRE withdraw function to be available with Governor
+      console.log("-----------------------------------------------------------------------------------------")
+      console.log("    Should be able to withdraw when there is 1 GWei of token1 present in the strategy")
+      console.log("-----------------------------------------------------------------------------------------")
+      await expectApproxSupply(cash, cashUnits("200"));
+
+      console.log("Initial", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
+
+      await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("1000.0"));
+      await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("1000.0"), 0);
+
+      console.log("Adding 0.000001 USDT to the Startegy")
+      await usdt.connect(matt).transfer(strategy.address,"1");
+
+      console.log("Before Allocation of", primaryStableName , "to",strategyName,"- ", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
+      console.log("Auto allocating funds from vault")
+      
+
+      console.log("After Allocation of", primaryStableName , "to ",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " - meshSwapPair in", strategyName, " Strategy:", usdcUnitsFormat(await meshSwapPair.balanceOf(strategy.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " - meshToken in", strategyName, " Strategy:", (await meshToken.balanceOf(strategy.address)).toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "equivalent in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
+      console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "equivalent via Oracle in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
+     
+      await strategy
+        .connect(governor)
+        .withdraw(vault.address, usdc.address, primaryStableUnits("30.0"));
+
+      console.log("After Withdrawal from",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString() );
+      console.log("After Withdrawal from",strategyName," -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
+      console.log("After Withdrawal from",strategyName," - meshSwapPair in", strategyName, " Strategy:", usdcUnitsFormat(await meshSwapPair.balanceOf(strategy.address)).toString());
+      console.log("After Withdrawal from",strategyName," - meshToken in", strategyName, " Strategy:", (await meshToken.balanceOf(strategy.address)).toString());
+      console.log("After Withdrawal from",strategyName," -", primaryStableName , "equivalent in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
+      console.log("After Withdrawal of", primaryStableName , "to", strategyName, " -", primaryStableName , "equivalent via Oracle in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
+  
+      expect(await strategy.checkBalance()).to.be.within(primaryStableUnits("969.0"), primaryStableUnits("971.0"));
+
+
+    });
+
     it("Should collect rewards"+ " @slow @fork", async() => {
         console.log("---------------------------------------------------------------------------")
         console.log("                        Should collect rewards")
@@ -188,11 +255,11 @@ describe("MeshSwap Dual Strategy", function () {
 
         console.log("Adding", primaryStableName , "to Vault: ", primaryStableUnits("500.0").toString());
         await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("500.0"));
-        await vault.connect(matt).justMint(primaryStable.address, primaryStableUnits("500.0"), 0);
+        await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("500.0"), 0);
 
         console.log("Before Allocation of", primaryStableName , "to ", strategyName, "- ", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
         console.log("Auto allocating funds from vault")
-        await vault.allocate();
+        
 
         console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
         console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in MeshSwap", primaryStableName , "Strategy:",primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
@@ -201,7 +268,7 @@ describe("MeshSwap Dual Strategy", function () {
         console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "equivalent in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "equivalent via Oracle in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
 
-        expect(await meshSwapPair.balanceOf(strategy.address)).to.be.within(usdcUnits("349.0"), usdcUnits("350.0"));
+        expect(await meshSwapPair.balanceOf(strategy.address)).to.be.within(usdcUnits("249.0"), usdcUnits("250.0"));
 
         await harvester.connect(governor)["harvest(address)"](strategy.address);
         console.log("After Harvest - USDC in Vault:", (await usdc.balanceOf(vault.address)).toString());

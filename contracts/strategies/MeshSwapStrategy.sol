@@ -13,12 +13,13 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import { StableMath } from "../utils/StableMath.sol";
 import "../exchanges/UniswapV2Exchange.sol";
 import "../interfaces/IMeshSwapLP.sol";
+import "../interfaces/IMiniVault.sol";
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
-import "../exchanges/BalancerExchange.sol";
+import "../exchanges/CurveExchange.sol";
 import "hardhat/console.sol";
 
 
-contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, BalancerExchange   {
+contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, CurveExchange   {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
@@ -33,7 +34,8 @@ contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, B
 
 
     bytes32 poolId;
-    address public balancerVault;
+    address public swappingPool;
+    address public oracleRouter;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -71,12 +73,11 @@ contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, B
         );
     }
 
-    function setBalancer(address _balancerVault, bytes32 _balancerPoolIdUsdcTusdDaiUsdt) external onlyGovernor {
-        require(_balancerVault != address(0), "Zero address not allowed");
-        require(_balancerPoolIdUsdcTusdDaiUsdt != "", "Empty pool id not allowed");
-        balancerVault = _balancerVault;
-        poolId = _balancerPoolIdUsdcTusdDaiUsdt;
+    function setOracleRouterSwappingPool() external onlyGovernor nonReentrant {
+        oracleRouter = IMiniVault(vaultAddress).priceProvider();
+        swappingPool = IMiniVault(vaultAddress).swappingPool();
     }
+
     // TODO: Deposit is not making use of _amount
     function _deposit(
         address _asset,
@@ -111,7 +112,7 @@ contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, B
         address _beneficiary,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant  {
+    ) external override onlyVaultOrGovernor nonReentrant  {
         require(_asset == address(primaryStable), "Token not compatible.");
         meshSwapToken0.withdrawToken(_amount);
         console.log("MeshSwapStrategy - withdraw - token0: ", token0.balanceOf(address(this)));
@@ -128,7 +129,6 @@ contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, B
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
         // console.log("withdraw - PrimaryStable",primaryStableBalance);
         primaryStable.safeTransfer(vaultAddress, primaryStableBalance);
-        _collectRewards();
     }
     function checkBalance()
         external
@@ -157,11 +157,9 @@ contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, B
         if ( (address(token0) != address(primaryStable))  ) {
             if (token0Balance > 0) {
                 primaryStableBalanceFromToken0 = onSwap(
-                    balancerVault,
-                    poolId,
-                    IVault.SwapKind.GIVEN_IN,
-                    token0,
-                    primaryStable,
+                    swappingPool,
+                    address(token0),
+                    address(primaryStable),
                     token0Balance.scaleBy(IERC20Metadata(address(token0)).decimals() , 6 )
                 );
                 // console.log("Token0 swap -  primaryStableBalanceFromToken0 ", primaryStableBalanceFromToken0);
@@ -181,28 +179,21 @@ contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, B
         _collectRewards();
     }
     function _collectRewards() internal {
-        // console.log("Starting collection of rewards");
-        // claim rewards
         meshSwapToken0.claimReward();
-        // console.log("claimStakingRewards called");
-        // sell rewards
         uint256 totalUsdc = 0;
         uint256 meshBalance = meshToken.balanceOf(address(this));
-        // console.log("meshBalance: ", meshBalance);
+        console.log("RewardCollection - MESH Balance: ", meshBalance);
         if (meshBalance > 10 ** 13) {
-            // console.log("Swapping MeshToken for USDC");
             uint256 meshUsdc = _swapExactTokensForTokens(
                 address(meshToken),
                 address(primaryStable),
                 meshBalance,
                 address(this)
             );
-            // console.log("Mesh USDC", meshUsdc);
             totalUsdc += meshUsdc;
         }
-        // console.log("totalUsdc", totalUsdc);
         uint256 balance = primaryStable.balanceOf(address(this));
-        // console.log("balance", balance);
+        console.log("RewardCollection - MESH -> USDC Balance: ", balance);
         if (balance > 0) {
             emit RewardTokenCollected(
                 harvesterAddress,
@@ -214,20 +205,15 @@ contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, B
     }
     function _swapAssetToPrimaryStable() internal {
         if ( (address(token0) != address(primaryStable)) && (token0.balanceOf(address(this)) > 0) )  {
-            // console.log("Swapping token0");
             swap(
-                balancerVault,
-                poolId,
-                IVault.SwapKind.GIVEN_IN,
-                IAsset(address(token0)),
-                IAsset(address(primaryStable)),
-                address(this),
-                address(this),
+                swappingPool,
+                address(token0),
+                address(primaryStable),
                 token0.balanceOf(address(this)),
-                0
+                oracleRouter
             );
             if(token0.balanceOf(address(this)) > 0) {
-                revert("MeshSwap Strategy - Token0 to PrimarySwap failed");
+                revert("ClearPool Strategy - Token0 to PrimarySwap failed");
             }
         }
     }
@@ -235,15 +221,11 @@ contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, B
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
         if (address(primaryStable) != address(token0)) {
             swap(
-                balancerVault,
-                poolId, 
-                IVault.SwapKind.GIVEN_IN,
-                IAsset(address(primaryStable)),
-                IAsset(address(token0)),
-                address(this),
-                address(this),
+                swappingPool,
+                address(primaryStable),
+                address(token0),
                 primaryStableBalance,
-                0
+                oracleRouter
             );
         }
     }

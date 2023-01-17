@@ -158,7 +158,6 @@ contract VaultAdmin is VaultStorage {
 
         // Verify that our oracle supports the asset
         // slither-disable-next-line unused-return
-        console.log("priceProvider",priceProvider);
         IOracle(priceProvider).price(_asset);
 
         emit AssetSupported(_asset);
@@ -218,7 +217,6 @@ contract VaultAdmin is VaultStorage {
 
 
         // Removing strategy from quickDeposit
-        console.log("Removing strategy from quickDeposit");
         strategyIndex = quickDepositStrategies.length;
         for (uint256 i = 0; i < quickDepositStrategies.length; i++) {
             if (quickDepositStrategies[i] == _addr) {
@@ -235,7 +233,6 @@ contract VaultAdmin is VaultStorage {
             emit StrategyRemoved(_addr);
         }
 
-        console.log("Removing strategy from weights");
         // Removing strategy from weights
         // Initialize strategyIndex with out of bounds result so function will
         // revert if no valid index found
@@ -248,13 +245,17 @@ contract VaultAdmin is VaultStorage {
         }
 
         if (strategyIndex < strategyWithWeights.length) {
+            // RECOMMENDED: To reset weights through its setStrategyWithWeights() function after strategy removal.
+            uint256 weightOfRemovable = strategyWithWeights[strategyIndex].targetWeight;
             strategyWithWeights[strategyIndex] = strategyWithWeights[
                 strategyWithWeights.length - 1
             ];
             strategyWithWeights.pop();
-            console.log("Deleting Mapping entry");
+            if (strategyWithWeights.length > 0) {
+                strategyWithWeights[0].targetWeight += weightOfRemovable;
+            }
+
             delete strategyWithWeightPositions[_addr];
-            console.log("Mapping entry Deleted");
         }
 
 
@@ -302,6 +303,13 @@ contract VaultAdmin is VaultStorage {
     function setMaxSupplyDiff(uint256 _maxSupplyDiff) external onlyGovernor {
         maxSupplyDiff = _maxSupplyDiff;
         emit MaxSupplyDiffChanged(_maxSupplyDiff);
+    }
+
+    /**
+     * @dev Change the CASH supply without any checks
+     */
+    function changeCASHSupply(uint256 _newTotalSupply) external onlyGovernor {
+        cash.changeSupply(_newTotalSupply);
     }
 
 
@@ -415,6 +423,23 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
+     * @dev Withdraws assets from the strategy and sends assets to the Vault.
+     * @param _strategyAddr Strategy address.
+     * @param _amount Amount to withdraw
+     */
+    function withdrawFromStrategy(address _strategyAddr, uint256 _amount)
+        external
+        onlyGovernorOrStrategist
+    {
+        require(
+            strategies[_strategyAddr].isSupported,
+            "Strategy is not supported"
+        );
+        IStrategy strategy = IStrategy(_strategyAddr);
+        strategy.withdraw(address(this), primaryStableAddress, _amount);
+    }
+
+    /**
      * @dev Withdraws all assets from all the strategies and sends assets to the Vault.
      */
     function withdrawAllFromStrategies() external onlyGovernorOrStrategist {
@@ -491,13 +516,6 @@ contract VaultAdmin is VaultStorage {
                 strategyWithWeights.pop();
             }
         }
-
-        // console.log from strategyWithWeights
-        for (uint8 i = 0; i < strategyWithWeights.length; i++) {
-            StrategyWithWeight memory strategyWithWeight = strategyWithWeights[i];
-            console.log(strategyWithWeight.strategy, strategyWithWeight.targetWeight);
-        }
-
     }
 
 
@@ -543,9 +561,7 @@ contract VaultAdmin is VaultStorage {
     */
     function setPrimaryStable(address _primaryStable) external onlyGovernor {
         require(_primaryStable != address(0), "PrimaryStable should not be empty.");
-        console.log("VaultAdmin: Setting Primary Stable: ", _primaryStable );
         primaryStableAddress = _primaryStable;
-        console.log("VaultAdmin: Setting Primary Stable: ", primaryStableAddress );
 
     }
 
@@ -574,14 +590,12 @@ contract VaultAdmin is VaultStorage {
     ************************************/
     /**
     * @dev Set the Balancer Vault as primary swapper for the Vault
-    * @param _balancerVault Address of Balancer Vault
-    * @param _balancerPoolId Id of the Balancer Pool to use for swapping
+    * @param _swappingPool Address of Pool
+    * @param _swappingPoolId Id of the Pool to use for swapping
     */
-    function setSwapper(address _balancerVault, bytes32 _balancerPoolId) external onlyGovernor {
-        require(_balancerVault != address(0), "Empty Swapper Address");
-        require(_balancerPoolId != "", "Empty pool id not allowed");
-        balancerVault = _balancerVault;
-        balancerPoolId = _balancerPoolId;
+    function setSwapper(address _swappingPool, bytes32 _swappingPoolId) external onlyGovernor {
+        swappingPool = _swappingPool;
+        swappingPoolId = _swappingPoolId;
     }
 
     /***********************************
@@ -610,21 +624,29 @@ contract VaultAdmin is VaultStorage {
             Fee Parameters
     ************************************/
     /**
-    * @dev Set the Fee Distribution Parameters for Vault (currently not used, but may be infuture)
-           and for Harvester
+    * @dev Set the Fee Distribution Parameters for Vault
     * @param _labsAddress address of the Labs account
-    * @param _labsFeeBps % in bps which Labs would recieve
     * @param _teamAddress address of the Team account
-    * @param _teamFeeBps % in bps which Team would recieve
+    * @param _treasuryAddress address of the Treasury account
     */
-    function setFeeParams(address _labsAddress, uint256 _labsFeeBps, address _teamAddress, uint256 _teamFeeBps) external onlyGovernor {
+    function setFeeParams(address _labsAddress, address _teamAddress, address _treasuryAddress) external onlyGovernor {
         labsAddress = _labsAddress;
-        labsFeeBps = _labsFeeBps;
         teamAddress = _teamAddress;
-        teamFeeBps = _teamFeeBps;
-        IHarvester(harvesterAddress).setLabs(labsAddress, labsFeeBps);
-        IHarvester(harvesterAddress).setTeam(teamAddress, teamFeeBps);
+        treasuryAddress = _treasuryAddress;
+        emit FeeAddressesChanged(_labsAddress, _teamAddress, _treasuryAddress);
     }
+    /**
+    * @dev Set Harvester Fee Parameters
+    * @param _labsFeeBps Fee in BPS for Labs
+    * @param _teamFeeBps Fee in BPS for Team
+    */
+    function setHarvesterFeeParams(uint256 _labsFeeBps, uint256 _teamFeeBps) external onlyGovernor {
+        require((labsAddress != address(0)) && (teamAddress != address(0)), "!SET");
+        IHarvester(harvesterAddress).setLabs(labsAddress, _labsFeeBps);
+        IHarvester(harvesterAddress).setTeam(teamAddress, _teamFeeBps);
+        emit HarvesterFeeParamsChanged(labsAddress, _labsFeeBps, teamAddress, _teamFeeBps);
+    }
+
     /**
     * @dev Get Fee parameters for Labs and Team
     * @return Tuple containing the Lab address, Lab % in Bps, Team address, Team % in Bps
@@ -632,7 +654,18 @@ contract VaultAdmin is VaultStorage {
     function getFeeParams() public view returns (address, uint256, address, uint256)  {
         return (labsAddress, labsFeeBps, teamAddress, teamFeeBps);
     }
-
+    /**
+    * @dev Set the fee % that would be deducted at the time minting
+    *      all of the mint fees would be sent to the Treasury
+    *      Hence, seperate Bps for Labs & Treasury is not needed.
+    * @param _mintFeeBps % in bps which would be deducted at the time of minting
+    */
+    function setMintFeeBps(uint256 _mintFeeBps) external onlyGovernor {
+        require(_mintFeeBps > 0 && _mintFeeBps <= 10000, "Invalid MintFee");
+        uint256 _previousMintFeeBps = mintFeeBps;
+        mintFeeBps = _mintFeeBps;
+        emit MintFeeChanged(msg.sender, _previousMintFeeBps, _mintFeeBps);
+    }
     /********************************
             PAYOUT TIMESTAMPS
     *********************************/
@@ -674,10 +707,19 @@ contract VaultAdmin is VaultStorage {
     * @dev Check if the an address is actually a Rebase Manager
     * @param _sender address to check if it is among Rebase Managers
     */
-    function isRebaseManager(address _sender) external returns (bool) {
+    function isRebaseManager(address _sender) external view returns (bool) {
         return rebaseManagers[_sender];
     }
 
+    /**
+     * Rebase Handler 
+     * @dev Set the rebase handler
+     * @param _rebaseHandler Address of the rebase handler
+     */
+    function setRebaseHandler(address _rebaseHandler) external onlyGovernor {
+        require(_rebaseHandler != address(0));
+        rebaseHandler = _rebaseHandler;
+    }   
     /***************************
               PAYOUT
     ****************************/
@@ -708,6 +750,16 @@ contract VaultAdmin is VaultStorage {
     /***************************
             REBALANCE
     ****************************/
+    function invokeDeposits() external onlyGovernor {
+        StrategyWithWeight[] memory stratsWithWeights = getAllStrategyWithWeights();
+        for (uint8 i; i < stratsWithWeights.length; i++) {
+            uint256 totalAssetInStrat = IStrategy(stratsWithWeights[i].strategy).checkBalance();
+            if (totalAssetInStrat > 0) {
+                console.log("Depositing %s from %s", totalAssetInStrat, stratsWithWeights[i].strategy);
+                IStrategy(stratsWithWeights[i].strategy).deposit(primaryStableAddress, totalAssetInStrat);
+            }
+        }
+    }
     /**
     * @dev Balance the Vault with predefined weights
     */
@@ -735,18 +787,17 @@ contract VaultAdmin is VaultStorage {
             if(stratsWithWeights[i].targetWeight == 0){
                 IStrategy(stratsWithWeights[i].strategy).withdrawAll();
             }else {
-                console.log("Balance in startegy: ",IStrategy(stratsWithWeights[i].strategy).checkBalance());
                 totalAssetInStrat += IStrategy(stratsWithWeights[i].strategy).checkBalance();
                 totalWeight += stratsWithWeights[i].targetWeight;
             }
 
         }
         uint256 totalAsset = totalAssetInStrat + asset.balanceOf(address(this));
-        console.log("Total asset: ", totalAsset);
 
         // 3. calc diffs for stratsWithWeights liquidity
         Order[] memory stakeOrders = new Order[](stratsWithWeights.length);
         uint8 stakeOrdersCount = 0;
+        uint256 stakeRequirement = 0;
         for (uint8 i; i < stratsWithWeights.length; i++) {
 
             if (!stratsWithWeights[i].enabled) {// Skip if strategy is not enabled
@@ -768,14 +819,12 @@ contract VaultAdmin is VaultStorage {
 
             if (targetLiquidity < currentLiquidity) {
                 // unstake now
-                console.log("Withdraw now amount from", currentLiquidity - targetLiquidity, stratsWithWeights[i].strategy);
                 IStrategy(stratsWithWeights[i].strategy).withdraw(
                     address(this),
                     address(asset),
                     currentLiquidity - targetLiquidity
                 );
             } else {
-                console.log("Deposit later amount from", targetLiquidity - currentLiquidity, stratsWithWeights[i].strategy);
                 // save to stake later
                 stakeOrders[stakeOrdersCount] = Order(
                     true,
@@ -783,15 +832,16 @@ contract VaultAdmin is VaultStorage {
                     targetLiquidity - currentLiquidity
                 );
                 stakeOrdersCount++;
+                stakeRequirement += targetLiquidity - currentLiquidity;
             }
         }
-        console.log("_asset Balance available after withdrawing", asset.balanceOf(address(this)));
+        console.log("REBALANCE: Balance available to stake %s", asset.balanceOf(address(this)));
+        console.log("REBALANCE: Balance required to stake %s", stakeRequirement);
         // 4.  make staking
         for (uint8 i; i < stakeOrdersCount; i++) {
 
             address strategy = stakeOrders[i].strategy;
             uint256 amount = stakeOrders[i].amount;
-            console.log("Processing stake order of", strategy, amount);
 
             uint256 currentBalance = asset.balanceOf(address(this));
             if (currentBalance < amount) {

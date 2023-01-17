@@ -46,6 +46,10 @@ contract VaultStorage is Initializable, Governable {
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
+    event MintFeeCharged(address _address, uint256 _fee);
+    event MintFeeChanged(address _sender, uint256 _previousFeeBps, uint256 _newFeeBps);
+    event FeeAddressesChanged(address _labsAddress, address _teamAddress, address _treasuryAddress);
+    event HarvesterFeeParamsChanged(address _labsAddress,uint256 _labsFeeBps, address _teamAddress, uint256 _teamFeeBps);
 
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {
@@ -71,9 +75,9 @@ contract VaultStorage is Initializable, Governable {
     // Redemption fee in basis points
     uint256 public redeemFeeBps;
     address public labsAddress;
-    uint256 public labsFeeBps;
+    uint256 public labsFeeBps;  // Not used
     address public teamAddress;
-    uint256 public teamFeeBps;
+    uint256 public teamFeeBps;  // Not Used
 
     // Buffer of assets to keep in Vault to handle (most) withdrawals
     uint256 public vaultBuffer;
@@ -121,8 +125,8 @@ contract VaultStorage is Initializable, Governable {
     address[] public quickDepositStrategies;
 
     // Balancer pool to swap the asset to primaryStable
-    address public balancerVault;
-    bytes32 public balancerPoolId;
+    address public swappingPool;
+    bytes32 public swappingPoolId;
 
     // Harvester & Dripper
     address public harvesterAddress;
@@ -164,6 +168,12 @@ contract VaultStorage is Initializable, Governable {
         uint256 amount;
     }
     mapping(address => uint256) internal lastMints;
+
+    uint256 public mintFeeBps; // All Mint/Deposit Fees will be sent to Treasury
+    address public treasuryAddress;
+
+    address public rebaseHandler;
+
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
      * @param newImpl address of the implementation

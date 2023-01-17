@@ -40,7 +40,7 @@ contract Am3CurveStrategy is BaseCurveStrategy, UniswapV2Exchange {
     ICurveGauge crvGauge;
     ICRVMinter crvMinter;
 
-    IERC20 public Superb;
+    IERC20 public _unused_;
     
 
 
@@ -103,7 +103,6 @@ contract Am3CurveStrategy is BaseCurveStrategy, UniswapV2Exchange {
     {
         // console.log("Depositing to Am3Curve");
         require(_asset == address(primaryStable), "Token not supported.");
-        require(_amount >= primaryStable.balanceOf(address(this)), "Not enough assets");
         require(_amount > 0, "Must deposit something");
         emit Deposit(_asset, address(platformAddress), _amount);
 
@@ -178,7 +177,7 @@ contract Am3CurveStrategy is BaseCurveStrategy, UniswapV2Exchange {
         _amounts[poolCoinIndex] = _amount;
 
         uint256 am3CrvTokenToWithdrawFrom = aaveCurvePool.calc_token_amount(_amounts, false);
-        console.log("am3CrvTokenToWithdrawFrom", am3CrvTokenToWithdrawFrom);
+        // console.log("am3CrvTokenToWithdrawFrom", am3CrvTokenToWithdrawFrom);
         uint256 recievableOnWithdrawl = aaveCurvePool.calc_withdraw_one_coin(am3CrvTokenToWithdrawFrom,int128(uint128(_getCoinIndex(address(primaryStable)))));
         uint256 minAmount = recievableOnWithdrawl.mulTruncate(
             uint256(1e18) - maxSlippage
@@ -215,7 +214,6 @@ contract Am3CurveStrategy is BaseCurveStrategy, UniswapV2Exchange {
         if (primaryStableBalance > 0) {
             primaryStable.safeTransfer(vaultAddress, primaryStableBalance);
         }
-        _collectRewards();
     }
     function checkBalance()
         public
@@ -249,6 +247,7 @@ contract Am3CurveStrategy is BaseCurveStrategy, UniswapV2Exchange {
     function _collectRewards() internal {
         crvMinter.mint(address(crvGauge));
         uint256 crvBalance = crvToken.balanceOf(address(this));
+        console.log("RewardCollection - CRV Balance: ", crvBalance);
         if (crvBalance != 0) {
             _swapExactTokensForTokens(
                 address(crvToken),
@@ -258,6 +257,7 @@ contract Am3CurveStrategy is BaseCurveStrategy, UniswapV2Exchange {
             );
         }
         uint256 balance = primaryStable.balanceOf(address(this));
+        console.log("RewardCollection - CRV -> USDC Balance: ", balance);
         emit RewardTokenCollected(
             harvesterAddress,
             address(primaryStable),
