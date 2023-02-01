@@ -67,6 +67,7 @@
     },
     "dependencies": {
         "@remix-project/remixd": "^0.6.2",
+        "alchemy-sdk": "^2.3.0",
         "axios": "^0.27.2",
         "cryptr": "^6.0.3",
         "hardhat-ethernal": "^1.0.0",

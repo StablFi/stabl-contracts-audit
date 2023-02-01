@@ -76,14 +76,29 @@ const configureVault = async (harvesterProxy) => {
   );
 
   log(
+    "Set the Mint Fees to the vault " );
+  await withConfirmation(
+    cVault.connect(sGovernor).setMintFeeBps(assetAddresses.mintFeeBps)
+  );
+
+  log(
     "Set the Fees to the vault " );
   await withConfirmation(
     cVault.connect(sGovernor).setFeeParams(assetAddresses.Labs, assetAddresses.Team, assetAddresses.Treasury)
   );
+
+  log(
+    "Set the Harvester Fees " );
+  await withConfirmation(
+    cVault.connect(sGovernor).setHarvesterFeeParams(assetAddresses.LabsFeeBps, assetAddresses.TeamFeeBps)
+  );
+  
   
   // Unpause deposits
   await withConfirmation(cVault.connect(sGovernor).unpauseCapital());
   log("Unpaused deposits on Vault");
+
+
   
 };
 

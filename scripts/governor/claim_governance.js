@@ -13,7 +13,7 @@ async function main() {
     const balance = await sDeployer.getBalance();
     console.log("sDeployer balance:", hre.ethers.utils.formatEther(balance));
 
-    const contracts = require(path.join(__dirname, "rgovernable.json"));
+    const contracts = require(path.join(__dirname, "governable.json"));
     for (let i = 0; i < contracts.length; i++) {
         const c = contracts[i];
         console.log("Loading contract: " + c.name);

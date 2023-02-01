@@ -390,6 +390,7 @@ const getAssetAddresses = async (deployments) => {
       balancerPoolIdWmaticMtaWeth: addresses.polygon.balancerPoolIdWmaticMtaWeth,
 
       redeemFeeBps: addresses.polygon.redeemFeeBps,
+      mintFeeBps: addresses.polygon.mintFeeBps,
       Labs: addresses.polygon.Labs,
       LabsFeeBps: addresses.polygon.LabsFeeBps,
       Team: addresses.polygon.Team,
@@ -426,6 +427,7 @@ const getAssetAddresses = async (deployments) => {
       balancerPoolIdWmaticMtaWeth: addresses.polygon.balancerPoolIdWmaticMtaWeth,
       primaryStable: (await deployments.get("MockUSDC")).address,
       redeemFeeBps: addresses.polygon.redeemFeeBps,
+      mintFeeBps: addresses.polygon.mintFeeBps,
       Labs: addresses.polygon.Labs,
       LabsFeeBps: addresses.polygon.LabsFeeBps,
       Team: addresses.polygon.Team,

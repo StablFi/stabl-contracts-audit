@@ -24,7 +24,7 @@ module.exports = deploymentWithProposal(
       "TetuStrategyDAIProxy",
       "TetuStrategyUSDTProxy",
     ];
-    // await deployWithConfirmation(upgradable);
+    await deployWithConfirmation(upgradable);
 
     let upgradeJson = [];
     const implementation = await ethers.getContract(upgradable);

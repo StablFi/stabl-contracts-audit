@@ -261,6 +261,70 @@ describe("Vault Redeem", function () {
     // expect(await usdc.balanceOf(josh.address)).closeTo(mattUSDCBalance.sub(usdcUnits("100")), usdcUnits("1"));
 
   });
+  it("Check if redeem outputs are working correctly @fork @redeemoutputs", async () => {
+    const { cash, vault, dai, matt, Labs, Team, usdc, governor, cTetuUsdtStrategyProxy } = await loadFixture(defaultFixture);
+    console.log("")
+
+    console.log("MATT CASH Balance: ", cashUnitsFormat((await cash.balanceOf(matt.address)).toString()))
+    console.log("MATT DAI Balance: ", daiUnitsFormat((await dai.balanceOf(matt.address)).toString()))
+    console.log("Total Vault Value: ", usdcUnitsFormat(await vault.totalValue()).toString())
+    console.log("Total Cash Supply: ", cashUnitsFormat(await cash.totalSupply()).toString())
+
+    // Setting fee to 0.25%
+    await vault.setMintFeeBps(25);
+
+    console.log("Minting 100 DAI")
+    await dai.connect(matt).approve(vault.address, daiUnits("100.0"));
+    await vault.connect(matt).mint(dai.address, daiUnits("100.0"), 0);
+
+    console.log("MATT CASH Balance: ", cashUnitsFormat((await cash.balanceOf(matt.address)).toString()))
+    console.log("MATT DAI Balance: ", daiUnitsFormat((await dai.balanceOf(matt.address)).toString()))
+    console.log("Total Vault Value: ", usdcUnitsFormat(await vault.totalValue()).toString())
+    console.log("Total Cash Supply: ", cashUnitsFormat(await cash.totalSupply()).toString())
+    
+    console.log("Rebasing the vault")
+    await vault.rebase();
+
+    console.log("Quickdeposit startegy:", await vault.getQuickDepositStrategies())
+
+    console.log("Withdrawing everything from quickdeposit")
+    await vault.connect(governor).withdrawAllFromStrategy((await vault.getQuickDepositStrategies())[0]);
+
+
+    console.log("Tranferring 100 USDC from the vault")
+    await vault.connect(governor).transferToken(usdc.address, usdcUnits("100.0"));
+
+    console.log("MATT CASH Balance: ", cashUnitsFormat((await cash.balanceOf(matt.address)).toString()))
+    console.log("MATT USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(matt.address)).toString()))
+    console.log("MATT DAI Balance: ", daiUnitsFormat((await dai.balanceOf(matt.address)).toString()))
+    console.log("Total Vault Value: ", usdcUnitsFormat(await vault.totalValue()).toString())
+    console.log("Total Cash Supply: ", cashUnitsFormat(await cash.totalSupply()).toString())
+    console.log("---")
+    console.log("Labs USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(Labs.address)).toString()))
+    console.log("Team USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(Team.address)).toString()))
+    console.log("Redeeming All the CASH of Matt: ",  cashUnitsFormat(await cash.balanceOf(matt.address)).toString(), "CASH")
+    await vault.connect(matt).redeem(await cash.balanceOf(matt.address) , 0);
+
+    console.log("MATT CASH Balance: ", cashUnitsFormat((await cash.balanceOf(matt.address)).toString()))
+    console.log("MATT USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(matt.address)).toString()))
+    console.log("MATT DAI Balance: ", daiUnitsFormat((await dai.balanceOf(matt.address)).toString()))
+    console.log("Labs USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(Labs.address)).toString()))
+    console.log("Team USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(Team.address)).toString()))
+    console.log("Total Vault Value: ", usdcUnitsFormat(await vault.totalValue()).toString())
+    console.log("Total Cash Supply: ", cashUnitsFormat(await cash.totalSupply()).toString())
+
+    console.log("Rebasing the vault");
+    await vault.rebase();
+    
+    console.log("MATT CASH Balance: ", cashUnitsFormat((await cash.balanceOf(matt.address)).toString()))
+    console.log("MATT DAI Balance: ", daiUnitsFormat((await dai.balanceOf(matt.address)).toString()))
+    console.log("Labs USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(Labs.address)).toString()))
+    console.log("Team USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(Team.address)).toString()))
+    console.log("Total Vault Value: ", usdcUnitsFormat(await vault.totalValue()).toString())
+    console.log("Total Cash Supply: ", cashUnitsFormat(await cash.totalSupply()).toString())
+    await expect(matt).has.a.balanceOf("0.00", cash);
+
+  });
 
   // it("Should allow a redeem @fast", async () => {
   //   const { cash, vault, usdc, anna, dai } = await loadFixture(defaultFixture);

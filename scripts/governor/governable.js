@@ -44,10 +44,7 @@ async function main() {
       } catch (e) {
       }
     }
-    // console.log(governables);
-    // save governable to file
-    const filenameWithDate = "rgovernable.json";
-
+    const filenameWithDate = "governables.json";
     fs.writeFileSync(path.join(__dirname, filenameWithDate), JSON.stringify(governables, null, 2));
     console.log("done");
 }

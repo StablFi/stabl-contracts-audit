@@ -106,10 +106,16 @@ describe("Tetu Strategy", function () {
         await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("45000.0"), 0);
 
         console.log("Auto allocating funds from vault")
+
+        console.log("After Allocation of", primaryStableName , "to",strategyName,"- ", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
+        console.log("After Allocation of", primaryStableName , "to",strategyName,"- checkBalance()", primaryStableName , "in Vault:", primaryStableUnitsFormat(await vault.checkBalance()).toString());
+        console.log("After Allocation of", primaryStableName , "to",strategyName,"- netAssetValue()", primaryStableName , "in Vault:", primaryStableUnitsFormat(await vault.nav()).toString());
+
         console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "in", strategyName, "Strategy:", (await primaryStable.balanceOf(strategy.address)).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " - TetuLPToken in", strategyName, "Strategy:", (await TetuLPToken.balanceOf(strategy.address)).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "equivalent in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " - LP Balance in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.lpBalance()).toString());
+        console.log("After Allocation of",strategyName," -", primaryStableName , " NAV in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
       
         // expect(await TetuLPToken.balanceOf(strategy.address)).to.be.within(usdcUnits("99.0"), usdcUnits("100.0"));
         expect(await strategy.checkBalance()).to.be.within(usdcUnits("44950.0"), usdcUnits("45000.0")); // investments + balance
@@ -133,12 +139,14 @@ describe("Tetu Strategy", function () {
       console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
       console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "equivalent in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
       console.log("After Allocation of", primaryStableName , "to", strategyName, " - LP Balance in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.lpBalance()).toString());
+      console.log("After Allocation of",strategyName," -", primaryStableName , " NAV in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
       await vault
         .connect(governor)
         .withdrawAllFromStrategy(strategy.address);
       console.log("After Withdrawal from",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString() );
       console.log("After Withdrawal from",strategyName," -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
       console.log("After Withdrawal of", primaryStableName , "from", strategyName, " -", primaryStableName , "equivalent in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
+      console.log("After Withdrawal from ",strategyName," -", primaryStableName , " NAV in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
       console.log("After Withdrawal of", primaryStableName , "from", strategyName, " - LP Balance in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.lpBalance()).toString());
       expect(await strategy.checkBalance()).to.be.within(usdcUnits("0"), usdcUnits("0.1"));
 
@@ -163,6 +171,7 @@ describe("Tetu Strategy", function () {
       console.log("After Allocation of", primaryStableName , "to ", strategyName, " - TetuLPToken in", strategyName, " Strategy:", usdcUnitsFormat(await TetuLPToken.balanceOf(strategy.address)).toString());
       console.log("After Allocation of", primaryStableName , "to ", strategyName, " - TETU in", strategyName, " Strategy:", (await TETU.balanceOf(strategy.address)).toString());
       console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "equivalent in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
+      console.log("After Allocation of",strategyName," -", primaryStableName , " NAV in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
 
       await strategy
         .connect(governor)
@@ -172,6 +181,7 @@ describe("Tetu Strategy", function () {
       console.log("After Withdrawal from",strategyName," - TetuLPToken in", strategyName, " Strategy:", usdcUnitsFormat(await TetuLPToken.balanceOf(strategy.address)).toString());
       console.log("After Withdrawal from",strategyName," - TETU in", strategyName, " Strategy:", (await TETU.balanceOf(strategy.address)).toString());
       console.log("After Withdrawal from",strategyName," -", primaryStableName , "equivalent in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
+      console.log("After Withdrawal from ",strategyName," -", primaryStableName , " NAV in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
       
       expect(await strategy.checkBalance()).to.be.within(usdcUnits("4.99"), usdcUnits("5.1"));
 
@@ -201,6 +211,7 @@ describe("Tetu Strategy", function () {
         console.log("After Allocation of", primaryStableName , "to ", strategyName, " -  Tetu LP Tokens: ", usdcUnitsFormat(await TetuLPToken.balanceOf(strategy.address)).toString())
         console.log("After Allocation of", primaryStableName , "to ", strategyName, " - TETU in ", strategyName, ":", (await TETU.balanceOf(strategy.address)).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "equivalent in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
+        console.log("After Allocation of",strategyName," -", primaryStableName , " NAV in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
 
         // expect(await TetuLPToken.balanceOf(strategy.address)).to.be.within(usdcUnits("495.0"), usdcUnits("500.0")); // yet to find where amount goes
         expect(await strategy.checkBalance()).to.be.within(usdcUnits("499.0"), usdcUnits("500.0"));

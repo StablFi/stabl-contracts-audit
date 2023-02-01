@@ -130,7 +130,7 @@ const fundAccounts = async () => {
       // console.log("Adding USDC to ", await signers[i].getAddress(), " from ", usdcWhale._address);
       await usdc
         .connect(await findBestMainnetTokenHolder(usdc, hre))
-        .transfer(await signers[i].getAddress(), usdcUnits("1000000"));
+        .transfer(await signers[i].getAddress(), usdcUnits("10000"));
 
       let daiWhale = await findBestMainnetTokenHolder(dai, hre);
       // console.log("Adding DAI to ", await signers[i].getAddress(), " from ", daiWhale._address);

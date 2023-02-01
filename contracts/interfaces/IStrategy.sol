@@ -5,6 +5,12 @@ pragma solidity ^0.8.0;
  * @title Platform interface to integrate with lending platform like Compound, AAVE etc.
  */
 interface IStrategy {
+
+    function token0() external returns (address);
+    function isDirectDepositAllowed() external returns (bool);
+    function directDeposit() external;
+    function directDepositRequirement(uint256 _psAmount) external  returns (uint256);
+
     /**
      * @dev Deposit the given asset to platform
      * @param _asset asset address
@@ -39,7 +45,13 @@ interface IStrategy {
         external
         view
         returns (uint256 balance);
-        
+    /**
+     * @dev Returns the current balance of the given asset.
+     */
+    function netAssetValue()
+        external
+        view
+        returns (uint256 balance);
     function lpBalance()
         external
         view

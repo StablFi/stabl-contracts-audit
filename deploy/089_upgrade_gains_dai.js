@@ -21,11 +21,6 @@ module.exports = deploymentWithProposal(
             contract: cProxy,
             signature: "upgradeTo(address)",
             args: [cContract.address],
-        },
-        {
-            contract: cGains,
-            signature: "setOracleRouterSwappingPool()",
-            args: [],
         }
       ],
     };

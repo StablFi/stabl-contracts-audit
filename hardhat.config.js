@@ -266,6 +266,13 @@ module.exports = {
       chainId: 1337,
       initialBaseFeePerGas: 0,
       timeout: 30 * 200000,
+      chains: {
+        137: {
+          hardforkHistory: {
+            london: 20000000,
+          },
+        }
+      }
     },
     localhost: {
       timeout: 30 * 200000,

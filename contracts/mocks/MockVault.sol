@@ -26,7 +26,6 @@ contract MockVault is VaultCore, VaultInitializer {
     function _checkBalance()
         internal
         view
-        override
         returns (uint256 balance)
     {
         return storedTotalValue;

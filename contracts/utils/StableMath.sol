@@ -111,4 +111,16 @@ library StableMath {
         // e.g. 8e36 / 10e18 = 8e17
         return z.div(y);
     }
+    function subOrZero(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (b >= a) {
+            return 0;
+        }
+        return a - b;
+    }
+    function subFromBigger(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (b >= a) {
+            return b - a;
+        }
+        return a - b;
+    }
 }

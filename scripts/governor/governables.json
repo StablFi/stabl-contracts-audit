@@ -1,11 +1,227 @@
-[{
-        "name": "TetuStrategy",
-        "governor": "0x442bB41E499bB21aFc6a42327C9E257a7d09872e",
-        "address": "0x730eEaf008379eBCb0dF0066eD47106e5b0027bb"
-    },
-    {
-        "name": "VaultCore",
-        "governor": "0x442bB41E499bB21aFc6a42327C9E257a7d09872e",
-        "address": "0x325731C5051a6cD938604752DBe238a7F1477251"
-    }
+[
+  {
+    "name": "VaultProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x33f76d45B9316Cf1b27F99313E3D414CfeaFd3D1"
+  },
+  {
+    "name": "CASHProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0xf10642B4D3C2414E0752D942269723721c6D564c"
+  },
+  {
+    "name": "CASH",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0xAe660A74D74EDd142c033561ac5f1E0267462abC"
+  },
+  {
+    "name": "Vault",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x0F1EF1B662b0c08588E323a9DBED772272fEFAAb"
+  },
+  {
+    "name": "VaultCore",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0xf3D8783B9F45da498D5047fd9c2bCa3960fFD68F"
+  },
+  {
+    "name": "VaultAdmin",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x2de4B9BFd56718d5E5E70dEC6cCe3191CdcE3cD8"
+  },
+  {
+    "name": "HarvesterProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x1B3922B4C0B4247cDeC70D905d7d769c5F9dB98C"
+  },
+  {
+    "name": "Harvester",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0xac13557b2835980186A3DD772323470Ca1D97448"
+  },
+  {
+    "name": "Dripper",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x42f1923F716149E7006d309328B1eA0C19b79a34"
+  },
+  {
+    "name": "DripperProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x2Bb8FEa01f6f784a568Db19d018aedD6aD52b1D0"
+  },
+  {
+    "name": "WrappedCASH",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x61b3ba0d0Fe49040ef641AFDa8D0b3ea1C3cfE72"
+  },
+  {
+    "name": "WrappedCASHProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x0f65289068b904b1411e29712d37D2D229d7F641"
+  },
+  {
+    "name": "SynapseStrategyUSDTProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x79C67BFB58F229E288628D1a3415a1356a9fb400"
+  },
+  {
+    "name": "SynapseStrategy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x7bA9F62a9e05A811A139Cbb88618Bf829DE10adA"
+  },
+  {
+    "name": "SynapseStrategyProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x4cf3ADCaaF0614223bc77d640fde2a7a69Eec20B"
+  },
+  {
+    "name": "DodoStrategyProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0xFF5b4E51BD710E8134D22B977C381D8A8FeEc82F"
+  },
+  {
+    "name": "DodoStrategy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x08061d42001303531040838172E0a92dbE2FFe18"
+  },
+  {
+    "name": "DystopiaStrategyUsdcDaiProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0xE2117f8dFbDCbaf5f144deC4d49832045328A743"
+  },
+  {
+    "name": "DystopiaStrategy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x341F8fb84A30c1F0D5Fe80E27dC3ab322e07d053"
+  },
+  {
+    "name": "DystopiaStrategyUsdcUsdtProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0xcC27430fBb5866d6F16E85150ac75C65546566DC"
+  },
+  {
+    "name": "DystopiaStrategyDaiUsdtProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x980d2D88298f5FFb6CBD06EA90A24cD8F6681421"
+  },
+  {
+    "name": "MeshSwapStrategyUSDCProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0xd90163CAaad420b8eAA08f7906D1598F204AC51c"
+  },
+  {
+    "name": "MeshSwapStrategy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0xEE4CA6cDd4E83a80A6624DaA230E6f9D378ab70C"
+  },
+  {
+    "name": "MeshSwapStrategyDAIProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x6630B4AF59020e60eB92F7c582CAA21380AfB334"
+  },
+  {
+    "name": "MeshSwapStrategyUSDTProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x25E2BB54E107Ac056cDe3e0577Edb7a558c30dE5"
+  },
+  {
+    "name": "MeshSwapStrategyUSDCDAIProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0xF6FC11268B8e43DCdb4861fa486412EFB1aD7438"
+  },
+  {
+    "name": "MeshSwapStrategyDual",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0xc074b120d85A1039dc490f465766C219121C1f6B"
+  },
+  {
+    "name": "MeshSwapStrategyUSDCUSDTProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x77cc4f8573d7AaDaF7707b1dA0Cf21964785d78E"
+  },
+  {
+    "name": "MeshSwapStrategyUSDTDAIProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0xB1B09bcf4a80E1e321C70636E3120eab8Ba574f5"
+  },
+  {
+    "name": "QuickSwapStrategyUSDCDAIProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0xb4BAf42b822b5990A30b6E877b100d5458754993"
+  },
+  {
+    "name": "QuickSwapStrategy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x09Aefc6DC52083CcB879a9EAC2f180E680eb5D7C"
+  },
+  {
+    "name": "QuickSwapStrategyUSDCUSDTProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0xc006eb6d0546e7dA4191C750BAB3685C37549eAa"
+  },
+  {
+    "name": "Am3CurveStrategyProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x9A9Ca2210CA54a345583c9eb3833b5AdE47E5Cf2"
+  },
+  {
+    "name": "Am3CurveStrategy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x7CdCE198638A2D98f58074b32344e924243B7932"
+  },
+  {
+    "name": "Am3CurveStrategyUSDTProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x26f5e6f4C5cf7F8A82dca877D9b0944df641641E"
+  },
+  {
+    "name": "ClearpoolWintermuteStrategyProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x118496b3b09F4BDDa93F08c150747498AfbAF824"
+  },
+  {
+    "name": "ClearpoolStrategy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0xb892e000C2e00dB73FFd9C4516AF796e41BAD59b"
+  },
+  {
+    "name": "GainsDAIStrategyProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x410cD1076B849671ad6D8697AE39801Fe1366685"
+  },
+  {
+    "name": "GainsStrategy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x2ed73Ee32F84AD0A3F14F0d144A2Ee1F62f370d0"
+  },
+  {
+    "name": "TetuStrategyUSDCProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0xbf2803E59c3817b57920b40f53A5e8445D6B3Cc1"
+  },
+  {
+    "name": "TetuStrategy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0xf1281f3ACeB0C4e02877f87495759d2c0EeAcbf1"
+  },
+  {
+    "name": "TetuStrategyDAIProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x6a47a2D2F759757DD82A78a43e12fD3F399172fF"
+  },
+  {
+    "name": "TetuStrategyUSDTProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0x06Ef9A6384dC0853eaacc966B14109ff01358DC8"
+  },
+  {
+    "name": "RebaseToNonEoaHandler",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0xc28243bF6Ae144be195A9da1b8eFa3c9b6E969B5"
+  },
+  {
+    "name": "RebaseToNonEoaHandlerProxy",
+    "governor": "0xF714CA07AFdFa512Da7b18B1A1587738c9230BEb",
+    "address": "0xc0BD0f29A0240c3eCB41f3Df5dCC67d683F484EA"
+  }
 ]

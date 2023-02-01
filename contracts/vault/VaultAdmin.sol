@@ -363,7 +363,7 @@ contract VaultAdmin is VaultStorage {
         external
         onlyGovernor
     {
-        require(!assets[_asset].isSupported, "Only unsupported assets");
+        // require(!assets[_asset].isSupported, "Only unsupported assets");
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
 
@@ -738,7 +738,9 @@ contract VaultAdmin is VaultStorage {
         }
 
         IHarvester(harvesterAddress).harvestAndDistribute();
+        uint256 totalUSDCInDripper = IERC20(primaryStableAddress).balanceOf(dripperAddress);
         IDripper(dripperAddress).collectAndRebase();
+        emit Payout(IERC20(primaryStableAddress).balanceOf(dripperAddress).subFromBigger(totalUSDCInDripper));
         _balance();
 
         // update next payout time. Cycle for preventing gaps

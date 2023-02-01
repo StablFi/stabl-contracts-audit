@@ -50,6 +50,7 @@ contract VaultStorage is Initializable, Governable {
     event MintFeeChanged(address _sender, uint256 _previousFeeBps, uint256 _newFeeBps);
     event FeeAddressesChanged(address _labsAddress, address _teamAddress, address _treasuryAddress);
     event HarvesterFeeParamsChanged(address _labsAddress,uint256 _labsFeeBps, address _teamAddress, uint256 _teamFeeBps);
+    event Payout(uint256 _dripperTransferred);
 
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {

@@ -164,23 +164,66 @@ contract GainsStrategy is InitializableAbstractStrategy, CurveExchange   {
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
         primaryStable.safeTransfer(vaultAddress, primaryStableBalance);
     }
+    function netAssetValue() external view returns (uint256) {
+       uint256 daiAmount = gainsVault.users(address(this)).daiDeposited;
+        if (
+            address(token0) != address(primaryStable) &&
+            daiAmount > 0
+        ) {
+            daiAmount = _convert(
+                address(token0),
+                address(primaryStable),
+                daiAmount
+            ).scaleBy(
+                    Helpers.getDecimals(address(primaryStable)),
+                    Helpers.getDecimals(address(token0))
+                );
+        }
 
+        return daiAmount + primaryStable.balanceOf(address(this));
+    }
     function checkBalance()
         external
         view
         override
         returns (uint256)
     {
+        uint256 _psBalance = primaryStable.balanceOf(address(this));
         uint256 daiAmount = gainsVault.users(address(this)).daiDeposited;
         if (daiAmount >  minThresholds[1]) {
-            return onSwap(
+            return _psBalance + onSwap(
                 swappingPool,
                 address(token0),
                 address(primaryStable),
                 daiAmount
             );
         }
-        return 0;
+        return _psBalance;
+    }
+
+      function _convert(
+        address from,
+        address to,
+        uint256 _amount,
+        bool limit
+    ) internal view returns (uint256) {
+        if (from == to) {
+            return _amount;
+        }
+        uint256 fromPrice = IOracle(oracleRouter).price(from);
+        uint256 toPrice = IOracle(oracleRouter).price(to);
+        if ((toPrice > 10 ** 8) && limit) {
+            toPrice = 10 ** 8;
+        }
+        return _amount.mul(fromPrice).div(toPrice);
+    }
+
+    function _convert(
+        address from,
+        address to,
+        uint256 _amount
+    ) internal view returns (uint256) {
+        return _convert(from, to, _amount, true);
     }
 
     function collectRewardTokens()

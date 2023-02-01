@@ -42,6 +42,121 @@ describe("Vault", function () {
     expect(await vault.isSupportedAsset(cash.address)).to.be.true;
   });
 
+  it("Should allow USDC minting with fee  mint_imp mint_new mint_imp_usdc @fork", async function () {
+    const { vault, usdc, anna, cash, cTetuUsdtStrategyProxy } = await loadFixture(defaultFixture);
+    expect(await vault.isSupportedAsset(usdc.address)).to.be.true;
+
+    await vault.setQuickDepositStrategies([cTetuUsdtStrategyProxy.address]);
+    // Setting fee to 0.25%
+    await vault.setMintFeeBps(25);
+
+    await expect(anna).has.a.approxBalanceOf("0.00", cash);
+
+    await usdc.connect(anna).approve(vault.address, usdcUnits("1"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("1"), 0);
+
+    // Print CASH of anna
+    console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
+    console.log("Strategy checkBalance: ", usdcUnitsFormat(await cTetuUsdtStrategyProxy.checkBalance()));
+    // expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits("95.0"),cashUnits("1"));
+  });
+
+  it("Should allow DAI minting (with swapping) with fee mint_imp @fork mint_imp_dai mint_new", async function () {
+    const { vault, dai, anna, cash, cTetuUsdtStrategyProxy } = await loadFixture(defaultFixture);
+    console.log("Vault: ", vault.address)
+    console.log("cTetuUsdtStrategyProxy: ", cTetuUsdtStrategyProxy.address)
+    expect(await vault.isSupportedAsset(dai.address)).to.be.true;
+    await vault.setQuickDepositStrategies([cTetuUsdtStrategyProxy.address]);
+    
+    // Setting fee to 0.25%
+    await vault.setMintFeeBps(25);
+
+    // Print mintFeeBps
+    console.log("Mint fee: ", (await vault.mintFeeBps()).toString());
+
+    await expect(anna).has.a.approxBalanceOf("0.00", cash);
+
+    await dai.connect(anna).approve(vault.address, daiUnits("1"));
+    await vault.connect(anna).mint(dai.address, daiUnits("1"), 0);
+    // Print CASH of anna
+    console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
+    console.log("Strategy checkBalance: ", usdcUnitsFormat(await cTetuUsdtStrategyProxy.checkBalance()));
+    // expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits("95.0"),cashUnits("1"));
+  });
+
+  it("Should allow USDT minting (with swapping) with fee mint_imp_usdt mint_new @fork", async function () {
+    const { vault, usdt, anna, cash, cTetuUsdtStrategyProxy } = await loadFixture(defaultFixture);
+    expect(await vault.isSupportedAsset(usdt.address)).to.be.true;
+    await vault.setQuickDepositStrategies([cTetuUsdtStrategyProxy.address]);
+    
+    // Setting fee to 0.25%
+    await vault.setMintFeeBps(25);
+
+    await expect(anna).has.a.approxBalanceOf("0.00", cash);
+
+    await usdt.connect(anna).approve(vault.address, usdtUnits("1"));
+    await vault.connect(anna).mint(usdt.address, usdtUnits("1"), 0);
+    // Print CASH of anna
+    console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
+    console.log("Strategy checkBalance: ", usdcUnitsFormat(await cTetuUsdtStrategyProxy.checkBalance()));
+    // expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits("95.0"),cashUnits("1"));
+  });
+
+  it("Should allow USDC minting with fee  mint_imp with non-direct deposit strategy @fork", async function () {
+    const { vault, usdc, anna, cash, cMeshSwapStrategyDAI } = await loadFixture(defaultFixture);
+    expect(await vault.isSupportedAsset(usdc.address)).to.be.true;
+
+    await vault.setQuickDepositStrategies([cMeshSwapStrategyDAI.address]);
+    // Setting fee to 5%
+    await vault.setMintFeeBps(500);
+
+    await expect(anna).has.a.approxBalanceOf("0.00", cash);
+
+    await usdc.connect(anna).approve(vault.address, usdcUnits("10000"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("10000"), 0);
+
+    // Print CASH of anna
+    console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
+    console.log("Strategy checkBalance: ", usdcUnitsFormat(await cMeshSwapStrategyDAI.checkBalance()));
+    expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits("95.0"),cashUnits("1"));
+  });
+
+  it("Should allow DAI minting (with swapping) with fee mint_imp with non-direct deposit strategy @fork", async function () {
+    const { vault, dai, anna, cash, cMeshSwapStrategyDAI } = await loadFixture(defaultFixture);
+    expect(await vault.isSupportedAsset(dai.address)).to.be.true;
+    await vault.setQuickDepositStrategies([cMeshSwapStrategyDAI.address]);
+    
+    // Setting fee to 5%
+    await vault.setMintFeeBps(500);
+
+    await expect(anna).has.a.approxBalanceOf("0.00", cash);
+
+    await dai.connect(anna).approve(vault.address, daiUnits("100"));
+    await vault.connect(anna).mint(dai.address, daiUnits("100"), 0);
+    // Print CASH of anna
+    console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
+    console.log("Strategy checkBalance: ", usdcUnitsFormat(await cMeshSwapStrategyDAI.checkBalance()));
+    expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits("95.0"),cashUnits("1"));
+  });
+
+  it("Should allow USDT minting (with swapping) with fee mint_imp with non-direct deposit strategy @fork", async function () {
+    const { vault, usdt, anna, cash, cMeshSwapStrategyDAI } = await loadFixture(defaultFixture);
+    expect(await vault.isSupportedAsset(usdt.address)).to.be.true;
+    await vault.setQuickDepositStrategies([cMeshSwapStrategyDAI.address]);
+    
+    // Setting fee to 5%
+    await vault.setMintFeeBps(500);
+
+    await expect(anna).has.a.approxBalanceOf("0.00", cash);
+
+    await usdt.connect(anna).approve(vault.address, usdtUnits("100"));
+    await vault.connect(anna).mint(usdt.address, usdtUnits("100"), 0);
+    // Print CASH of anna
+    console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
+    console.log("Strategy checkBalance: ", usdcUnitsFormat(await cMeshSwapStrategyDAI.checkBalance()));
+    expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits("95.0"),cashUnits("1"));
+  });
+
   it("Should allow USDC minting  mint_imp @fork", async function () {
     const { vault, usdc, anna, cash } = await loadFixture(defaultFixture);
     expect(await vault.isSupportedAsset(usdc.address)).to.be.true;

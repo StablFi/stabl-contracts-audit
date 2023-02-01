@@ -37,6 +37,39 @@ abstract contract MiniCurveExchange {
         console.log("Amounts: %s -> %s " , _amount, _returned);
         return _returned;
     }
+    
+    function swapTillSatisfied(
+        address _curvePool,
+        address _fromToken,
+        address _toToken,
+        uint256 _amount,
+        uint256 _min, 
+        uint256 _max,
+        uint256 _step
+    ) internal returns (uint256) {
+        _checkPoolBalances(_curvePool);
+        IERC20(_fromToken).approve(
+            _curvePool,
+            _amount
+        );
+        require(_amount <= _max, "Amount too high");
+        uint256 _returned = 0;
+        try IStableSwapPool(_curvePool).exchange_underlying(
+            _getTokenIndex(_fromToken),
+            _getTokenIndex(_toToken),
+            _amount,
+            _min
+        ) returns (uint256 __returned) {
+            _returned = __returned;
+        } catch  {
+            console.log("swapTillSatisfied - Retrying with _amount", _amount.addBasisPoints(_step));
+            return swapTillSatisfied(_curvePool, _fromToken, _toToken, _amount.addBasisPoints(_step), _min, _max, _step);
+        }
+        console.log("Swap Tokens: %s %s" , _fromToken, _toToken);
+        console.log("Amounts: %s -> %s " , _amount, _returned);
+        return _returned;
+    }
+
     function _checkPoolBalances(address _curvePool) internal view {
         uint256 _dai = IStableSwapPool(_curvePool).balances(0);
         uint256 _usdc = IStableSwapPool(_curvePool).balances(1);

@@ -7,13 +7,15 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import  "./../connectors/curve/CurveStuff.sol";
 import "../utils/Helpers.sol";
+import { ICurveCalculator } from "../interfaces/ICurveCalculator.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
+
 import "hardhat/console.sol";
 abstract contract CurveExchange {
     using OvnMath for uint256;
     using StableMath for uint256;
     using SafeMath for uint256;
-    
+
     function swap(
         address _curvePool,
         address _fromToken,
@@ -37,6 +39,7 @@ abstract contract CurveExchange {
         console.log("Amounts: %s -> %s " , _amount, _returned);
         return _returned;
     }
+
     function _checkPoolBalances(address _curvePool) internal view {
         uint256 _dai = IStableSwapPool(_curvePool).balances(0);
         uint256 _usdc = IStableSwapPool(_curvePool).balances(1);
@@ -81,5 +84,33 @@ abstract contract CurveExchange {
         console.log("Amounts: %s -> %s " , _amount, _returned);
         return _returned;
     }
+    
+    function _howMuchToSwapData(address _curvePool) internal view returns (uint256[3] memory _balances, uint256[3] memory _rates, uint256 _fee, uint256 _a) {
+        _balances[0]= (IStableSwapPool(_curvePool).balances(0));
+        _balances[1] =(IStableSwapPool(_curvePool).balances(1));
+        _balances[2] = (IStableSwapPool(_curvePool).balances(2));
+
+        _rates[0]= (1000000000000000000);
+        _rates[1]= (1000000000000000000);
+        _rates[2]= (1000000000000000000);
+
+
+        _fee = IStableSwapPool(_curvePool).fee();
+        _a = IStableSwapPool(_curvePool).A();
+
+    }
+
+    function howMuchToSwap(
+        address _curvePool,
+        address _fromToken,
+        address _toToken,
+        uint256 _amountToGet
+    ) internal view returns (uint256) {
+        _checkPoolBalances(_curvePool);
+        (uint256[3] memory _balances, uint256[3] memory _rates, uint256 _fee, uint256 _a) = _howMuchToSwapData(_curvePool);
+        (int128 _i, int128 _j) = (_getTokenIndex(_fromToken),  _getTokenIndex(_toToken));
+        return ICurveCalculator(0x83036f6C6aA9512C4e9f27462069674870B320eA).get_dx_stable(_balances,_a,_fee,_rates,_i,_j,_amountToGet);
+    }
+        
     uint256[49] private __gap;
 }

@@ -37,7 +37,9 @@ interface IStableSwapPool {
     function exchange(int128 sendToken, int128 receivedToken, uint256 _dx, uint256 _min_dy) external returns (uint256);
 
     function exchange_underlying(int128 sendToken, int128 receivedToken, uint256 _dx, uint256 _min_dy) external returns (uint256);
-
+    function A() external view returns (uint256);
+    function fee() external view returns (uint256);
+    
 }
 
 

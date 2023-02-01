@@ -155,6 +155,7 @@ interface IVault {
     function totalValue() external view returns (uint256 value);
 
     function checkBalance() external view returns (uint256);
+    function nav() external view returns (uint256);
 
     function calculateRedeemOutput(uint256 _amount)
         external
