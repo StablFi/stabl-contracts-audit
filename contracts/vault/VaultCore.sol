@@ -290,7 +290,7 @@ contract VaultCore is VaultStorage, MiniCurveExchange  {
     /**
      * @dev Allocate unallocated PS in the Vault to quick deposit strategies.
      **/
-    function quickAllocate() external whenNotCapitalPaused nonReentrant {
+    function quickAllocate() external onlyGovernor whenNotCapitalPaused nonReentrant {
         _quickAllocate(_getQuickDepositIndex());
     }
 
@@ -347,10 +347,7 @@ contract VaultCore is VaultStorage, MiniCurveExchange  {
         if (vaultValue > cashSupply) {
             cash.changeSupply(vaultValue);
             if (rebaseHandler != address(0)) {
-                try IRebaseHandler(rebaseHandler).process()  {
-                } catch  {
-                    console.log("HANDLER_FAILED");
-                }
+                 IRebaseHandler(rebaseHandler).process()  ;
             }
         }
     }

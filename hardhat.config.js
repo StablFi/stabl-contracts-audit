@@ -186,7 +186,7 @@ task("set_performance_fee", "Set Fee Bps for Harvester")
   .addParam("teambps", "Team BPS")
   .setAction(setPerformanceFee);
 
-task("vault_support_strategy", "Removed strategy from Vault")
+task("vault_remove_strategy", "Removed strategy from Vault")
   .addParam("strategy", "The strategy's address")
   .setAction(removeStrategy);
 
@@ -288,8 +288,16 @@ module.exports = {
     polygon_staging: {
       url: `${process.env.PROVIDER_URL}`,
       accounts: [STAGING_DEPLOYER_GATEPASS],
-      gasPrice: 150e9,
-      // gasMultiplier: 2,
+      gasPrice: 300e9,
+      gasMultiplier: 1.5,
+      // gasPrice: 200000000000,
+      // blockGasLimit: 20000000
+    },
+    polygon_tenderly: {
+      url: `${process.env.TENDERLY_PROVIDER_URL}`,
+      accounts: [STAGING_DEPLOYER_GATEPASS],
+      gasPrice: 300e9,
+      gasMultiplier: 1.5,
       // gasPrice: 200000000000,
       // blockGasLimit: 20000000
     },

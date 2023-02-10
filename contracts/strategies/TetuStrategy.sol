@@ -238,17 +238,17 @@ contract TetuStrategy is
     {
         if (IERC20(address(smartVault)).balanceOf(address(this)) == 0) {
             console.log("TetuStrategy - Smartvault is empty");
-            return;
+        } else {
+            smartVault.getAllRewards();
         }
 
-        smartVault.getAllRewards();
 
         if (IERC20(address(xTetuSmartVault)).balanceOf(address(this)) == 0) {
             console.log("TetuStrategy - xTetuSmartVault is empty");
-            return;
+        } else {
+            xTetuSmartVault.exit();
         }
 
-        xTetuSmartVault.exit();
 
         uint256 totalUsdc;
         uint256 tetuBalance = tetuToken.balanceOf(address(this));

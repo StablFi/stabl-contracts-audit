@@ -219,9 +219,20 @@ addresses.polygon.aaveVDebtUSDT =  "0x8038857FD47108A07d1f6Bf652ef1cBeC279A2f3";
 
 // Balancer
 addresses.polygon.balancerVault =  "0xBA12222222228d8Ba445958a75a0704d566BF2C8",
+addresses.polygon.balToken = "0x9a71012B13CA4d3D0Cdc72A177DF3ef03b0E76A3",
 addresses.polygon.balancerPoolIdUsdcTusdDaiUsdt = "0x0d34e5dd4d8f043557145598e4e2dc286b35fd4f000000000000000000000068",
 addresses.polygon.balancerPoolIdWmaticUsdcWethBal =  "0x0297e37f1873d2dab4487aa67cd56b58e2f27875000100000000000000000002",
 addresses.polygon.balancerPoolIdWmaticMtaWeth = "0x614b5038611729ed49e0ded154d8a5d3af9d1d9e00010000000000000000001d",
+addresses.polygon.balancerPoolIdBoostedAaveUSD = "0x48e6b98ef6329f8f0a30ebb8c7c960330d64808500000000000000000000075b",
+addresses.polygon.balancerPoolIdUsdcAmUsdc = "0xf93579002dbe8046c43fefe86ec78b1112247bb8000000000000000000000759",
+addresses.polygon.balancerPoolIdDaiAmDai = "0x178e029173417b1f9c8bc16dcec6f697bc323746000000000000000000000758",
+addresses.polygon.balancerPoolIdUsdtAmUsdt = "0xff4ce5aaab5a627bf82f4a571ab1ce94aa365ea600000000000000000000075a",  
+addresses.polygon.balancerAmUsdToken = "0x48e6B98ef6329f8f0A30eBB8c7C960330d648085", // lp
+addresses.polygon.balancerAmUsdcToken = "0xF93579002DBE8046c43FEfE86ec78b1112247BB8",
+addresses.polygon.balancerAmDaiToken = "0x178E029173417b1F9C8bC16DCeC6f697bC323746",
+addresses.polygon.balancerAmUsdtToken = "0xFf4ce5AAAb5a627bf82f4A571AB1cE94Aa365eA6",
+addresses.polygon.balancerAmUsdGauge = "0x1c514fec643add86aef0ef14f4add28cc3425306",
+addresses.polygon.balancerRewardHelper = "0xaEb406b0E430BF5Ea2Dc0B9Fe62E4E53f74B3a33";
 
 // a3crv
 addresses.polygon.am3crv =  "0xE7a24EF0C5e95Ffb0f6684b813A78F2a3AD7D171"; // aaveCurve Token

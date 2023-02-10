@@ -276,6 +276,47 @@ module.exports = deploymentWithProposal(
       cGainsDAIStrategyProxy.address
     );
 
+
+    // BALANCER STRATEGY:
+    // balancer-usdc
+    const cBalancerUsdcStrategyProxy = await ethers.getContract(
+      "BalancerStrategyUSDCProxy"
+    );
+    const cBalancerStrategyUsdc = await ethers.getContractAt(
+      "BalancerStrategy",
+      cBalancerUsdcStrategyProxy.address
+    );
+    console.log(
+      "cBalancerUsdcStrategyProxy.address",
+      cBalancerUsdcStrategyProxy.address
+    );
+
+    // balancer-usdt
+    const cBalancerUsdtStrategyProxy = await ethers.getContract(
+      "BalancerStrategyUSDTProxy"
+    );
+    const cBalancerStrategyUsdt = await ethers.getContractAt(
+      "BalancerStrategy",
+      cBalancerUsdtStrategyProxy.address
+    );
+    console.log(
+      "cBalancerUsdtStrategyProxy.address",
+      cBalancerUsdtStrategyProxy.address
+    );
+
+    // balancer-dai
+    const cBalancerDaiStrategyProxy = await ethers.getContract(
+      "BalancerStrategyDAIProxy"
+    );
+    const cBalancerStrategyDai = await ethers.getContractAt(
+      "BalancerStrategy",
+      cBalancerDaiStrategyProxy.address
+    );
+    console.log(
+      "cBalancerDaiStrategyProxy.address",
+      cBalancerDaiStrategyProxy.address
+    );
+
     let weights = [
       // {
       //     "strategy": cDystopiaStrategyUsdcDaiProxy.address,
@@ -443,7 +484,7 @@ module.exports = deploymentWithProposal(
         contract: "TetuStrategy",
         name: "TetuStrategy - DAI",
         minWeight: 0,
-        targetWeight: 30,
+        targetWeight: 10,
         maxWeight: 100,
         enabled: true,
         enabledReward: true,
@@ -453,7 +494,7 @@ module.exports = deploymentWithProposal(
         contract: "TetuStrategy",
         name: "TetuStrategy - USDT",
         minWeight: 0,
-        targetWeight: 45,
+        targetWeight: 10,
         maxWeight: 100,
         enabled: true,
         enabledReward: true,
@@ -463,11 +504,42 @@ module.exports = deploymentWithProposal(
         contract: "TetuStrategy",
         name: "TetuStrategy - USDC",
         minWeight: 0,
-        targetWeight: 25,
+        targetWeight: 10,
         maxWeight: 100,
         enabled: true,
         enabledReward: true,
       },
+      {
+        strategy: cBalancerStrategyUsdc.address,
+        contract: "BalancerStrategy",
+        name: "BalancerStrategy - USDC",
+        minWeight: 0,
+        targetWeight: 10,
+        maxWeight: 100,
+        enabled: true,
+        enabledReward: true,
+      },
+      {
+        strategy: cBalancerStrategyUsdt.address,
+        contract: "BalancerStrategy",
+        name: "BalancerStrategy - USDT",
+        minWeight: 0,
+        targetWeight: 10,
+        maxWeight: 100,
+        enabled: true,
+        enabledReward: true,
+      },
+      {
+        strategy: cBalancerStrategyDai.address,
+        contract: "BalancerStrategy",
+        name: "BalancerStrategy - DAI",
+        minWeight: 0,
+        targetWeight: 50,
+        maxWeight: 100,
+        enabled: true,
+        enabledReward: true,
+      },
+      
     ];
 
     let allStrategies = await cVaultCore.getAllStrategies();
