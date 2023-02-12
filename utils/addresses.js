@@ -247,6 +247,13 @@ addresses.polygon.tetuUsdcSwapRouter = "0xBCA055F25c3670fE0b1463e8d470585Fe15Ca8
 addresses.polygon.tetuUsdtSmartVault = "0xE680e0317402ad3CB37D5ed9fc642702658Ef57F"; // tetu-usdc smart vault
 addresses.polygon.tetuDaiSmartVault = "0xb4607d4b8ecfafd063b3a3563c02801c4c7366b2"; // tetu-dai smart vault
 
+// Stargate
+addresses.polygon.STG = "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590"; // reward token
+addresses.polygon.sUSDC = "0x1205f31718499dBf1fCa446663B532Ef87481fe1"; // LP token
+addresses.polygon.stargateChef = "0x8731d54E9D02c286767d56ac03e8037C07e01e98"; // Stargate Chef
+addresses.polygon.stargateRouter = "0x45A01E4e04F14f7A4a6702c74187c5F6222033cd"; // Tetu Smart vault
+addresses.polygon.stgUsdcSwapRouter = "0x1b02da8cb0d097eb8d57a175b88c7d8b47997506"; // tetu-usdc swap router
+
 // Dodo
 addresses.polygon.DODO = "0xe4Bf2864ebeC7B7fDf6Eeca9BaCAe7cDfDAffe78";
 addresses.polygon.dodoUsdcLPToken = "0x2C5CA709d9593F6Fd694D84971c55fB3032B87AB";

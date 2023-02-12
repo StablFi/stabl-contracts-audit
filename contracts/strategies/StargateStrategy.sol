@@ -29,6 +29,7 @@ contract StargateStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
     struct StargateParams {
         address lpToken;
         address chef;
+        address stargateRouter;
         uint256 routerPoolId;
         uint256 poolId;
         uint256 minSwap;
@@ -88,6 +89,7 @@ contract StargateStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
 
         lpToken = IStargatePool(_params.lpToken);
         chef = IStargateChef(_params.chef);
+        stargateRouter = IStargateRouter(_params.stargateRouter);
         routerPoolId = _params.routerPoolId;
         poolId = _params.poolId;
         minSwap = _params.minSwap;

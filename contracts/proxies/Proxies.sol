@@ -249,3 +249,17 @@ contract DripperProxy is InitializeGovernedUpgradeabilityProxy {
 contract RebaseToNonEoaHandlerProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice StargateStrategyUSDTProxy delegates calls to a StargateStrategy implementation
+ */
+contract StargateStrategyUSDTProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice StargateStrategyUSDCProxy delegates calls to a StargateStrategy implementation
+ */
+contract StargateStrategyUSDCProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

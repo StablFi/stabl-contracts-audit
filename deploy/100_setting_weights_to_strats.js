@@ -252,6 +252,19 @@ module.exports = deploymentWithProposal(
     );
     console.log("cTetuDaiStrategyProxy.address", cTetuDaiStrategyProxy.address);
 
+    // stargate-usdc
+    const cStargateUsdcStrategyProxy = await ethers.getContract(
+      "StargateStrategyUSDCProxy"
+    );
+    const cStargateStrategyUsdc = await ethers.getContractAt(
+      "StargateStrategy",
+      cStargateUsdcStrategyProxy.address
+    );
+    console.log(
+      "cStargateUsdcStrategyProxy.address",
+      cStargateUsdcStrategyProxy.address
+    );
+
     const cClearpoolWintermuteStrategyProxy = await ethers.getContract(
       "ClearpoolWintermuteStrategyProxy"
     );
@@ -439,6 +452,16 @@ module.exports = deploymentWithProposal(
       //   enabledReward: true,
       // },
       {
+        strategy: cStargateStrategyUsdc.address,
+        contract: "StargateStrategy",
+        name: "StargateStrategy - USDC",
+        minWeight: 0,
+        targetWeight: 30,
+        maxWeight: 100,
+        enabled: true,
+        enabledReward: true,
+      },
+      {
         strategy: cTetuStrategyDai.address,
         contract: "TetuStrategy",
         name: "TetuStrategy - DAI",
@@ -453,7 +476,7 @@ module.exports = deploymentWithProposal(
         contract: "TetuStrategy",
         name: "TetuStrategy - USDT",
         minWeight: 0,
-        targetWeight: 45,
+        targetWeight: 15,
         maxWeight: 100,
         enabled: true,
         enabledReward: true,
@@ -467,7 +490,7 @@ module.exports = deploymentWithProposal(
         maxWeight: 100,
         enabled: true,
         enabledReward: true,
-      },
+      }
     ];
 
     let allStrategies = await cVaultCore.getAllStrategies();

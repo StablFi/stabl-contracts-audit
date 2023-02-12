@@ -134,6 +134,8 @@ async function defaultFixture() {
       dai = await ethers.getContractAt(daiAbi, addresses.polygon.DAI);
       tusd = await ethers.getContractAt(tusdAbi, addresses.polygon.TUSD);
       usdc = await ethers.getContractAt(usdcAbi, addresses.polygon.USDC);
+      STG = await ethers.getContractAt(usdcAbi, addresses.polygon.STG);
+      sUSDC = await ethers.getContractAt(usdcAbi, addresses.polygon.sUSDC);
       tetu = await ethers.getContractAt(usdcAbi, addresses.polygon.TETU);
       TetuLPToken = await ethers.getContractAt(usdcAbi, addresses.polygon.TetuLPToken);
       primaryStable = await ethers.getContractAt(usdcAbi, addresses.polygon.primaryStable);
@@ -414,11 +416,17 @@ async function defaultFixture() {
       "TetuStrategy",
       cTetuDaiStrategyProxy.address
     );
+
+    const cStargateUsdcStrategyProxy = await ethers.getContract(
+      "StargateStrategyUSDCProxy"
+    );
+    const cStargateUsdcStrategy= await ethers.getContractAt(
+      "StargateStrategy",
+      cStargateUsdcStrategyProxy.address
+    );
     // console.log("cClearpoolStrategy.address", cClearpoolStrategy.address);
 
-    await runStrategyLogic(governor, "Tetu Strategy", cTetuUsdcStrategy.address); 
-    await runStrategyLogic(governor, "Tetu Strategy", cTetuDaiStrategy.address); 
-    await runStrategyLogic(governor, "Tetu Strategy", cTetuUsdtStrategy.address); 
+    await runStrategyLogic(governor, "Tetu Strategy", cStargateUsdcStrategy.address); 
     strategiesWithDependencies = {
       dystToken: dystToken,
       cDystopiaStrategyUsdcDai: cDystopiaStrategyUsdcDai,
@@ -476,7 +484,9 @@ async function defaultFixture() {
       cTetuUsdcStrategyProxy: cTetuUsdcStrategy,
       cTetuUsdtStrategyProxy: cTetuUsdtStrategy,
       cTetuDaiStrategyProxy: cTetuDaiStrategy,
-
+      STG: STG,
+      sUSDC: sUSDC,
+      cStargateUsdcStrategyProxy: cStargateUsdcStrategy,
       CPOOL: CPOOL,
       clearpoolWintermuteStrategy: cClearpoolWintermuteStrategy,
       
