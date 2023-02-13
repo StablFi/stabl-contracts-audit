@@ -27,7 +27,7 @@ addresses.mainnet.TUSD = "0x0000000000085d4780B73119b644AE5ecd22b376";
 addresses.mainnet.AAVE_ADDRESS_PROVIDER =  "0xb53c1a33016b2dc2ff3653530bff1848a515c8c5"; // v2
 addresses.mainnet.Aave = "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9"; // v1-v2
 addresses.mainnet.aTUSD = "--"; // Todo: use v2
-addresses.mainnet.aUSDT = "--"; // Todo: use v2
+//addresses.mainnet.aUSDT = "--"; // Todo: use v2
 addresses.mainnet.aDAI = "0x028171bca77440897b824ca71d1c56cac55b68a3"; // v2
 addresses.mainnet.aUSDC = "--"; // Todo: use v2
 addresses.mainnet.STKAAVE = "0x4da27a545c0c5b758a6ba100e3a049001de870f5"; // v1-v2
@@ -216,6 +216,10 @@ addresses.polygon.amUSDT = "0x60D55F02A771d515e077c9C2403a1ef324885CeC";
 addresses.polygon.aaveVDebtDAI =  "0x75c4d1Fb84429023170086f06E682DcbBF537b7d"; // DAI Variable Debt Token
 addresses.polygon.aaveVDebtUSDC =  "0x248960A9d75EdFa3de94F7193eae3161Eb349a12"; // USDC Variable Debt Token
 addresses.polygon.aaveVDebtUSDT =  "0x8038857FD47108A07d1f6Bf652ef1cBeC279A2f3"; // USDT Variable Debt Token
+
+// AAVE V3
+addresses.polygon.aUSDT = "0x6ab707Aca953eDAeFBc4fD23bA73294241490620";
+addresses.polygon.aaveLendingPool = "0x794a61358D6845594F94dc1DB02A252b5b4814aD";
 
 // Balancer
 addresses.polygon.balancerVault =  "0xBA12222222228d8Ba445958a75a0704d566BF2C8",

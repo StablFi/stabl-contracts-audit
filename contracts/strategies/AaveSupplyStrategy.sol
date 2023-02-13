@@ -195,19 +195,21 @@ contract AaveSupplyStrategy is InitializableAbstractStrategy, CurveExchange {
         }
 
         uint256 interest = lpBalance() - storedATokenBalance;
-        uint256 beforeBal = primaryStable.balanceOf(address(this));
+        if (interest > 0) {
+            uint256 beforeBal = primaryStable.balanceOf(address(this));
 
-        pool.withdraw(address(token0), interest, address(this));
-        _swapAssetToPrimaryStable();
+            pool.withdraw(address(token0), interest, address(this));
+            _swapAssetToPrimaryStable();
 
-        uint256 afterBal = primaryStable.balanceOf(address(this)) - beforeBal;
-        if (afterBal > 0) {
-            primaryStable.transfer(harvesterAddress, afterBal);
-            emit RewardTokenCollected(
-                harvesterAddress,
-                address(primaryStable),
-                afterBal
-            );
+            uint256 afterBal = primaryStable.balanceOf(address(this)) - beforeBal;
+            if (afterBal > 0) {
+                primaryStable.transfer(harvesterAddress, afterBal);
+                emit RewardTokenCollected(
+                    harvesterAddress,
+                    address(primaryStable),
+                    afterBal
+                );
+            }
         }
     }
 

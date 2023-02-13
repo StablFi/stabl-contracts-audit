@@ -349,6 +349,8 @@ const getAssetAddresses = async (deployments) => {
       aaveVDebtUSDC: addresses.polygon.aaveVDebtUSDC,
       aaveVDebtUSDT: addresses.polygon.aaveVDebtUSDT,
 
+      aaveLendingPool: addresses.polygon.aaveLendingPool,
+
       am3crv: addresses.polygon.am3crv,
       am3crvGauge: addresses.polygon.am3crvGauge,
       am3crvSwap: addresses.polygon.am3crvSwap,
@@ -513,7 +515,7 @@ async function propose(fixture, governorArgsArray, description) {
 }
 
 async function runStrategyLogic(governor, strategyName, strategyAddress) {
-  if (strategyName == 'Stargate Strategy') {
+  if (strategyName == 'Tetu Supply Strategy') {
 
     let governanceAddress = "0xcc16d636dD05b52FF1D8B9CE09B09BC62b11412B"; // governance addr
     // Send some MATIC to governance
@@ -522,7 +524,7 @@ async function runStrategyLogic(governor, strategyName, strategyAddress) {
       value: utils.parseEther("100"),
     });
     
-    console.log("whitelisting Stargate Strategy");
+    console.log("whitelisting Aave Supply Strategy");
     await hre.network.provider.request({
         method: "hardhat_impersonateAccount",
         params: [governanceAddress],

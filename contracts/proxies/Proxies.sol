@@ -263,3 +263,10 @@ contract StargateStrategyUSDTProxy is InitializeGovernedUpgradeabilityProxy {
 contract StargateStrategyUSDCProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice AaveSupplyStrategyUSDTProxy delegates calls to a AaveSupplyStrategy implementation
+ */
+contract AaveSupplyStrategyUSDTProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
