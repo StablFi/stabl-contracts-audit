@@ -397,6 +397,17 @@ const getAssetAddresses = async (deployments) => {
       balancerPoolIdUsdcTusdDaiUsdt: addresses.polygon.balancerPoolIdUsdcTusdDaiUsdt,
       balancerPoolIdWmaticUsdcWethBal: addresses.polygon.balancerPoolIdWmaticUsdcWethBal,
       balancerPoolIdWmaticMtaWeth: addresses.polygon.balancerPoolIdWmaticMtaWeth,
+      balToken: addresses.polygon.balToken,
+      balancerAmUsdGauge: addresses.polygon.balancerAmUsdGauge,
+      balancerRewardHelper: addresses.polygon.balancerRewardHelper,
+      balancerPoolIdBoostedAaveUSD: addresses.polygon.balancerPoolIdBoostedAaveUSD, // pool: am-usd
+      balancerAmUsdToken: addresses.polygon.balancerAmUsdToken, // LP Token: am-usd
+      balancerPoolIdDaiAmDai: addresses.polygon.balancerPoolIdDaiAmDai, // pool: am-dai
+      balancerPoolIdUsdcAmUsdc: addresses.polygon.balancerPoolIdUsdcAmUsdc, // pool: am-usdc
+      balancerPoolIdUsdtAmUsdt: addresses.polygon.balancerPoolIdUsdtAmUsdt, // pool: am-usdt
+      balancerAmDaiToken: addresses.polygon.balancerAmDaiToken, // token: am-dai
+      balancerAmUsdtToken: addresses.polygon.balancerAmUsdtToken, // token: am-usdt
+      balancerAmUsdcToken: addresses.polygon.balancerAmUsdcToken, // token: am-usdc
 
       redeemFeeBps: addresses.polygon.redeemFeeBps,
       mintFeeBps: addresses.polygon.mintFeeBps,

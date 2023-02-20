@@ -8,6 +8,8 @@ import { StableMath } from "../utils/StableMath.sol";
 import  "./../connectors/curve/CurveStuff.sol";
 import "../utils/Helpers.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
+import { ICurveCalculator } from "../interfaces/ICurveCalculator.sol";
+
 import "hardhat/console.sol";
 abstract contract MiniCurveExchange {
     using OvnMath for uint256;
@@ -111,5 +113,30 @@ abstract contract MiniCurveExchange {
             _getTokenIndex(_toToken),
             _amount
         );
+    }
+    function _howMuchToSwapData(address _curvePool) internal view returns (uint256[3] memory _balances, uint256[3] memory _rates, uint256 _fee, uint256 _a) {
+        _balances[0]= (IStableSwapPool(_curvePool).balances(0));
+        _balances[1] =(IStableSwapPool(_curvePool).balances(1));
+        _balances[2] = (IStableSwapPool(_curvePool).balances(2));
+
+        _rates[0]= (1000000000000000000);
+        _rates[1]= (1000000000000000000);
+        _rates[2]= (1000000000000000000);
+
+
+        _fee = IStableSwapPool(_curvePool).fee();
+        _a = IStableSwapPool(_curvePool).A();
+
+    }
+    function howMuchToSwap(
+        address _curvePool,
+        address _fromToken,
+        address _toToken,
+        uint256 _amountToGet
+    ) internal view returns (uint256) {
+        _checkPoolBalances(_curvePool);
+        (uint256[3] memory _balances, uint256[3] memory _rates, uint256 _fee, uint256 _a) = _howMuchToSwapData(_curvePool);
+        (int128 _i, int128 _j) = (_getTokenIndex(_fromToken),  _getTokenIndex(_toToken));
+        return ICurveCalculator(0x83036f6C6aA9512C4e9f27462069674870B320eA).get_dx_stable(_balances,_a,_fee,_rates,_i,_j,_amountToGet);
     }
 }

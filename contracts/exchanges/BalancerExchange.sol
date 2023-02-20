@@ -93,6 +93,7 @@ abstract contract BalancerExchange {
     ) internal returns (uint256) {
         IVault balancerVault = IVault(_balancerVault);
         IERC20(address(tokenIn)).approve(address(balancerVault), amount);
+        IVault.SwapKind _kind = kind;
 
         IVault.BatchSwapStep[] memory swaps = new IVault.BatchSwapStep[](2);
 
@@ -122,7 +123,7 @@ abstract contract BalancerExchange {
         fundManagement.toInternalBalance = false;
 
         int256[] memory limits = new int256[](3);
-        if (kind == IVault.SwapKind.GIVEN_IN) {
+        if (_kind == IVault.SwapKind.GIVEN_IN) {
             limits[0] = MAX_VALUE;
             limits[1] = MAX_VALUE;
             limits[2] = MAX_VALUE;
@@ -132,7 +133,7 @@ abstract contract BalancerExchange {
             limits[2] = 0;
         }
 
-        return uint256(- balancerVault.batchSwap(kind, swaps, assets, fundManagement, limits, block.timestamp + 600)[2]);
+        return uint256(- balancerVault.batchSwap(_kind, swaps, assets, fundManagement, limits, block.timestamp + 600)[2]);
     }
 
     function onSwap(
