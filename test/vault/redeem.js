@@ -49,6 +49,7 @@ describe("Vault Redeem", function () {
 
     console.log("MATT CASH Balance: ", cashUnitsFormat((await cash.balanceOf(matt.address)).toString()))
     console.log("MATT DAI Balance: ", daiUnitsFormat((await dai.balanceOf(matt.address)).toString()))
+    console.log("MATT USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(matt.address)).toString()))
     console.log("Total Vault Value: ", usdcUnitsFormat(await vault.totalValue()).toString())
     console.log("Total Cash Supply: ", cashUnitsFormat(await cash.totalSupply()).toString())
     console.log("---")
@@ -59,6 +60,7 @@ describe("Vault Redeem", function () {
 
     console.log("MATT CASH Balance: ", cashUnitsFormat((await cash.balanceOf(matt.address)).toString()))
     console.log("MATT DAI Balance: ", daiUnitsFormat((await dai.balanceOf(matt.address)).toString()))
+    console.log("MATT USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(matt.address)).toString()))
     console.log("Labs USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(Labs.address)).toString()))
     console.log("Team USDC Balance: ", usdcUnitsFormat((await usdc.balanceOf(Team.address)).toString()))
     console.log("Total Vault Value: ", usdcUnitsFormat(await vault.totalValue()).toString())

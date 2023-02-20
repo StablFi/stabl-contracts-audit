@@ -106,21 +106,31 @@ contract VaultCore is VaultStorage, MiniCurveExchange  {
             console.log("FEE: ", _toUseAsset.mul(mintFeeBps).div(10000));
             _toUseAsset = _toUseAsset.sub(_toUseAsset.mul(mintFeeBps).div(10000));
         }
+        console.log("TO_USE_ASSET:", _toUseAsset);
         uint256 _toMintCASH = _toUseAsset.scaleBy(18,_assetDecimals);
 
         uint256 _quickDepositIndex = _getQuickDepositIndex();
         IStrategy _quickDepositStrategy = IStrategy(quickDepositStrategies[_quickDepositIndex]);
-        bool _isDirectDepositAllowed = _quickDepositStrategy.isDirectDepositAllowed() ;
+
+        bool _isDirectDepositAllowed = false;
+        uint256 _directDepositAmount = 0;
+        try  _quickDepositStrategy.isDirectDepositAllowed() returns (bool __isDirectDepositAllowed) {
+            _isDirectDepositAllowed = __isDirectDepositAllowed;
+        } catch  {
+            console.log("DD_NOT_SUPPORTED");
+        }
         bool _isDirectDeposited = false;
-        uint256 _directDepositAmount = _quickDepositStrategy.directDepositRequirement(_toMintCASH.scaleBy(_psDecimals, 18)).addBasisPoints(1); // 1e(_assetDecimals)
-        if (_directDepositAmount > _amount.scaleBy(_psDecimals, _assetDecimals)) {
-            console.log("DDA > TO_USE_ASSET:", _directDepositAmount, _toUseAsset);
-            _directDepositAmount = _toUseAsset;
+        if (_isDirectDepositAllowed == true) {
+            _directDepositAmount = _quickDepositStrategy.directDepositRequirement(_toMintCASH.scaleBy(_psDecimals, 18));//.addBasisPoints(1); // 1e(_assetDecimals)
+            if (_directDepositAmount.scaleBy(_psDecimals, _assetDecimals) > _amount.scaleBy(_psDecimals, _assetDecimals)) {
+                console.log("DDA > TO_USE_ASSET:", _directDepositAmount, _toUseAsset);
+                _directDepositAmount = _toUseAsset;
+            }
         }
         uint256 _liquidationValueBefore = _totalValue();
         _assetToken.safeTransferFrom(msg.sender, address(this), _amount);
         
-        console.log("TO_USE_ASSET:", _toUseAsset);
+        console.log("TO_USE_ASSET_AFTER_DDA_CHECK:", _toUseAsset);
         console.log("DDA:", _directDepositAmount);
 
         // Swap if needed
@@ -311,6 +321,7 @@ contract VaultCore is VaultStorage, MiniCurveExchange  {
         if (quickDepositStrategyAddr != address(0)   && allocateAmount > 0 ) {
             IStrategy strategy = IStrategy(quickDepositStrategyAddr);
             IERC20(primaryStableAddress).safeTransfer(address(strategy), allocateAmount);
+            console.log("DEPOSITING TO STRATEGY");
             strategy.deposit(primaryStableAddress, allocateAmount);
             emit AssetAllocated(
                 primaryStableAddress,
@@ -529,6 +540,56 @@ contract VaultCore is VaultStorage, MiniCurveExchange  {
         return assets[_asset].isSupported;
     }
 
+    
+
+    // Internal functions
+    function _handleDirectDeposit(address _asset, uint256 _amount, uint256 _directDepositAmount, address _quickDepositStrategy) internal returns (bool) {
+        console.log("HANDLE_DIRECT_DEPOSIT");
+        if (mintFeeBps > 0 && treasuryAddress != address(0)) {
+            uint256 _mintFee = _amount.sub(_directDepositAmount);  // 1e(_assetDecimals)
+            _mintFee = _swapAsset(_asset, primaryStableAddress, _mintFee); // 1e(_psDecimals)
+            IERC20(primaryStableAddress).safeTransfer(treasuryAddress, _mintFee);
+            emit MintFeeCharged(msg.sender, _mintFee);
+        }
+        IERC20(_asset).safeTransfer(_quickDepositStrategy, _directDepositAmount);
+        IStrategy(_quickDepositStrategy).directDeposit();
+        return true;
+    }
+
+    function _handleDirectDepositWithUnalignedToken(address _asset, uint256 _amount, uint256 _directDepositAmount, address _quickDepositStrategy) internal returns (bool) {
+        console.log("HANDLE_DIRECT_DEPOSIT_WITH_UNALIGNED_TOKEN");
+        uint256 _assetBeforeSwapping = IERC20(_asset).balanceOf(address(this));
+        console.log("ASSET_BEFORE_SWAPPING", _assetBeforeSwapping);
+
+        // How much to swap to get _asset is needed to get _directDepositAmount of PS
+        uint256 _assetsToSwap = howMuchToSwap(swappingPool, _asset , IStrategy(_quickDepositStrategy).token0() , _directDepositAmount.scaleBy(Helpers.getDecimals(IStrategy(_quickDepositStrategy).token0()), Helpers.getDecimals(primaryStableAddress)));
+
+        console.log("ASSETS_TO_SWAP", _assetsToSwap);
+        uint256 _token0GeneratedAmount = swapTillSatisfied(swappingPool, _asset, IStrategy(_quickDepositStrategy).token0(), _assetsToSwap,_directDepositAmount, _amount, 1);
+        console.log("TOKEN0_GENERATED_AMOUNT", _token0GeneratedAmount);
+        uint256 _assetUsed = _assetBeforeSwapping.sub(IERC20(_asset).balanceOf(address(this)));
+
+        if (mintFeeBps > 0 && treasuryAddress != address(0)) {
+            uint256 _mintFee = _amount.sub(_assetUsed); // 1e(_assetDecimals)
+            _mintFee = _swapAsset(_asset, primaryStableAddress, _mintFee); // 1e(_psDecimals)
+            IERC20(primaryStableAddress).safeTransfer(treasuryAddress, _mintFee);
+            emit MintFeeCharged(msg.sender, _mintFee);
+        }
+        IERC20(IStrategy(_quickDepositStrategy).token0()).safeTransfer(_quickDepositStrategy, _token0GeneratedAmount);
+        IStrategy(_quickDepositStrategy).directDeposit();
+        return true;
+    }
+    function _handleTrivialDeposit(address _asset, uint256 _amount, uint256 _psDecimals) internal returns (uint256) {
+        console.log("HANDLE_TRIVIAL_DEPOSIT");
+        // Swap the asset to PS
+        uint256 _psAmount = _swapAsset(_asset, primaryStableAddress);
+        // If the amount after swapping is more than provided amount, we need to max out the _psAmount to the amount provided
+        if (_psAmount.scaleBy(18, _psDecimals) > _amount.scaleBy(18, Helpers.getDecimals(_asset))) {
+            _psAmount = _amount.scaleBy(_psDecimals, Helpers.getDecimals(_asset));
+        }
+        return _psAmount;
+    }
+
     receive() external payable {}
 
     /**
@@ -566,47 +627,5 @@ contract VaultCore is VaultStorage, MiniCurveExchange  {
                 return(0, returndatasize())
             }
         }
-    }
-
-    // Internal functions
-    function _handleDirectDeposit(address _asset, uint256 _amount, uint256 _directDepositAmount, address _quickDepositStrategy) internal returns (bool) {
-        console.log("HANDLE_DIRECT_DEPOSIT");
-        if (mintFeeBps > 0 && treasuryAddress != address(0)) {
-            uint256 _mintFee = _amount.sub(_directDepositAmount);  // 1e(_assetDecimals)
-            _mintFee = _swapAsset(_asset, primaryStableAddress, _mintFee); // 1e(_psDecimals)
-            IERC20(primaryStableAddress).safeTransfer(treasuryAddress, _mintFee);
-            emit MintFeeCharged(msg.sender, _mintFee);
-        }
-        IERC20(_asset).safeTransfer(_quickDepositStrategy, _directDepositAmount);
-        IStrategy(_quickDepositStrategy).directDeposit();
-        return true;
-    }
-
-    function _handleDirectDepositWithUnalignedToken(address _asset, uint256 _amount, uint256 _directDepositAmount, address _quickDepositStrategy) internal returns (bool) {
-        console.log("HANDLE_DIRECT_DEPOSIT_WITH_UNALIGNED_TOKEN");
-        uint256 _assetBeforeSwapping = IERC20(_asset).balanceOf(address(this));
-        uint256 _assetsToSwap = onSwap(swappingPool, IStrategy(_quickDepositStrategy).token0() , _asset , _directDepositAmount);
-        uint256 _token0GeneratedAmount = swapTillSatisfied(swappingPool, _asset, IStrategy(_quickDepositStrategy).token0(), _assetsToSwap,_directDepositAmount, _amount, 1);
-        uint256 _assetUsed = _assetBeforeSwapping.sub(IERC20(_asset).balanceOf(address(this)));
-
-        if (mintFeeBps > 0 && treasuryAddress != address(0)) {
-            uint256 _mintFee = _amount.sub(_assetUsed); // 1e(_assetDecimals)
-            _mintFee = _swapAsset(_asset, primaryStableAddress, _mintFee); // 1e(_psDecimals)
-            IERC20(primaryStableAddress).safeTransfer(treasuryAddress, _mintFee);
-            emit MintFeeCharged(msg.sender, _mintFee);
-        }
-        IERC20(IStrategy(_quickDepositStrategy).token0()).safeTransfer(_quickDepositStrategy, _token0GeneratedAmount);
-        IStrategy(_quickDepositStrategy).directDeposit();
-        return true;
-    }
-    function _handleTrivialDeposit(address _asset, uint256 _amount, uint256 _psDecimals) internal returns (uint256) {
-        console.log("HANDLE_TRIVIAL_DEPOSIT");
-        // Swap the asset to PS
-        uint256 _psAmount = _swapAsset(_asset, primaryStableAddress);
-        // If the amount after swapping is more than provided amount, we need to max out the _psAmount to the amount provided
-        if (_psAmount.scaleBy(18, _psDecimals) > _amount.scaleBy(18, Helpers.getDecimals(_asset))) {
-            _psAmount = _amount.scaleBy(_psDecimals, Helpers.getDecimals(_asset));
-        }
-        return _psAmount;
     }
 }

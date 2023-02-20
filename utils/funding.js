@@ -15,6 +15,9 @@ const {
   tusdUnits,
   ognUnits,
   isFork,
+  usdcUnitsFormat,
+  daiUnitsFormat,
+  usdtUnitsFormat,
 } = require("../test/helpers");
 /* Used for funding accounts in forked mode. Find the holder that has the most ETH or ERC20 token amounts.
  * param contract: address of ERC20 token. If null the account with the most ETH shall be returned
@@ -125,29 +128,32 @@ const fundAccounts = async () => {
         to: await signers[i].getAddress(),
         value: utils.parseEther("100"),
       });
+      // usdc, dai. usdt, tusd balance of signers[i]
+      let usdcBalance = await usdc.balanceOf(await signers[i].getAddress());
+      let daiBalance = await dai.balanceOf(await signers[i].getAddress());
+      let usdtBalance = await usdt.balanceOf(await signers[i].getAddress());
+
+      let toAddUsdc = (usdcUnits("50000").sub(usdcBalance) > 0) ? usdcUnits("50000").sub(usdcBalance) : "1";
+      let toAddDai = (daiUnits("50000").sub(daiBalance) > 0) ? daiUnits("50000").sub(daiBalance) : "1";
+      let toAddUsdt = (usdtUnits("50000").sub(usdtBalance) > 0) ? usdtUnits("50000").sub(usdtBalance) : "1";
 
       let usdcWhale = await findBestMainnetTokenHolder(usdc, hre);
-      // console.log("Adding USDC to ", await signers[i].getAddress(), " from ", usdcWhale._address);
+      console.log("Adding ",usdcUnitsFormat(toAddUsdc), "USDC to ", await signers[i].getAddress(), " from ", usdcWhale._address);
       await usdc
         .connect(await findBestMainnetTokenHolder(usdc, hre))
-        .transfer(await signers[i].getAddress(), usdcUnits("10000"));
+        .transfer(await signers[i].getAddress(), toAddUsdc);
 
       let daiWhale = await findBestMainnetTokenHolder(dai, hre);
-      // console.log("Adding DAI to ", await signers[i].getAddress(), " from ", daiWhale._address);
+      console.log("Adding ",daiUnitsFormat(toAddDai), "DAI to ", await signers[i].getAddress(), " from ", daiWhale._address);
       await dai
         .connect(daiWhale)
-        .transfer(await signers[i].getAddress(), daiUnits("1000"));
+        .transfer(await signers[i].getAddress(), toAddDai);
 
       let usdtWhale = await findBestMainnetTokenHolder(usdt, hre);
-      // console.log("Adding USDT to ", await signers[i].getAddress(), " from ", usdtWhale._address);
+      console.log("Adding ",usdtUnitsFormat(toAddUsdt), "USDT to ", await signers[i].getAddress(), " from ", usdtWhale._address);
       await usdt
         .connect(await findBestMainnetTokenHolder(usdt, hre))
-        .transfer(await signers[i].getAddress(), usdtUnits("1000"));
-      // // console.log("Adding TUSD to ", await signers[i].getAddress())
-      // await tusd
-      //   .connect(await findBestMainnetTokenHolder(tusd, hre))
-      //   .transfer(await signers[i].getAddress(), tusdUnits("1000"));
-      // console.log("Adding STABL to ", await signers[i].getAddress())
+        .transfer(await signers[i].getAddress(), toAddUsdt);
 
     } else {
       await dai.connect(signers[i]).mint(daiUnits("1000"));

@@ -16,6 +16,7 @@ const {
   isFork,
   usdcUnitsFormat,
   cashUnitsFormat,
+  daiUnitsFormat,
 } = require("../helpers");
 
 // Support BigNumber and all that with ethereum-waffle
@@ -41,66 +42,165 @@ describe("Vault", function () {
     expect(assets.length).to.equal(origAssetCount.add(1));
     expect(await vault.isSupportedAsset(cash.address)).to.be.true;
   });
+  for (let i = 0; i < 40; i++) {
+    // Random amount from 1 to 1M
+    const amount =(Math.floor(Math.random() * 50000) + 1).toString();
+    // Get random number from 0 to 2
+    const stratIndex = Math.floor(Math.random() * 3);
 
-  it("Should allow USDC minting with fee  mint_imp mint_new mint_imp_usdc @fork", async function () {
-    const { vault, usdc, anna, cash, cTetuUsdtStrategyProxy } = await loadFixture(defaultFixture);
-    expect(await vault.isSupportedAsset(usdc.address)).to.be.true;
+    it("Should allow " +amount+ " USDC minting with fee  mint_imp_mass mint_new mint_imp_usdc @fork", async function () {
+      const { vault, usdc, anna, rio, cash, cTetuUsdtStrategyProxy, cTetuUsdcStrategyProxy, cTetuDaiStrategyProxy  } = await loadFixture(defaultFixture);
+      expect(await vault.isSupportedAsset(usdc.address)).to.be.true;
 
-    await vault.setQuickDepositStrategies([cTetuUsdtStrategyProxy.address]);
-    // Setting fee to 0.25%
-    await vault.setMintFeeBps(25);
+      // Set treasury
+      console.log("Anna USDC balance: ", usdcUnitsFormat(await usdc.balanceOf(anna.address)));
+      console.log("Treasury: ", rio.address);
+      await vault.setFeeParams( rio.address, rio.address, rio.address);
+      const rioUsdcBalance = await usdc.balanceOf(rio.address);
+      console.log("Rio USDC balance: ", usdcUnitsFormat(await usdc.balanceOf(rio.address)));
 
-    await expect(anna).has.a.approxBalanceOf("0.00", cash);
 
-    await usdc.connect(anna).approve(vault.address, usdcUnits("1"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("1"), 0);
+      // KMake an array of tetu strats
+      const tetuStrats = [cTetuUsdcStrategyProxy.address, cTetuUsdtStrategyProxy.address, cTetuDaiStrategyProxy.address];
+      // Get 1 random strat from the array
+      const randomStrat = tetuStrats[stratIndex];
+      console.log('Quick deposit strat: ', randomStrat);
+      await vault.setQuickDepositStrategies([randomStrat]);
+      // Setting fee to 0.25%
+      await vault.setMintFeeBps(25);
 
-    // Print CASH of anna
-    console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
-    console.log("Strategy checkBalance: ", usdcUnitsFormat(await cTetuUsdtStrategyProxy.checkBalance()));
-    // expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits("95.0"),cashUnits("1"));
-  });
+      await expect(anna).has.a.approxBalanceOf("0.00", cash);
 
-  it("Should allow DAI minting (with swapping) with fee mint_imp @fork mint_imp_dai mint_new", async function () {
-    const { vault, dai, anna, cash, cTetuUsdtStrategyProxy } = await loadFixture(defaultFixture);
-    console.log("Vault: ", vault.address)
-    console.log("cTetuUsdtStrategyProxy: ", cTetuUsdtStrategyProxy.address)
-    expect(await vault.isSupportedAsset(dai.address)).to.be.true;
-    await vault.setQuickDepositStrategies([cTetuUsdtStrategyProxy.address]);
-    
-    // Setting fee to 0.25%
-    await vault.setMintFeeBps(25);
 
-    // Print mintFeeBps
-    console.log("Mint fee: ", (await vault.mintFeeBps()).toString());
 
-    await expect(anna).has.a.approxBalanceOf("0.00", cash);
+      await usdc.connect(anna).approve(vault.address, usdcUnits(amount));
+      await vault.connect(anna).mint(usdc.address, usdcUnits(amount), 0);
 
-    await dai.connect(anna).approve(vault.address, daiUnits("1"));
-    await vault.connect(anna).mint(dai.address, daiUnits("1"), 0);
-    // Print CASH of anna
-    console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
-    console.log("Strategy checkBalance: ", usdcUnitsFormat(await cTetuUsdtStrategyProxy.checkBalance()));
-    // expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits("95.0"),cashUnits("1"));
-  });
+      const rioUsdcBalanceAfter = await usdc.balanceOf(rio.address);
+      const changeInRioBalance = rioUsdcBalanceAfter.sub(rioUsdcBalance);
+      const amountMinusFee = (amount - (amount * 0.0025)).toString();
+      const fee = (amount * 0.0025).toString();
 
-  it("Should allow USDT minting (with swapping) with fee mint_imp_usdt mint_new @fork", async function () {
-    const { vault, usdt, anna, cash, cTetuUsdtStrategyProxy } = await loadFixture(defaultFixture);
-    expect(await vault.isSupportedAsset(usdt.address)).to.be.true;
-    await vault.setQuickDepositStrategies([cTetuUsdtStrategyProxy.address]);
-    
-    // Setting fee to 0.25%
-    await vault.setMintFeeBps(25);
+      // Print CASH of anna
+      console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
+      console.log("Anna CASH balance should be: ", amountMinusFee);
+      // Calculate the 0.1% of amountMinusFee
+      const allowedDifferenceAmount = ((amountMinusFee * 0.001).toFixed(2)).toString();
 
-    await expect(anna).has.a.approxBalanceOf("0.00", cash);
+      console.log("Strategy checkBalance: ", usdcUnitsFormat(await cTetuUsdtStrategyProxy.checkBalance()));
+      console.log("Treasury USDC should gain: ", fee);
+      console.log("Treasury USDC gained: ", usdcUnitsFormat(changeInRioBalance));
+      expect(changeInRioBalance).to.be.closeTo(usdcUnits(parseFloat(fee).toFixed(6)),usdcUnits("1"));
+      expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits(amountMinusFee),cashUnits(allowedDifferenceAmount));
+    });
+  }
+  for (let i = 0; i < 40; i++) {
+    const amount =(Math.floor(Math.random() * 50000) + 1).toString();
+    const stratIndex = Math.floor(Math.random() * 3);
 
-    await usdt.connect(anna).approve(vault.address, usdtUnits("1"));
-    await vault.connect(anna).mint(usdt.address, usdtUnits("1"), 0);
-    // Print CASH of anna
-    console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
-    console.log("Strategy checkBalance: ", usdcUnitsFormat(await cTetuUsdtStrategyProxy.checkBalance()));
-    // expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits("95.0"),cashUnits("1"));
-  });
+    it("Should allow " +amount+ " DAI minting (with swapping) with fee mint_imp_mass @fork mint_imp_dai mint_new", async function () {
+      const { vault, dai, anna, rio, cash, cTetuUsdtStrategyProxy, cTetuUsdcStrategyProxy,cTetuDaiStrategyProxy,  usdc } = await loadFixture(defaultFixture);
+      console.log("Vault: ", vault.address)
+      console.log("cTetuUsdtStrategyProxy: ", cTetuUsdtStrategyProxy.address)
+      expect(await vault.isSupportedAsset(dai.address)).to.be.true;
+
+      
+      // Set treasury
+      console.log("Anna DAI balance: ", daiUnitsFormat(await dai.balanceOf(anna.address)));
+      console.log("Anna USDC balance: ", usdcUnitsFormat(await usdc.balanceOf(anna.address)));
+
+      console.log("Treasury: ", rio.address);
+      await vault.setFeeParams( rio.address, rio.address, rio.address);
+      const rioUsdcBalance = await usdc.balanceOf(rio.address);
+      console.log("Rio USDC balance: ", usdcUnitsFormat(await usdc.balanceOf(rio.address)));
+
+
+      const tetuStrats = [cTetuUsdcStrategyProxy.address, cTetuUsdtStrategyProxy.address, cTetuDaiStrategyProxy.address];
+      // Get 1 random strat from the array
+      const randomStrat = tetuStrats[stratIndex];
+      console.log('Quick deposit strat: ', randomStrat);
+      await vault.setQuickDepositStrategies([randomStrat]);
+      
+      // Setting fee to 0.25%
+      await vault.setMintFeeBps(25);
+
+      // Print mintFeeBps
+      console.log("Mint fee: ", (await vault.mintFeeBps()).toString());
+
+      await expect(anna).has.a.approxBalanceOf("0.00", cash);
+
+      await dai.connect(anna).approve(vault.address, daiUnits(amount));
+      await vault.connect(anna).mint(dai.address, daiUnits(amount), 0);
+
+      const rioUsdcBalanceAfter = await usdc.balanceOf(rio.address);
+      const changeInRioBalance = rioUsdcBalanceAfter.sub(rioUsdcBalance);
+      const amountMinusFee = (amount - (amount * 0.0025)).toString();
+      const fee = (amount * 0.0025).toString();
+
+      
+      // Print CASH of anna
+      console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
+      console.log("Anna CASH balance should be: ", amountMinusFee);
+      // Calculate the 0.1% of amountMinusFee
+      const allowedDifferenceAmount = ((amountMinusFee * 0.001).toFixed(2)).toString();
+
+      console.log("Strategy checkBalance: ", usdcUnitsFormat(await cTetuUsdtStrategyProxy.checkBalance()));
+      console.log("Treasury USDC should gain: ", fee);
+      console.log("Treasury USDC gain", usdcUnitsFormat(changeInRioBalance));
+      // expect(changeInRioBalance).to.be.closeTo(usdcUnits(parseFloat(fee).toFixed(6)),usdcUnits("1"));
+      expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits(amountMinusFee),cashUnits(allowedDifferenceAmount));
+    });
+  }
+  for (let i = 0; i < 40; i++) {
+    const amount = (Math.floor(Math.random() * 50000) + 1).toString();
+    const stratIndex = Math.floor(Math.random() * 3);
+
+    it("Should allow " +amount+ " USDT minting (with swapping) with fee mint_imp_mass mint_imp_usdt mint_new @fork", async function () {
+      const { vault, usdt, anna, usdc, rio, cash, cTetuUsdtStrategyProxy,  cTetuUsdcStrategyProxy,cTetuDaiStrategyProxy } = await loadFixture(defaultFixture);
+      expect(await vault.isSupportedAsset(usdt.address)).to.be.true;
+
+      // Set treasury
+      console.log("Anna USDC balance: ", usdcUnitsFormat(await usdc.balanceOf(anna.address)));
+      console.log("Treasury: ", rio.address);
+      await vault.setFeeParams( rio.address, rio.address, rio.address);
+      const rioUsdcBalance = await usdc.balanceOf(rio.address);
+      console.log("Rio USDC balance: ", usdcUnitsFormat(await usdc.balanceOf(rio.address)));
+
+
+      const tetuStrats = [cTetuUsdcStrategyProxy.address, cTetuUsdtStrategyProxy.address, cTetuDaiStrategyProxy.address];
+      // Get 1 random strat from the array
+      const randomStrat = tetuStrats[stratIndex];
+      console.log('Quick deposit strat: ', randomStrat);
+      await vault.setQuickDepositStrategies([randomStrat]);
+
+      // Setting fee to 0.25%
+      await vault.setMintFeeBps(25);
+
+      await expect(anna).has.a.approxBalanceOf("0.00", cash);
+
+      await usdt.connect(anna).approve(vault.address, usdtUnits(amount));
+      await vault.connect(anna).mint(usdt.address, usdtUnits(amount), 0);
+
+      
+      const rioUsdcBalanceAfter = await usdc.balanceOf(rio.address);
+      const changeInRioBalance = rioUsdcBalanceAfter.sub(rioUsdcBalance);
+      const amountMinusFee = (amount - (amount * 0.0025)).toString();
+      const fee = (amount * 0.0025).toString();
+
+      // Print CASH of anna
+      console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
+      console.log("Anna CASH balance should be: ", amountMinusFee);
+      // Calculate the 0.1% of amountMinusFee
+      const allowedDifferenceAmount = ((amountMinusFee * 0.001).toFixed(2)).toString();
+
+      console.log("Strategy checkBalance: ", usdcUnitsFormat(await cTetuUsdtStrategyProxy.checkBalance()));
+      console.log("Treasury USDC should gain: ", fee);
+      console.log("Treasury USDC gained: ", usdcUnitsFormat(changeInRioBalance));
+      expect(changeInRioBalance).to.be.closeTo(usdcUnits(parseFloat(fee).toFixed(6)),usdcUnits("20"));
+      expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits(amountMinusFee),cashUnits(allowedDifferenceAmount));
+
+    });
+  }
 
   it("Should allow USDC minting with fee  mint_imp with non-direct deposit strategy @fork", async function () {
     const { vault, usdc, anna, cash, cMeshSwapStrategyDAI } = await loadFixture(defaultFixture);

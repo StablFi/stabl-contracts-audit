@@ -140,6 +140,7 @@ contract TetuStrategy is
         if (address(token0) == address(primaryStable)) {
             return _psAmount;
         }
+        console.log("TETU_DEPOSIT_REQUIREMENT %s", _psAmount);
         return
             howMuchToSwap(
                 curvePool,
@@ -156,7 +157,7 @@ contract TetuStrategy is
         require(_asset == address(primaryStable), "Token not supported.");
         require(_amount > 0, "Must deposit something");
         _swapPrimaryStableToToken0();
-        console.log("TETU_DEPOSIT %s", _amount);
+        console.log("TETU_DEPOSIT %s", token0.balanceOf(address(this)));
         _stake(token0.balanceOf(address(this)));
         console.log("TETU_DEPOSIT LP: %s", lpBalance());
 
