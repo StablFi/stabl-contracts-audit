@@ -137,6 +137,7 @@ async function defaultFixture() {
       usdc = await ethers.getContractAt(usdcAbi, addresses.polygon.USDC);
       STG = await ethers.getContractAt(usdcAbi, addresses.polygon.STG);
       sUSDC = await ethers.getContractAt(usdcAbi, addresses.polygon.sUSDC);
+      sUSDT = await ethers.getContractAt(usdtAbi, addresses.polygon.sUSDT);
       tetu = await ethers.getContractAt(usdcAbi, addresses.polygon.TETU);
       TetuLPToken = await ethers.getContractAt(usdcAbi, addresses.polygon.TetuLPToken);
       primaryStable = await ethers.getContractAt(usdcAbi, addresses.polygon.primaryStable);
@@ -428,6 +429,14 @@ async function defaultFixture() {
       cStargateUsdcStrategyProxy.address
     );
 
+    const cStargateUsdtStrategyProxy = await ethers.getContract(
+      "StargateStrategyUSDTProxy"
+    );
+    const cStargateUsdtStrategy= await ethers.getContractAt(
+      "StargateStrategy",
+      cStargateUsdtStrategyProxy.address
+    );
+
     const cAaveSupplyUsdtStrategyProxy = await ethers.getContract(
       "AaveSupplyStrategyUSDTProxy"
     );
@@ -501,6 +510,8 @@ async function defaultFixture() {
       STG: STG,
       sUSDC: sUSDC,
       cStargateUsdcStrategyProxy: cStargateUsdcStrategy,
+      sUSDT: sUSDT,
+      cStargateUsdtStrategyProxy: cStargateUsdtStrategy,
       CPOOL: CPOOL,
       clearpoolWintermuteStrategy: cClearpoolWintermuteStrategy,
       

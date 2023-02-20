@@ -25,7 +25,7 @@ let {
   token1Units,
   token1UnitsFormat,
   strategy,
-  sUSDC,
+  sUSDT,
   usdcUnitsFormat,
   usdtUnits,
   usdtUnitsFormat,
@@ -34,8 +34,8 @@ let {
 } = require("../../helpers");
 const { min } = require("lodash");
 
-const strategyName = "Stargate Strategy USDC";
-const token0Name = "USDC";
+const strategyName = "Stargate Strategy USDT";
+const token0Name = "USDT";
 
 const primaryStableName = "USDC";
 describe("Stargate Strategy", function () {
@@ -53,7 +53,7 @@ describe("Stargate Strategy", function () {
     dai,
     strategy,
     STG,
-    sUSDC;
+    sUSDT;
 
   beforeEach(async function () {
     const fixture = await loadFixture(defaultFixture);
@@ -70,7 +70,7 @@ describe("Stargate Strategy", function () {
     Labs = fixture.Labs;
     Team = fixture.Team;
 
-    token0 = usdc;
+    token0 = usdt;
     token0Units = usdcUnits;
     token0UnitsFormat = usdcUnitsFormat;
 
@@ -78,9 +78,9 @@ describe("Stargate Strategy", function () {
     primaryStableUnits = usdcUnits;
     primaryStableUnitsFormat = usdcUnitsFormat;
 
-    strategy = fixture.cStargateUsdcStrategyProxy;
+    strategy = fixture.cStargateUsdtStrategyProxy;
     STG = fixture.STG;
-    sUSDC = fixture.sUSDC;
+    sUSDT = fixture.sUSDT;
 
     erc20Abi = fixture.erc20Abi;
     harvester = fixture.harvester;
@@ -101,21 +101,21 @@ describe("Stargate Strategy", function () {
         console.log("Should be able to mint", primaryStableName ,  "and it should show up in the", strategyName)
         console.log("---------------------------------------------------------------------------")
 
-        await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("45000.0"));
-        await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("45000.0"), 0);
+        await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("1000.0"));
+        await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("1000.0"), 0);
 
         // await expectApproxSupply(cash, cashUnits("300"));
 
         console.log("Auto allocating funds from vault")
         console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "in", strategyName, "Strategy:", (await primaryStable.balanceOf(strategy.address)).toString());
-        console.log("After Allocation of", primaryStableName , "to", strategyName, " - sUSDC in", strategyName, "Strategy:", (await sUSDC.balanceOf(strategy.address)).toString());
+        console.log("After Allocation of", primaryStableName , "to", strategyName, " - sUSDT in", strategyName, "Strategy:", (await sUSDT.balanceOf(strategy.address)).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "equivalent in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " - LP Balance in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.lpBalance()).toString());
         console.log("After Allocation of",strategyName," -", primaryStableName , " NAV in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
         console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "equivalent in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
       
-        // expect(await sUSDC.balanceOf(strategy.address)).to.be.within(usdcUnits("99.0"), usdcUnits("100.0"));
-        expect(await strategy.checkBalance()).to.be.within(usdcUnits("44850.0"), usdcUnits("45100.0")); // investments + balance
+        // expect(await sUSDT.balanceOf(strategy.address)).to.be.within(usdcUnits("99.0"), usdcUnits("100.0"));
+        expect(await strategy.checkBalance()).to.be.within(usdcUnits("950.0"), usdcUnits("1100.0")); // investments + balance
     });
 
     it("Should be able to withdrawAll"+ " @fast @fork", async function () {
@@ -126,15 +126,15 @@ describe("Stargate Strategy", function () {
 
       console.log("Initial", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
  
-      await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("45000.0"));
-      await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("45000.0"), 0);
+      await primaryStable.connect(matt).approve(vault.address, primaryStableUnits("1000.0"));
+      await vault.connect(matt).mint(primaryStable.address, primaryStableUnits("1000.0"), 0);
 
       console.log("Before Allocation of", primaryStableName , "to",strategyName,"- ", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
       console.log("Auto allocating funds from vault")
       
       console.log("After Allocation of", primaryStableName , "to ",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
       console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
-      console.log("After Allocation of", primaryStableName , "to ", strategyName, " - sUSDC in", strategyName, " Strategy:", daiUnitsFormat(await strategy.lpBalance()).toString().toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " - sUSDT in", strategyName, " Strategy:", daiUnitsFormat(await strategy.lpBalance()).toString().toString());
       console.log("After Allocation of", primaryStableName , "to ", strategyName, " - STG in", strategyName, " Strategy:", (await STG.balanceOf(strategy.address)).toString());
       console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "equivalent in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
       console.log("After Allocation of", primaryStableName , "to ", strategyName , "Oracle in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
@@ -144,7 +144,7 @@ describe("Stargate Strategy", function () {
         .withdrawAllFromStrategy(strategy.address);
       console.log("After Withdrawal from",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString() );
       console.log("After Withdrawal from",strategyName," -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
-      console.log("After Withdrawal from",strategyName," - sUSDC in", strategyName, " Strategy:", daiUnitsFormat(await strategy.lpBalance()).toString().toString());
+      console.log("After Withdrawal from",strategyName," - sUSDT in", strategyName, " Strategy:", daiUnitsFormat(await strategy.lpBalance()).toString().toString());
       console.log("After Withdrawal from",strategyName," - STG in", strategyName, " Strategy:", (await STG.balanceOf(strategy.address)).toString());
       console.log("After Withdrawal from",strategyName," -", primaryStableName , "oracle in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
       console.log("After Withdrawal from",strategyName," -", primaryStableName , "equivalent in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
@@ -170,7 +170,7 @@ describe("Stargate Strategy", function () {
       
       console.log("After Allocation of", primaryStableName , "to ",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
       console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
-      console.log("After Allocation of", primaryStableName , "to ", strategyName, " - sUSDC in", strategyName, " Strategy:", daiUnitsFormat(await strategy.lpBalance()).toString().toString());
+      console.log("After Allocation of", primaryStableName , "to ", strategyName, " - sUSDT in", strategyName, " Strategy:", daiUnitsFormat(await strategy.lpBalance()).toString().toString());
       console.log("After Allocation of", primaryStableName , "to ", strategyName, " - STG in", strategyName, " Strategy:", (await STG.balanceOf(strategy.address)).toString());
       console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "equivalent in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
 
@@ -179,7 +179,7 @@ describe("Stargate Strategy", function () {
         .redeem(cashUnits("5.0"), cashUnits("3.0"));
       console.log("After Withdrawal from",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString() );
       console.log("After Withdrawal from",strategyName," -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
-      console.log("After Withdrawal from",strategyName," - sUSDC in", strategyName, " Strategy:", daiUnitsFormat(await strategy.lpBalance()).toString().toString());
+      console.log("After Withdrawal from",strategyName," - sUSDT in", strategyName, " Strategy:", daiUnitsFormat(await strategy.lpBalance()).toString().toString());
       console.log("After Withdrawal from",strategyName," - STG in", strategyName, " Strategy:", (await STG.balanceOf(strategy.address)).toString());
       console.log("After Withdrawal from",strategyName," -", primaryStableName , "equivalent in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
       
@@ -212,13 +212,13 @@ describe("Stargate Strategy", function () {
         console.log("After Allocation of", primaryStableName , "to ", strategyName, " - STG in ", strategyName, ":", (await STG.balanceOf(strategy.address)).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "equivalent in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
 
-        // expect(await sUSDC.balanceOf(strategy.address)).to.be.within(usdcUnits("495.0"), usdcUnits("500.0")); // yet to find where amount goes
-        expect(await strategy.checkBalance()).to.be.within(usdcUnits("498.0"), usdcUnits("499.0"));
+        // expect(await sUSDT.balanceOf(strategy.address)).to.be.within(usdcUnits("495.0"), usdcUnits("500.0")); // yet to find where amount goes
+        expect(await strategy.checkBalance()).to.be.within(usdcUnits("498.0"), usdcUnits("500.0"));
 
         // await harvester.connect(governor)["harvest(address)"](strategy.address);
-        // console.log("After Harvest - USDC in Vault:", (await usdc.balanceOf(vault.address)).toString());
-        // console.log("After Harvest-  Stargate LP Tokens: ", (await sUSDC.balanceOf(strategy.address)).toString())
-        // console.log("After Harvest - USDC in Harvester:", (await usdc.balanceOf(harvester.address)).toString());
+        // console.log("After Harvest - USDT in Vault:", (await usdt.balanceOf(vault.address)).toString());
+        // console.log("After Harvest-  Stargate LP Tokens: ", (await sUSDT.balanceOf(strategy.address)).toString())
+        // console.log("After Harvest - USDT in Harvester:", (await usdt.balanceOf(harvester.address)).toString());
 
         for (let i = 0; i < 6; i++) {
             console.log("\n\n🎉claiming rewards");

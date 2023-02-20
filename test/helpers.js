@@ -379,6 +379,7 @@ const getAssetAddresses = async (deployments) => {
       tetuUsdcSwapRouter: addresses.polygon.tetuUsdcSwapRouter,
 
       sUSDC: addresses.polygon.sUSDC,
+      sUSDT: addresses.polygon.sUSDT,
       stargateChef: addresses.polygon.stargateChef,
       stargateRouter: addresses.polygon.stargateRouter,
       stgUsdcSwapRouter: addresses.polygon.stgUsdcSwapRouter,

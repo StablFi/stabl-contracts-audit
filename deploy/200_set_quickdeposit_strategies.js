@@ -22,7 +22,7 @@ module.exports = deploymentWithProposal(
     );
 
     // Getting the strategy proxies
-    const pStrategy=  await ethers.getContract("AaveSupplyStrategyUSDTProxy");
+    const pStrategy=  await ethers.getContract("StargateStrategyUSDTProxy");
 
     // Governance Actions
     // ----------------
