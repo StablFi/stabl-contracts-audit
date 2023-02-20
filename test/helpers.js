@@ -274,6 +274,7 @@ const getAssetAddresses = async (deployments) => {
       USDP: addresses.polygon.USDP,
       DODO: addresses.polygon.DODO,
       TETU: addresses.polygon.TETU,
+      STG: addresses.polygon.STG,
       primaryStable: addresses.polygon.primaryStable,
 
       DAI: addresses.polygon.DAI,
@@ -348,6 +349,8 @@ const getAssetAddresses = async (deployments) => {
       aaveVDebtUSDC: addresses.polygon.aaveVDebtUSDC,
       aaveVDebtUSDT: addresses.polygon.aaveVDebtUSDT,
 
+      aaveLendingPool: addresses.polygon.aaveLendingPool,
+
       am3crv: addresses.polygon.am3crv,
       am3crvGauge: addresses.polygon.am3crvGauge,
       am3crvSwap: addresses.polygon.am3crvSwap,
@@ -374,6 +377,12 @@ const getAssetAddresses = async (deployments) => {
       tetuSmartVault: addresses.polygon.tetuSmartVault,
       tetuUsdcLPToken: addresses.polygon.TetuLPToken,
       tetuUsdcSwapRouter: addresses.polygon.tetuUsdcSwapRouter,
+
+      sUSDC: addresses.polygon.sUSDC,
+      sUSDT: addresses.polygon.sUSDT,
+      stargateChef: addresses.polygon.stargateChef,
+      stargateRouter: addresses.polygon.stargateRouter,
+      stgUsdcSwapRouter: addresses.polygon.stgUsdcSwapRouter,
 
       CPOOL: addresses.polygon.CPOOL,
       clearpoolAmberPoolBase: addresses.polygon.clearpoolAmberPoolBase,
@@ -518,7 +527,7 @@ async function propose(fixture, governorArgsArray, description) {
 }
 
 async function runStrategyLogic(governor, strategyName, strategyAddress) {
-  if (strategyName == 'Tetu Strategy') {
+  if (strategyName == 'Tetu Supply Strategy') {
 
     let governanceAddress = "0xcc16d636dD05b52FF1D8B9CE09B09BC62b11412B"; // governance addr
     // Send some MATIC to governance
@@ -527,7 +536,7 @@ async function runStrategyLogic(governor, strategyName, strategyAddress) {
       value: utils.parseEther("100"),
     });
     
-    console.log("whitelisting Tetu Strategy");
+    console.log("whitelisting Aave Supply Strategy");
     await hre.network.provider.request({
         method: "hardhat_impersonateAccount",
         params: [governanceAddress],

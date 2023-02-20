@@ -26,6 +26,7 @@ const dystPairAbi = require("./abi/dystPair.json");
 const penLensAbi = require("./abi/IPenLens.json");
 const uniswapV2PairAbi = require("./abi/uniswapv2pair.json");
 const quickSwapStakingRewardAbi = require("./abi/IStakingRewards.json");
+const aaveLendingPoolAbi = require("./abi/aaveLendingPool.json");
 const { ethers } = require("hardhat");
 
 async function defaultFixture() {
@@ -135,6 +136,9 @@ async function defaultFixture() {
       dai = await ethers.getContractAt(daiAbi, addresses.polygon.DAI);
       tusd = await ethers.getContractAt(tusdAbi, addresses.polygon.TUSD);
       usdc = await ethers.getContractAt(usdcAbi, addresses.polygon.USDC);
+      STG = await ethers.getContractAt(usdcAbi, addresses.polygon.STG);
+      sUSDC = await ethers.getContractAt(usdcAbi, addresses.polygon.sUSDC);
+      sUSDT = await ethers.getContractAt(usdtAbi, addresses.polygon.sUSDT);
       tetu = await ethers.getContractAt(usdcAbi, addresses.polygon.TETU);
       TetuLPToken = await ethers.getContractAt(usdcAbi, addresses.polygon.TetuLPToken);
       BalToken = await ethers.getContractAt(usdcAbi, addresses.polygon.balToken);
@@ -162,6 +166,8 @@ async function defaultFixture() {
       quickSwapStakingReward = await ethers.getContractAt(quickSwapStakingRewardAbi,addresses.polygon.quickSwapStakingReward);
       quickSwapStakingRewardUSDCUSDT = await ethers.getContractAt(quickSwapStakingRewardAbi,addresses.polygon.quickSwapStakingRewardUSDCUSDT);
       CPOOL = await ethers.getContractAt(erc20Abi, addresses.polygon.CPOOL);
+      aUSDT = await ethers.getContractAt(erc20Abi, addresses.polygon.aUSDT);
+      aaveLendingPool = await ethers.getContractAt(aaveLendingPoolAbi, addresses.polygon.aaveLendingPool);
       amDAI = await ethers.getContractAt(erc20Abi, addresses.polygon.amDAI);
       amUSDC = await ethers.getContractAt(erc20Abi, addresses.polygon.amUSDC);
       amUSDT = await ethers.getContractAt(erc20Abi, addresses.polygon.amUSDT);
@@ -420,6 +426,30 @@ async function defaultFixture() {
       cTetuDaiStrategyProxy.address
     );
 
+    const cStargateUsdcStrategyProxy = await ethers.getContract(
+      "StargateStrategyUSDCProxy"
+    );
+    const cStargateUsdcStrategy= await ethers.getContractAt(
+      "StargateStrategy",
+      cStargateUsdcStrategyProxy.address
+    );
+
+    const cStargateUsdtStrategyProxy = await ethers.getContract(
+      "StargateStrategyUSDTProxy"
+    );
+    const cStargateUsdtStrategy= await ethers.getContractAt(
+      "StargateStrategy",
+      cStargateUsdtStrategyProxy.address
+    );
+
+    const cAaveSupplyUsdtStrategyProxy = await ethers.getContract(
+      "AaveSupplyStrategyUSDTProxy"
+    );
+    const cAaveSupplyUsdtStrategy= await ethers.getContractAt(
+      "AaveSupplyStrategy",
+      cAaveSupplyUsdtStrategyProxy.address
+    );
+
     const cBalancerDaiStrategyProxy = await ethers.getContract(
       "BalancerStrategyDAIProxy"
     );
@@ -446,9 +476,7 @@ async function defaultFixture() {
 
     // console.log("cClearpoolStrategy.address", cClearpoolStrategy.address);
 
-    await runStrategyLogic(governor, "Tetu Strategy", cTetuUsdcStrategy.address); 
-    await runStrategyLogic(governor, "Tetu Strategy", cTetuDaiStrategy.address); 
-    await runStrategyLogic(governor, "Tetu Strategy", cTetuUsdtStrategy.address); 
+    await runStrategyLogic(governor, "Aave Supply Strategy", cTetuUsdtStrategy.address); 
     strategiesWithDependencies = {
       dystToken: dystToken,
       cDystopiaStrategyUsdcDai: cDystopiaStrategyUsdcDai,
@@ -483,6 +511,9 @@ async function defaultFixture() {
       quickSwapStakingReward: quickSwapStakingReward,
       quickSwapStakingRewardUSDCUSDT: quickSwapStakingRewardUSDCUSDT,
       // cAaveStrategyUSDC: cAaveStrategyUSDC,
+      aUSDT: aUSDT,
+      aaveLendingPool: aaveLendingPool,
+      cAaveSupplyUsdtStrategyProxy: cAaveSupplyUsdtStrategy,
       amDAI: amDAI,
       amUSDC: amUSDC,
       amUSDT: amUSDT,
@@ -506,6 +537,11 @@ async function defaultFixture() {
       cTetuUsdcStrategyProxy: cTetuUsdcStrategy,
       cTetuUsdtStrategyProxy: cTetuUsdtStrategy,
       cTetuDaiStrategyProxy: cTetuDaiStrategy,
+      STG: STG,
+      sUSDC: sUSDC,
+      cStargateUsdcStrategyProxy: cStargateUsdcStrategy,
+      sUSDT: sUSDT,
+      cStargateUsdtStrategyProxy: cStargateUsdtStrategy,
 
       // ? BALANCER
       BalToken: BalToken,
@@ -541,11 +577,11 @@ async function defaultFixture() {
   }
 
   // Matt and Josh each have $100 CASH
-  for (const user of [matt, josh]) {
+  /*for (const user of [matt, josh]) {
     console.log("Depositing 100 USDC to", user.address);
     await usdc.connect(user).approve(vault.address, usdcUnits("100"));
     await vault.connect(user).mint(usdc.address, usdcUnits("100"), 0);
-  }
+  }*/
   
   let contracts = { cash, vault, vaultAdmin, vaultCore, harvester, dripper, governorContract, wcash, oracleRouter, chainlinkOracleFeedDAI, chainlinkOracleFeedUSDT, chainlinkOracleFeedUSDC, 
                 chainlinkOracleFeedETH, rebaseToNonEoaHandler, uniswapV2PairCASHUSDC};

@@ -252,6 +252,45 @@ module.exports = deploymentWithProposal(
     );
     console.log("cTetuDaiStrategyProxy.address", cTetuDaiStrategyProxy.address);
 
+    // stargate-usdc
+    const cStargateUsdcStrategyProxy = await ethers.getContract(
+      "StargateStrategyUSDCProxy"
+    );
+    const cStargateStrategyUsdc = await ethers.getContractAt(
+      "StargateStrategy",
+      cStargateUsdcStrategyProxy.address
+    );
+    console.log(
+      "cStargateUsdcStrategyProxy.address",
+      cStargateUsdcStrategyProxy.address
+    );
+
+    // aave-usdt
+    const cAaveSupplyUsdtStrategyProxy = await ethers.getContract(
+      "AaveSupplyStrategyUSDTProxy"
+    );
+    const cAaveSupplyStrategyUsdt = await ethers.getContractAt(
+      "AaveSupplyStrategy",
+      cAaveSupplyUsdtStrategyProxy.address
+    );
+    console.log(
+      "cAaveSupplyUsdtStrategyProxy.address",
+      cAaveSupplyUsdtStrategyProxy.address
+    );
+
+    // stargate-usdt
+    const cStargateUsdtStrategyProxy = await ethers.getContract(
+      "StargateStrategyUSDTProxy"
+    );
+    const cStargateStrategyUsdt = await ethers.getContractAt(
+      "StargateStrategy",
+      cStargateUsdtStrategyProxy.address
+    );
+    console.log(
+      "cStargateUsdtStrategyProxy.address",
+      cStargateUsdtStrategyProxy.address
+    );
+
     const cClearpoolWintermuteStrategyProxy = await ethers.getContract(
       "ClearpoolWintermuteStrategyProxy"
     );
@@ -480,6 +519,36 @@ module.exports = deploymentWithProposal(
       //   enabledReward: true,
       // },
       {
+        strategy: cStargateStrategyUsdt.address,
+        contract: "StargateStrategy",
+        name: "StargateStrategy - USDT",
+        minWeight: 0,
+        targetWeight: 20,
+        maxWeight: 100,
+        enabled: true,
+        enabledReward: true,
+      },
+      {
+        strategy: cAaveSupplyStrategyUsdt.address,
+        contract: "AaveSupplyStrategy",
+        name: "AaveSupplyStrategy - USDT",
+        minWeight: 0,
+        targetWeight: 10,
+        maxWeight: 100,
+        enabled: true,
+        enabledReward: true,
+      },
+      {
+        strategy: cStargateStrategyUsdc.address,
+        contract: "StargateStrategy",
+        name: "StargateStrategy - USDC",
+        minWeight: 0,
+        targetWeight: 10,
+        maxWeight: 100,
+        enabled: true,
+        enabledReward: true,
+      },
+      {
         strategy: cTetuStrategyDai.address,
         contract: "TetuStrategy",
         name: "TetuStrategy - DAI",
@@ -534,7 +603,7 @@ module.exports = deploymentWithProposal(
         contract: "BalancerStrategy",
         name: "BalancerStrategy - DAI",
         minWeight: 0,
-        targetWeight: 50,
+        targetWeight: 10,
         maxWeight: 100,
         enabled: true,
         enabledReward: true,
