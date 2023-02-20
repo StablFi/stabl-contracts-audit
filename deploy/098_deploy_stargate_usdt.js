@@ -2,7 +2,7 @@ const { isFork } = require("../test/helpers");
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "095_deploy_stargate_usdt", forceDeploy: isFork, tags: ["test", "main", "stargate"], dependencies: ["001_core"] },
+  { deployName: "098_deploy_stargate_usdt", forceDeploy: isFork, tags: ["test", "main", "stargate"], dependencies: ["001_core"] },
   async ({
     oracleAddresses,
     assetAddresses,
