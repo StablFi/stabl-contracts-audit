@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import { InitializeGovernedUpgradeabilityProxy } from "./InitializeGovernedUpgradeabilityProxy.sol";
 
-
 /**
  * @notice CASHProxy delegates calls to an CASH implementation
  */
@@ -53,7 +52,6 @@ contract AaveStrategyUSDTProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 
-
 /**
  * @notice ThreePoolStrategyProxy delegates calls to a ThreePoolStrategy implementation
  */
@@ -68,8 +66,6 @@ contract ConvexStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 
-
-
 /**
  * @notice DystopiaStrategyUsdcDaiProxy delegates calls to a DystopiaStrategy implementation
  */
@@ -80,7 +76,9 @@ contract DystopiaStrategyUsdcDaiProxy is InitializeGovernedUpgradeabilityProxy {
 /**
  * @notice DystopiaStrategyUsdcUsdtProxy delegates calls to a DystopiaStrategy implementation
  */
-contract DystopiaStrategyUsdcUsdtProxy is InitializeGovernedUpgradeabilityProxy {
+contract DystopiaStrategyUsdcUsdtProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
 
 }
 
@@ -90,9 +88,6 @@ contract DystopiaStrategyUsdcUsdtProxy is InitializeGovernedUpgradeabilityProxy 
 contract DystopiaStrategyDaiUsdtProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
-
-
-
 
 /**
  * @notice MeshSwapStrategyDAIProxy delegates calls to a MeshSwapStrategy implementation
@@ -115,14 +110,12 @@ contract MeshSwapStrategyUSDCProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 
-
-
-
-
 /**
  * @notice MeshSwapStrategyUSDCUSDTProxy delegates calls to a MeshSwapStrategyDual implementation
  */
-contract MeshSwapStrategyUSDCUSDTProxy is InitializeGovernedUpgradeabilityProxy {
+contract MeshSwapStrategyUSDCUSDTProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
 
 }
 
@@ -140,21 +133,23 @@ contract MeshSwapStrategyUSDTDAIProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 
-
 /**
  * @notice QuickSwapStrategyUSDCDAIProxy delegates calls to a QuickSwapStrategy implementation
  */
-contract QuickSwapStrategyUSDCDAIProxy is InitializeGovernedUpgradeabilityProxy {
+contract QuickSwapStrategyUSDCDAIProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
 }
 
 /**
  * @notice QuickSwapStrategyUSDCUSDTProxy delegates calls to a QuickSwapStrategy implementation
  */
-contract QuickSwapStrategyUSDCUSDTProxy is InitializeGovernedUpgradeabilityProxy {
+contract QuickSwapStrategyUSDCUSDTProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
+
 }
-
-
-
 
 /**
  * @notice Am3CurveStrategyProxy delegates calls to a Am3CurveStrategy implementation
@@ -163,14 +158,12 @@ contract Am3CurveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 
-
 /**
  * @notice Am3CurveStrategyUSDTProxy delegates calls to a Am3CurveStrategy implementation
  */
 contract Am3CurveStrategyUSDTProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
-
 
 /**
  * @notice SynapseStrategyProxy delegates calls to a SynapseStrategy implementation
@@ -185,7 +178,6 @@ contract SynapseStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract SynapseStrategyUSDTProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
-
 
 /**
  * @notice DodoStrategyProxy delegates calls to a DodoStrategy implementation
@@ -216,9 +208,32 @@ contract TetuStrategyDAIProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
+ * @notice BalancerStrategyUSDCProxy delegates calls to a TetuStrategy implementation
+ */
+contract BalancerStrategyUSDCProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice BalancerStrategyUSDTProxy delegates calls to a TetuStrategy implementation
+ */
+contract BalancerStrategyUSDTProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice BalancerStrategyDAIProxy delegates calls to a TetuStrategy implementation
+ */
+contract BalancerStrategyDAIProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
  * @notice ClearpoolWintermuteStrategyProxy delegates calls to a ClearpoolStrategy implementation
  */
-contract ClearpoolWintermuteStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+contract ClearpoolWintermuteStrategyProxy is
+    InitializeGovernedUpgradeabilityProxy
+{
 
 }
 

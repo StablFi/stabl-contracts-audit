@@ -99,6 +99,7 @@ async function defaultFixture() {
   const josh = signers[5];
   const anna = signers[6];
   const rio = signers[7];
+  const john = signers[8];
   // console.log("governor:", governor.address);
   // console.log("strategist:", strategist.address);
   // console.log("adjuster:", adjuster.address);
@@ -140,6 +141,8 @@ async function defaultFixture() {
       sUSDT = await ethers.getContractAt(usdtAbi, addresses.polygon.sUSDT);
       tetu = await ethers.getContractAt(usdcAbi, addresses.polygon.TETU);
       TetuLPToken = await ethers.getContractAt(usdcAbi, addresses.polygon.TetuLPToken);
+      BalToken = await ethers.getContractAt(usdcAbi, addresses.polygon.balToken);
+      BalAmUsdToken = await ethers.getContractAt(usdcAbi, addresses.polygon.balancerAmUsdToken);
       primaryStable = await ethers.getContractAt(usdcAbi, addresses.polygon.primaryStable);
       crv = await ethers.getContractAt(crvAbi, addresses.polygon.CRV);
       ogn = await ethers.getContractAt(ognAbi, addresses.polygon.OGN);
@@ -185,6 +188,8 @@ async function defaultFixture() {
       clearpoolAmberPoolBase = await ethers.getContractAt(erc20Abi, addresses.polygon.clearpoolAmberPoolBase);
       clearpoolWinterMutePoolBase = await ethers.getContractAt(erc20Abi, addresses.polygon.clearpoolWinterMutePoolBase);
       clearpoolAurosPoolBase = await ethers.getContractAt(erc20Abi, addresses.polygon.clearpoolAurosPoolBase);
+
+      uniswapV2PairCASHUSDC = await ethers.getContract("UniswapV2PairCASHUSDC");
   } else {
       usdt = await ethers.getContract("MockUSDT");
       dai = await ethers.getContract("MockDAI");
@@ -444,13 +449,38 @@ async function defaultFixture() {
       "AaveSupplyStrategy",
       cAaveSupplyUsdtStrategyProxy.address
     );
+
+    const cBalancerDaiStrategyProxy = await ethers.getContract(
+      "BalancerStrategyDAIProxy"
+    );
+    const cBalancerDaiStrategy= await ethers.getContractAt(
+      "BalancerStrategy",
+      cBalancerDaiStrategyProxy.address
+    );
+
+    const cBalancerUsdcStrategyProxy = await ethers.getContract(
+      "BalancerStrategyUSDCProxy"
+    );
+    const cBalancerUsdcStrategy= await ethers.getContractAt(
+      "BalancerStrategy",
+      cBalancerUsdcStrategyProxy.address
+    );
+
+    const cBalancerUsdtStrategyProxy = await ethers.getContract(
+      "BalancerStrategyUSDTProxy"
+    );
+    const cBalancerUsdtStrategy= await ethers.getContractAt(
+      "BalancerStrategy",
+      cBalancerUsdtStrategyProxy.address
+    );
+
     // console.log("cClearpoolStrategy.address", cClearpoolStrategy.address);
 
     await runStrategyLogic(governor, "Aave Supply Strategy", cTetuUsdtStrategy.address); 
     strategiesWithDependencies = {
       dystToken: dystToken,
       cDystopiaStrategyUsdcDai: cDystopiaStrategyUsdcDai,
-      cDystopiaStrategyUsdcUsdt: cDystopiaStrategyUsdcUsdt,
+      cDystopiaStrategyUsdcDai: cDystopiaStrategyUsdcUsdt,
       cDystopiaStrategyDaiUsdt: cDystopiaStrategyDaiUsdt,
       dystPairUsdcDai: dystPairUsdcDai,
       dystPairUsdcUsdt: dystPairUsdcUsdt,
@@ -512,6 +542,14 @@ async function defaultFixture() {
       cStargateUsdcStrategyProxy: cStargateUsdcStrategy,
       sUSDT: sUSDT,
       cStargateUsdtStrategyProxy: cStargateUsdtStrategy,
+
+      // ? BALANCER
+      BalToken: BalToken,
+      BalAmUsdToken: BalAmUsdToken,
+      cBalancerDaiStrategy: cBalancerDaiStrategy,
+      cBalancerUsdcStrategy: cBalancerUsdcStrategy,
+      cBalancerUsdtStrategy: cBalancerUsdtStrategy,
+
       CPOOL: CPOOL,
       clearpoolWintermuteStrategy: cClearpoolWintermuteStrategy,
       
@@ -549,7 +587,7 @@ async function defaultFixture() {
                 chainlinkOracleFeedETH, rebaseToNonEoaHandler, uniswapV2PairCASHUSDC};
   let assets = {usdt, dai, tusd, usdc, primaryStable, wmatic, nonStandardToken, mockNonRebasing, mockNonRebasingTwo};
   let abis = {erc20Abi};
-  let accounts = { matt, josh, rio, anna, governor, strategist, adjuster};
+  let accounts = { matt, josh, rio, anna, governor, strategist, adjuster, john};
   let feeCollectors = {Labs, Team};
 
   return {...contracts, ...assets, ...abis, ...accounts, ...feeCollectors, ...strategiesWithDependencies};

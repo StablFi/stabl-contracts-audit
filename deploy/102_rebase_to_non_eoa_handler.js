@@ -1,7 +1,7 @@
 const { deploymentWithProposal, log } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "102_rebase_to_non_eoa_handler", forceDeploy: true, tags: ["test", "main", "mainnet"],  dependencies: ["001_core"]},
+  { deployName: "102_rebase_to_non_eoa_handler", forceDeploy: true, tags: ["test", "main", "mainnet", "rebase_handler"],  dependencies: ["001_core"]},
   async ({
     assetAddresses,
     deployWithConfirmation,
@@ -74,11 +74,6 @@ module.exports = deploymentWithProposal(
           contract: cRebaseToNonEoaHandler,
           signature: "claimGovernance()",
           args: [],
-        },
-        {
-          contract: cRebaseToNonEoaHandler,
-          signature: "setMultiRewardPool(address)",
-          args: [cVaultAdmin.address],
         },
         {
           contract: cVaultAdmin,

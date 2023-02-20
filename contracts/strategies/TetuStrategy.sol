@@ -140,6 +140,7 @@ contract TetuStrategy is
         if (address(token0) == address(primaryStable)) {
             return _psAmount;
         }
+        console.log("TETU_DEPOSIT_REQUIREMENT %s", _psAmount);
         return
             howMuchToSwap(
                 curvePool,
@@ -156,7 +157,7 @@ contract TetuStrategy is
         require(_asset == address(primaryStable), "Token not supported.");
         require(_amount > 0, "Must deposit something");
         _swapPrimaryStableToToken0();
-        console.log("TETU_DEPOSIT %s", _amount);
+        console.log("TETU_DEPOSIT %s", token0.balanceOf(address(this)));
         _stake(token0.balanceOf(address(this)));
         console.log("TETU_DEPOSIT LP: %s", lpBalance());
 
@@ -238,17 +239,17 @@ contract TetuStrategy is
     {
         if (IERC20(address(smartVault)).balanceOf(address(this)) == 0) {
             console.log("TetuStrategy - Smartvault is empty");
-            return;
+        } else {
+            smartVault.getAllRewards();
         }
 
-        smartVault.getAllRewards();
 
         if (IERC20(address(xTetuSmartVault)).balanceOf(address(this)) == 0) {
             console.log("TetuStrategy - xTetuSmartVault is empty");
-            return;
+        } else {
+            xTetuSmartVault.exit();
         }
 
-        xTetuSmartVault.exit();
 
         uint256 totalUsdc;
         uint256 tetuBalance = tetuToken.balanceOf(address(this));

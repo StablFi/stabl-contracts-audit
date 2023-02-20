@@ -32,10 +32,23 @@ interface IVault {
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
-    event MintFeeChanged(address _sender, uint256 _previousFeeBps, uint256 _newFeeBps);
+    event MintFeeChanged(
+        address _sender,
+        uint256 _previousFeeBps,
+        uint256 _newFeeBps
+    );
     event MintFeeCharged(address _address, uint256 _fee);
-    event FeeAddressesChanged(address _labsAddress, address _teamAddress, address _treasuryAddress);
-    event HarvesterFeeParamsChanged(address _labsAddress,uint256 _labsFeeBps, address _teamAddress, uint256 _teamFeeBps);
+    event FeeAddressesChanged(
+        address _labsAddress,
+        address _teamAddress,
+        address _treasuryAddress
+    );
+    event HarvesterFeeParamsChanged(
+        address _labsAddress,
+        uint256 _labsFeeBps,
+        address _teamAddress,
+        uint256 _teamFeeBps
+    );
 
     // Governable.sol
     function transferGovernance(address _newGovernor) external;
@@ -61,7 +74,6 @@ interface IVault {
 
     function autoAllocateThreshold() external view returns (uint256);
 
-
     function setRebaseThreshold(uint256 _threshold) external;
 
     function rebaseThreshold() external view returns (uint256);
@@ -78,7 +90,6 @@ interface IVault {
 
     function setTrusteeAddress(address _address) external;
 
-
     function trusteeAddress() external view returns (address);
 
     function setTrusteeFeeBps(uint256 _basis) external;
@@ -91,13 +102,14 @@ interface IVault {
 
     function removeStrategy(address _addr) external;
 
-    function setAssetDefaultStrategy(address _asset, address _strategy)
-        external;
+    function setAssetDefaultStrategy(
+        address _asset,
+        address _strategy
+    ) external;
 
-    function assetDefaultStrategies(address _asset)
-        external
-        view
-        returns (address);
+    function assetDefaultStrategies(
+        address _asset
+    ) external view returns (address);
 
     function pauseRebase() external;
 
@@ -117,8 +129,11 @@ interface IVault {
 
     function priceUSDRedeem(address asset) external view returns (uint256);
 
-    function withdrawFromStrategy(address _strategyAddr, uint256 _amount) external;
-    
+    function withdrawFromStrategy(
+        address _strategyAddr,
+        uint256 _amount
+    ) external;
+
     function withdrawAllFromStrategy(address _strategyAddr) external;
 
     function withdrawAllFromStrategies() external;
@@ -136,6 +151,7 @@ interface IVault {
         uint256 _amount,
         uint256 _minimumCASHAmount
     ) external;
+
     function justMint(
         address _asset,
         uint256 _amount,
@@ -147,7 +163,7 @@ interface IVault {
     function redeemAll(uint256 _minimumUnitAmount) external;
 
     function allocate() external;
-    
+
     function quickAllocate() external;
 
     function rebase() external;
@@ -155,16 +171,17 @@ interface IVault {
     function totalValue() external view returns (uint256 value);
 
     function checkBalance() external view returns (uint256);
+
     function nav() external view returns (uint256);
 
-    function calculateRedeemOutput(uint256 _amount)
-        external
-        view
-        returns (uint256);
-    function redeemOutputs(uint256 _amount)
-        external
-        view
-        returns (uint256,uint256,uint256);
+    function calculateRedeemOutput(
+        uint256 _amount
+    ) external view returns (uint256);
+
+    function redeemOutputs(
+        uint256 _amount
+    ) external view returns (uint256, uint256, uint256);
+
     function getAssetCount() external view returns (uint256);
 
     function getAllAssets() external view returns (address[] memory);
@@ -179,32 +196,65 @@ interface IVault {
 
     function payout() external;
 
-    function setStrategyWithWeights(StrategyWeight[] calldata _strategyWeights) external;
-    function getAllStrategyWithWeights() external view returns (StrategyWeight[] memory);
-    function strategyWithWeightPositions(address _strategyWeight)
+    function setStrategyWithWeights(
+        StrategyWeight[] calldata _strategyWeights
+    ) external;
+
+    function getAllStrategyWithWeights()
         external
         view
-        returns (uint256);
+        returns (StrategyWeight[] memory);
 
-    function setSwapper(address _balancerVault, address _balancerPoolId) external;
+    function strategyWithWeightPositions(
+        address _strategyWeight
+    ) external view returns (uint256);
 
-    function setQuickDepositStrategies(address[] calldata _quickDepositStartegies) external;
-    function getQuickDepositStrategies() external view returns (address[] memory);
+    function setSwapper(
+        address _balancerVault,
+        address _balancerPoolId
+    ) external;
+
+    function setQuickDepositStrategies(
+        address[] calldata _quickDepositStartegies
+    ) external;
+
+    function getQuickDepositStrategies()
+        external
+        view
+        returns (address[] memory);
 
     function setPrimaryStable(address _primaryStable) external;
+
     function primaryStableAddress() external view returns (address);
 
+    function getFeeParams()
+        external
+        view
+        returns (address, uint256, address, uint256);
 
-    function getFeeParams() external view returns  (address, uint256, address, uint256);
-    function setFeeParams(address _labsAddress, address _teamAddress, address _treasuryAddress) external;
-    function setHarvesterFeeParams(uint256 _labsFeeBps, uint256 _teamFeeBps) external;
+    function setFeeParams(
+        address _labsAddress,
+        address _teamAddress,
+        address _treasuryAddress
+    ) external;
+
+    function setHarvesterFeeParams(
+        uint256 _labsFeeBps,
+        uint256 _teamFeeBps
+    ) external;
 
     function setMintFeeBps(uint256 _mintFeeBps) external;
+
     function mintFeeBps() external view returns (uint256);
 
     function setNextPayoutTime(uint256 _nextPayoutTime) external;
-    function setPayoutIntervals(uint256 _payoutPeriod, uint256 _payoutTimeRange) external;
+
+    function setPayoutIntervals(
+        uint256 _payoutPeriod,
+        uint256 _payoutTimeRange
+    ) external;
 
     function addRebaseManager(address _rebaseManager) external;
+
     function isRebaseManager(address _sender) external returns (bool);
 }

@@ -39,11 +39,11 @@ module.exports = deploymentWithProposal(
           signature: "setAdminImpl(address)",
           args: [cVaultAdmin.address],
         },
-        {
-          contract: cVaultAdminProxy,
-          signature: "setSwapper(address,bytes32)",
-          args: [assetAddresses.am3crvSwap, assetAddresses.balancerPoolIdUsdcTusdDaiUsdt],
-        }
+        // {
+        //   contract: cVaultAdminProxy,
+        //   signature: "setSwapper(address,bytes32)",
+        //   args: [assetAddresses.am3crvSwap, assetAddresses.balancerPoolIdUsdcTusdDaiUsdt],
+        // }
       ],
     };
   }

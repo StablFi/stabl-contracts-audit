@@ -2,7 +2,7 @@ const { isMainnetOrRinkebyOrFork } = require("../test/helpers");
 const { deploymentWithProposal, log } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "103_mock_uniswap_pair", forceDeploy: !isMainnetOrRinkebyOrFork, tags: ["test", "main"],  dependencies: ["001_core"]},
+  { deployName: "103_mock_uniswap_pair", forceDeploy: true, tags: ["test", "main"],  dependencies: ["001_core"]},
   async ({
     assetAddresses,
     deployWithConfirmation,
