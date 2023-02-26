@@ -459,7 +459,7 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
 
      /// Tick Positioning ///
     function inRange() private view returns (bool) {
-        return currentTick() >= ticks.lowerTick || currentTick() <= ticks.upperTick;
+        return currentTick() >= ticks.lowerTick && currentTick() <= ticks.upperTick;
     }
 
     // What is the pools current tick? 
