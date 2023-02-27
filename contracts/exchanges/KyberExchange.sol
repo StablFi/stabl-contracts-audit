@@ -11,7 +11,7 @@ abstract contract KyberExchange {
     uint256 public constant BASIS_POINTS_FOR_SLIPPAGE = 4;
 
     IKyberElastic private elasticRouter;
-    IBasePositionManager public nftManager;
+    IBasePositionManager internal nftManager;
 
     address private quoter;
 

@@ -16,7 +16,7 @@ library KyberStructs {
         uint256 tokenId;
         uint256[] tokenIds;
         uint256 pid;
-        uint256[] pids;
+        bytes[] pids;
         address tickReader;
     }
 

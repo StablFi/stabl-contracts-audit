@@ -31,17 +31,18 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
     using TickMath for int24;
 
     /// Important variables used in our contract, can find the structs in KyberStructs.sol /// 
-    KyberStructs.Ticks public ticks;
-    KyberStructs.NftInfo public nftInfo;
-    KyberStructs.TokenInfo public tokenInfo;
+    KyberStructs.Ticks private ticks;
+    KyberStructs.NftInfo private nftInfo;
+    KyberStructs.TokenInfo private tokenInfo;
 
     // Important addresses needed for strategy
-    IKyberPool public pool;
-    IKyberLM public farm;
+    IKyberPool private pool;
+    IKyberLM private farm;
     address public curvePool;
     address public oracleRouter;
     IERC20 public primaryStable;
 
+    bool public isDirectDepositAllowed; 
     /**
      * Initializer for setting up strategy internal state. This overrides the
      * InitializableAbstractStrategy initializer as Dystopia strategies don't fit
@@ -65,6 +66,8 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
         tokenInfo.token0 = IERC20(_addresses[1][0]);
         tokenInfo.token1 = IERC20(_addresses[1][1]);
 
+        isDirectDepositAllowed = false;
+
         _setStructs(_pid, _tickRangeMultiplier, _path);
         super._initialize(
             _platformAddress,
@@ -78,7 +81,9 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
     function _setStructs(uint256 _pid, int24 _tickRangeMultiplier, bytes calldata _path) private {
         // The elastic farm has pid system, we both set the pid and build a reusable array. 
         nftInfo.pid = _pid;
-        nftInfo.pids = _buildArray(nftInfo.pid);
+        nftInfo.pids[0] = abi.encode(IKyberLM.HarvestData({
+            pIds: _buildArray(nftInfo.pid)
+        }));
 
         // Set the range multiplier
         ticks.tickRangeMultiplier = _tickRangeMultiplier;
@@ -124,45 +129,31 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
         onlyVault
         nonReentrant {
 
-        _deposit(_asset, _amount);
-    }
-    
-    function _deposit(address _asset, uint256 _amount) private {
-        require(_asset == primary(), "Token not supported.");
+            _onlyPrimary(_asset);
         (uint256 _amount0ToSwap, uint256 _amount1ToSwap) = _getAmountsToSwap(_amount);
-        if (_amount0ToSwap > 0 && token0() != primary()) {
-            swap(
-                curvePool,
-                primary(),
-                token0(),
-                _amount0ToSwap,
-                oracleRouter
-            );
-        } else if (_amount1ToSwap > 0) {
-            swap(
-                curvePool,
-                primary(),
-                token0(),
-                _amount1ToSwap,
-                oracleRouter
-            );
-        }
+        if (_amount0ToSwap > 0 && lpToken0() != primary()) {
+            _swap(primary(), lpToken0(), _amount0ToSwap);
+        } else if (_amount1ToSwap > 0) _swap(primary(), lpToken0(), _amount1ToSwap);
 
         (uint256 token0Balance, uint256 token1Balance,,,,)  = balanceOfTokens();
         if (nftInfo.tokenId != 0) {
             // add liquidity
             uint256 liquidity = _addLiquidity(
-                token0(),
-                token1(),
+                lpToken0(),
+                lpToken1(),
                 token0Balance,
                 token1Balance,
                 nftInfo.tokenId
             );
 
-            farm.join(nftInfo.pid, nftInfo.tokenIds, _buildArray(liquidity));
+            _join(liquidity);
         } else {
             _init(token0Balance, token1Balance);
         }
+    }
+    
+    function _deposit(address _asset, uint256 _amount) private {
+    
     }
 
     // intializes a position, it is used if we have either no tokenId or if we are rebalancing
@@ -174,8 +165,8 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
 
         // Mint our new position the position manager contract
         (nftInfo.tokenId, liquidity, actual0, actual1) = nftManager.mint(IBasePositionManager.MintParams({
-                token0: token0(),
-                token1: token1(),
+                token0: lpToken0(),
+                token1: lpToken1(),
                 fee: _swapFeeUnits(),
                 tickLower: ticks.lowerTick,
                 tickUpper: ticks.upperTick,
@@ -193,12 +184,16 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
         if (nftInfo.tokenIds.length > 0) delete nftInfo.tokenIds;
         nftInfo.tokenIds.push(nftInfo.tokenId);
         farm.deposit(nftInfo.tokenIds);
+        _join(liquidity);
+    }
+
+    function _join(uint256 liquidity) private {
         farm.join(nftInfo.pid, nftInfo.tokenIds, _buildArray(liquidity));
     }
 
     /// Withdraw from strategy ///
     function withdrawAll() external override onlyVaultOrGovernor nonReentrant  {
-        _withdrawFromPool(uint128(balanceOfPool()));
+        _withdrawFromPool(uint128(lpBalance()));
         _swapAssetsToPrimaryStable();
         primaryStable.safeTransfer(vaultAddress, _primaryStableBalance());
         nftInfo.tokenId = 0;
@@ -210,9 +205,9 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
         uint256 _amount
     ) external override onlyVaultOrGovernor nonReentrant {
 
-        require(_asset == primary(), "Token not supported.");
+        _onlyPrimary(_asset);
         _withdrawFromPool(
-            primary() == token0()
+            primary() == lpToken0()
                 ? LiquidityAmounts.getLiquidityForAmount0(
                     _getSqrtRatioAtTick(ticks.lowerTick),
                     _getSqrtRatioAtTick(ticks.upperTick),
@@ -228,17 +223,17 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
         _swapAssetsToPrimaryStable();
         primaryStable.safeTransfer(_beneficiary, _amount);
 
-        if (balanceOfPool() > 0) {
+        if (lpBalance() > 0) {
             farm.deposit(nftInfo.tokenIds);
-            farm.join(nftInfo.pid, nftInfo.tokenIds, _buildArray(balanceOfPool()));
+            farm.join(nftInfo.pid, nftInfo.tokenIds, _buildArray(lpBalance()));
         }
     }
 
      // Withdrawing from the position is two steps, you have to first remove from farm then remove liquidity
     function _withdrawFromPool(uint128 _liquidity) private returns (uint256 amt0, uint256 amt1) {
-        if (inRange()) _harvestFromFarm();
+        if (inRange()) farm.harvestMultiplePools(nftInfo.tokenIds, nftInfo.pids);
 
-        farm.exit(nftInfo.pid, nftInfo.tokenIds, _buildArray(balanceOfPool()));
+        farm.exit(nftInfo.pid, nftInfo.tokenIds, _buildArray(lpBalance()));
         farm.withdraw(nftInfo.tokenIds);
         (amt0, amt1,) = nftManager.removeLiquidity(IBasePositionManager.RemoveLiquidityParams({
             tokenId: nftInfo.tokenId,
@@ -248,8 +243,8 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
             deadline: block.timestamp
         }));
 
-        nftManager.transferAllTokens(token0(), 0, address(this));
-        nftManager.transferAllTokens(token1(), 0, address(this));
+        nftManager.transferAllTokens(lpToken0(), 0, address(this));
+        nftManager.transferAllTokens(lpToken1(), 0, address(this));
     }
 
     
@@ -259,20 +254,18 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
         lp1Amt = _amount - lp0Amt;
         
         // Fetch token decimals 
-        uint256 lp0Decimals = _getDecimals(token0());
-        uint256 lp1Decimals = _getDecimals(token1());
+        uint256 lp0Decimals = _getDecimals(lpToken0());
+        uint256 lp1Decimals = _getDecimals(lpToken1());
 
         // Estimate amount out for swaps and quote add liquidity
-        uint256 out0 = token0() != primary() ? onSwap(
-                curvePool,
+        uint256 out0 = lpToken0() != primary() ? _onSwap(
                 primary(),
-                token0(),
+                lpToken0(),
                 lp0Amt
             )  * 1e18 / lp0Decimals : lp0Amt;
-        uint256 out1 = token1() != primary() ? onSwap(
-                curvePool,
+        uint256 out1 = lpToken1() != primary() ? _onSwap(
                 primary(),
-                token1(),
+                lpToken1(),
                 lp1Amt
             )  * 1e18 / lp1Decimals : lp1Amt;
         (uint256 amountA, uint256 amountB,) = KyberTickUtils.quoteAddLiquidity(currentTick(), ticks.lowerTick, ticks.upperTick, out0, out1);
@@ -292,13 +285,10 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
         onlyHarvester
         nonReentrant
     {
-        _collectRewards();
-    }
-    
-    function _collectRewards() private {
         uint256 before = _primaryStableBalance();
-        _harvestFromFarm();
-        _swapRewardsToPrimaryStable();
+        farm.harvestMultiplePools(nftInfo.tokenIds, nftInfo.pids);
+        uint256 outputBal = _balanceOfOutput();
+        if (outputBal > 0) swapExactInput(_factory(), tokenInfo.outputToPrimaryStableRoute, outputBal);
         
         uint256 balance = _primaryStableBalance() - before;
         console.log("RewardCollection - (KNC) -> USDC Balance: ", balance);
@@ -310,46 +300,51 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
         primaryStable.transfer(harvesterAddress, balance);
     }
 
-    function _harvestFromFarm() private {
-        bytes[] memory datas = new bytes[](1);
-        datas[0] = abi.encode(IKyberLM.HarvestData({
-            pIds: nftInfo.pids
-        }));
-        farm.harvestMultiplePools(nftInfo.tokenIds, datas);
-    }
-
-    // Swap all rewards to native for accounting 
-    function _swapRewardsToPrimaryStable() private {
-        uint256 outputBal = _balanceOfOutput();
-        if (outputBal > 0) {
-            swapExactInput(_factory(), tokenInfo.outputToPrimaryStableRoute, outputBal);
-        }
-    }
-
     function _swapAssetsToPrimaryStable() internal {
         (uint256 token0Bal, uint256 token1Bal,,,,) = balanceOfTokens();
-        if ( (token0() != primary()) && token0Bal > 0) {
+        if (lpToken0() != primary() && token0Bal > 0 ) {
+             _swap(lpToken0(), primary(), token0Bal);
+        } else if (token1Bal > 0) _swap(lpToken1(), primary(), token1Bal);
+    }
+
+    function _swap(address _from, address _to, uint256 _amount) private {
             swap(
                 curvePool,
-                token0(),
-                primary(),
-                token0Bal,
+                _from,
+                _to,
+                _amount,
                 oracleRouter
             );
-        }
-        if ( (token1() != primary()) && token1Bal > 0)  {
-             swap(
+    }
+
+    function _onSwap(address _from, address _to, uint256 _amount) private view returns (uint256) {
+        return onSwap(
                 curvePool,
-                token1(),
-                primary(),
-                token1Bal,
-                oracleRouter
+                _from,
+                _to,
+                _amount
             );
+    }
+
+    function _convert(
+        address from,
+        address to,
+        uint256 _amount,
+        bool limit
+    ) internal view returns (uint256) {
+        if (from == to) {
+            return _amount;
         }
+        uint256 fromPrice = IOracle(oracleRouter).price(from);
+        uint256 toPrice = IOracle(oracleRouter).price(to);
+        if ((toPrice > 10 ** 8) && limit) {
+            toPrice = 10 ** 8;
+        }
+        return _amount * fromPrice / toPrice;
     }
 
     /// View Functions ///
-    function balanceOfPool() public view returns (uint256 liquidity) {
+    function lpBalance() public view returns (uint256 liquidity) {
         (IBasePositionManager.Position memory position,) = nftManager.positions(nftInfo.tokenId);
         return position.liquidity;
     }
@@ -367,11 +362,11 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
             _getSqrtRatioAtTick(currentTick()),
             _getSqrtRatioAtTick(ticks.lowerTick),
             _getSqrtRatioAtTick(ticks.upperTick),
-            uint128(balanceOfPool())
+            uint128(lpBalance())
             );
         
-        thisTokens0 = IERC20(token0()).balanceOf(address(this));
-        thisTokens1 = IERC20(token1()).balanceOf(address(this));
+        thisTokens0 = IERC20(lpToken0()).balanceOf(address(this));
+        thisTokens1 = IERC20(lpToken1()).balanceOf(address(this));
         totalTokens0 = poolTokens0 + totalTokens0;
         totalTokens1 = poolTokens1 + totalTokens1;
     }
@@ -382,7 +377,37 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
         override
         returns (uint256 balance)
     {
-        return netAssetValue();
+        (,,,,uint256 token0Balance, uint256 token1Balance) = balanceOfTokens();
+
+       uint256 primaryStableBalanceFromToken0;
+        if ( (lpToken0() != primary())  ) {
+            if (token0Balance > 0) {
+                primaryStableBalanceFromToken0 = onSwap(
+                    curvePool,
+                    lpToken0(),
+                    primary(),
+                    token0Balance
+                );
+            }
+        } else {
+            primaryStableBalanceFromToken0 += token0Balance;
+        }
+
+        uint256 primaryStableBalanceFromToken1;
+        if ( (lpToken1() != primary())  ) {
+            if (token1Balance > 0) {
+                primaryStableBalanceFromToken1 = 
+                    onSwap(
+                        curvePool,
+                        lpToken1(),
+                        primary(),
+                        token1Balance
+                    );
+            }
+        } else {
+            primaryStableBalanceFromToken1 += token1Balance;
+        }
+        return primaryStableBalanceFromToken0 + primaryStableBalanceFromToken1;
     }
 
     function netAssetValue()
@@ -393,28 +418,29 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
        (,,,,uint256 token0Balance, uint256 token1Balance) = balanceOfTokens();
 
        uint256 primaryStableBalanceFromToken0;
-        if ( (token0() != primary())  ) {
+        if ( (lpToken0() != primary())  ) {
             if (token0Balance > 0) {
-                primaryStableBalanceFromToken0 = onSwap(
-                    curvePool,
-                    token0(),
-                    primary(),
-                    token0Balance
-                );
+                primaryStableBalanceFromToken0 = 
+                    _convert(
+                        lpToken0(),
+                        primary(),
+                        token0Balance,
+                        true
+                    );
             }
         } else {
             primaryStableBalanceFromToken0 += token0Balance;
         }
 
         uint256 primaryStableBalanceFromToken1;
-        if ( (token1() != primary())  ) {
+        if ( (lpToken1() != primary())  ) {
             if (token1Balance > 0) {
                 primaryStableBalanceFromToken1 = 
-                    onSwap(
-                        curvePool,
-                        token1(),
+                     _convert(
+                        lpToken1(),
                         primary(),
-                        token1Balance
+                        token1Balance,
+                        true
                     );
             }
         } else {
@@ -479,16 +505,23 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
     }
 
     /// view functions to save bytes ///
-    function token0() public view returns (address) {
+    function token0() external view returns (address) {
+        return assetsMapped[0];
+    }
+    function lpToken0() private view returns (address) {
         return address(tokenInfo.token0);
     }
 
-    function token1() public view returns (address) {
+    function lpToken1() private view returns (address) {
         return address(tokenInfo.token1);
     }
 
     function primary() private view returns (address) {
         return address(primaryStable);
+    }
+
+    function _onlyPrimary(address _asset) private view {
+         require(_asset == primary(), "Token not supported.");
     }
 
     function _getSqrtRatioAtTick(int24 tick) private pure returns (uint160) {
@@ -533,5 +566,4 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
     function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4){
         return IERC721Receiver.onERC721Received.selector;
     }
-   
 }
