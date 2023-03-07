@@ -32,6 +32,13 @@ contract CompoundStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
+ * @notice KyberElasticStrategyProxy delegates calls to a KyberElasticStrategy implementation
+ */
+contract KyberElasticStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
  * @notice AaveStrategyUSDCProxy delegates calls to a AaveStrategy implementation
  */
 contract AaveStrategyUSDCProxy is InitializeGovernedUpgradeabilityProxy {
