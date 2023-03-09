@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for investing stablecoins via Am3Curve
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { IAsset } from "../interfaces/balancer/interfaces/IAsset.sol";
@@ -25,7 +25,6 @@ import { IProtocolDataProvider } from "../connectors/aave/interfaces/IProtocolDa
 import "hardhat/console.sol";
 
 contract Am3CurveStrategy is BaseCurveStrategy, UniswapV2Exchange {
-    using SafeMath for uint256;
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 

@@ -8,13 +8,14 @@ pragma solidity ^0.8.0;
  */
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
+import "@openzeppelin/contracts/utils/Strings.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IHarvester } from "../interfaces/IHarvester.sol";
+import { IVaultCore } from "../interfaces/IVaultCore.sol";
 import { IDripper } from "../interfaces/IDripper.sol";
 import "./VaultStorage.sol";
-import "../utils/Sort.sol";
+import "../utils/Array.sol";
 import "hardhat/console.sol";
 
 contract VaultAdmin is VaultStorage {
@@ -25,28 +26,17 @@ contract VaultAdmin is VaultStorage {
      * @dev Verifies that the caller is the Vault, Governor, or Strategist.
      */
     modifier onlyVaultOrGovernorOrStrategist() {
-        require(
-            msg.sender == address(this) ||
-                msg.sender == strategistAddr ||
-                isGovernor(),
-            "Caller is not the Vault, Governor, or Strategist"
-        );
+        require(msg.sender == address(this) || msg.sender == strategistAddr || isGovernor(), "Caller is not the Vault, Governor, or Strategist");
         _;
     }
 
     modifier onlyGovernorOrStrategist() {
-        require(
-            msg.sender == strategistAddr || isGovernor(),
-            "Caller is not the Strategist or Governor"
-        );
+        require(msg.sender == strategistAddr || isGovernor(), "Caller is not the Strategist or Governor");
         _;
     }
 
     modifier onlyGovernorOrRebaseManager() {
-        require(
-            isGovernor() || rebaseManagers[msg.sender],
-            "Caller is not the Governor or Rebase Manager"
-        );
+        require(isGovernor() || rebaseManagers[msg.sender], "Caller is not the Governor or Rebase Manager");
         _;
     }
 
@@ -61,6 +51,15 @@ contract VaultAdmin is VaultStorage {
     function setPriceProvider(address _priceProvider) external onlyGovernor {
         priceProvider = _priceProvider;
         emit PriceProviderUpdated(_priceProvider);
+        for (uint8 i = 0; i < allStrategies.length; i++) {
+            if (strategies[allStrategies[i]].isSupported) {
+                try IStrategy(allStrategies[i]).setOracleRouter() {
+                    emit PriceProviderStrategyUpdated(_priceProvider, allStrategies[i]);
+                } catch {
+                    emit PriceProviderStrategyUpdationFailed(_priceProvider, allStrategies[i]);
+                }
+            }
+        }
     }
 
     /**
@@ -68,36 +67,9 @@ contract VaultAdmin is VaultStorage {
      * @param _redeemFeeBps Basis point fee to be charged
      */
     function setRedeemFeeBps(uint256 _redeemFeeBps) external onlyGovernor {
-        require(_redeemFeeBps <= 1000, "Redeem fee should not be over 10%");
+        require(_redeemFeeBps <= 1000, "!FEE");
         redeemFeeBps = _redeemFeeBps;
         emit RedeemFeeUpdated(_redeemFeeBps);
-    }
-
-    /**
-     * @dev Set a buffer of assets to keep in the Vault to handle most
-     * redemptions without needing to spend gas unwinding assets from a Strategy.
-     * @param _vaultBuffer Percentage using 18 decimals. 100% = 1e18.
-     */
-    function setVaultBuffer(uint256 _vaultBuffer)
-        external
-        onlyGovernorOrStrategist
-    {
-        require(_vaultBuffer <= 1e18, "Invalid value");
-        vaultBuffer = _vaultBuffer;
-        emit VaultBufferUpdated(_vaultBuffer);
-    }
-
-    /**
-     * @dev Sets the minimum amount of CASH in a mint to trigger an
-     * automatic allocation of funds afterwords.
-     * @param _threshold CASH amount with 18 fixed decimals.
-     */
-    function setAutoAllocateThreshold(uint256 _threshold)
-        external
-        onlyGovernor
-    {
-        autoAllocateThreshold = _threshold;
-        emit AllocateThresholdUpdated(_threshold);
     }
 
     /**
@@ -125,22 +97,14 @@ contract VaultAdmin is VaultStorage {
      * @param _asset Address of the asset
      * @param _strategy Address of the Strategy
      */
-    function setAssetDefaultStrategy(address _asset, address _strategy)
-        external
-        onlyGovernorOrStrategist
-    {
+    function setAssetDefaultStrategy(address _asset, address _strategy) external onlyGovernorOrStrategist {
         emit AssetDefaultStrategyUpdated(_asset, _strategy);
         // If its a zero address being passed for the strategy we are removing
         // the default strategy
         if (_strategy != address(0)) {
             // Make sure the strategy meets some criteria
-            require(strategies[_strategy].isSupported, "Strategy not approved");
-            IStrategy strategy = IStrategy(_strategy);
-            require(assets[_asset].isSupported, "Asset is not supported");
-            require(
-                strategy.supportsAsset(_asset),
-                "Asset not supported by Strategy"
-            );
+            require(strategies[_strategy].isSupported, "!STRT_APRVD");
+            require(assets[_asset].isSupported, "!AST_SPRTD");
         }
         assetDefaultStrategies[_asset] = _strategy;
     }
@@ -151,7 +115,7 @@ contract VaultAdmin is VaultStorage {
      * @param _asset Address of asset
      */
     function supportAsset(address _asset) external onlyGovernor {
-        require(!assets[_asset].isSupported, "Asset already supported");
+        require(!assets[_asset].isSupported, "ALRDY");
 
         assets[_asset] = Asset({ isSupported: true });
         allAssets.push(_asset);
@@ -168,7 +132,7 @@ contract VaultAdmin is VaultStorage {
      * @param _addr Address of the strategy to add
      */
     function approveStrategy(address _addr) external onlyGovernor {
-        require(!strategies[_addr].isSupported, "Strategy already approved");
+        require(!strategies[_addr].isSupported, "ALRDY");
         strategies[_addr] = Strategy({ isSupported: true, _deprecated: 0 });
         allStrategies.push(_addr);
         emit StrategyApproved(_addr);
@@ -180,13 +144,14 @@ contract VaultAdmin is VaultStorage {
      */
 
     function removeStrategy(address _addr) external onlyGovernor {
-        require(strategies[_addr].isSupported, "Strategy not approved");
+        _removeStrategy(_addr);
+    }
+
+    function _removeStrategy(address _addr) internal {
+        require(strategies[_addr].isSupported, "!APRVD");
 
         for (uint256 i = 0; i < allAssets.length; i++) {
-            require(
-                assetDefaultStrategies[allAssets[i]] != _addr,
-                "Strategy is default for an asset"
-            );
+            require(assetDefaultStrategies[allAssets[i]] != _addr, "RMV_DFLT");
         }
 
         // Initialize strategyIndex with out of bounds result so function will
@@ -200,21 +165,23 @@ contract VaultAdmin is VaultStorage {
         }
 
         if (strategyIndex < allStrategies.length) {
-            allStrategies[strategyIndex] = allStrategies[
-                allStrategies.length - 1
-            ];
+            allStrategies[strategyIndex] = allStrategies[allStrategies.length - 1];
             allStrategies.pop();
 
             // Mark the strategy as not supported
             strategies[_addr].isSupported = false;
 
-            // Withdraw all assets
+            // Try to collectRewards
             IStrategy strategy = IStrategy(_addr);
+            try strategy.collectRewardTokens() {} catch {
+                // If it fails, we don't care
+            }
+
+            // Withdraw all assets
             strategy.withdrawAll();
 
             emit StrategyRemoved(_addr);
         }
-
 
         // Removing strategy from quickDeposit
         strategyIndex = quickDepositStrategies.length;
@@ -226,9 +193,7 @@ contract VaultAdmin is VaultStorage {
         }
 
         if (strategyIndex < quickDepositStrategies.length) {
-            quickDepositStrategies[strategyIndex] = quickDepositStrategies[
-                quickDepositStrategies.length - 1
-            ];
+            quickDepositStrategies[strategyIndex] = quickDepositStrategies[quickDepositStrategies.length - 1];
             quickDepositStrategies.pop();
             emit StrategyRemoved(_addr);
         }
@@ -247,9 +212,7 @@ contract VaultAdmin is VaultStorage {
         if (strategyIndex < strategyWithWeights.length) {
             // RECOMMENDED: To reset weights through its setStrategyWithWeights() function after strategy removal.
             uint256 weightOfRemovable = strategyWithWeights[strategyIndex].targetWeight;
-            strategyWithWeights[strategyIndex] = strategyWithWeights[
-                strategyWithWeights.length - 1
-            ];
+            strategyWithWeights[strategyIndex] = strategyWithWeights[strategyWithWeights.length - 1];
             strategyWithWeights.pop();
             if (strategyWithWeights.length > 0) {
                 strategyWithWeights[0].targetWeight += weightOfRemovable;
@@ -258,7 +221,8 @@ contract VaultAdmin is VaultStorage {
             delete strategyWithWeightPositions[_addr];
         }
 
-
+        // Remove support from Harvestor
+        IHarvester(harvesterAddress).setSupportedStrategy(_addr, false);
     }
 
     /**
@@ -274,21 +238,15 @@ contract VaultAdmin is VaultStorage {
         address[] calldata _assets,
         uint256[] calldata _amounts
     ) external onlyGovernorOrStrategist {
-        require(
-            strategies[_strategyFromAddress].isSupported,
-            "Invalid from Strategy"
-        );
-        require(
-            strategies[_strategyToAddress].isSupported,
-            "Invalid to Strategy"
-        );
-        require(_assets.length == _amounts.length, "Parameter length mismatch");
+        require(strategies[_strategyFromAddress].isSupported, "!FRM_STRT");
+        require(strategies[_strategyToAddress].isSupported, "!TO_STRT");
+        require(_assets.length == _amounts.length, "!LEN");
 
         IStrategy strategyFrom = IStrategy(_strategyFromAddress);
         IStrategy strategyTo = IStrategy(_strategyToAddress);
 
         for (uint256 i = 0; i < _assets.length; i++) {
-            require(strategyTo.supportsAsset(_assets[i]), "Asset unsupported");
+            require(strategyTo.supportsAsset(_assets[i]), "!SPRTD");
             // Withdraw from Strategy and pass other Strategy as recipient
             strategyFrom.withdraw(address(strategyTo), _assets[i], _amounts[i]);
         }
@@ -304,14 +262,6 @@ contract VaultAdmin is VaultStorage {
         maxSupplyDiff = _maxSupplyDiff;
         emit MaxSupplyDiffChanged(_maxSupplyDiff);
     }
-
-    /**
-     * @dev Change the CASH supply without any checks
-     */
-    function changeCASHSupply(uint256 _newTotalSupply) external onlyGovernor {
-        cash.changeSupply(_newTotalSupply);
-    }
-
 
     /***************************************
                     Pause
@@ -359,11 +309,8 @@ contract VaultAdmin is VaultStorage {
      * @param _asset Address for the asset
      * @param _amount Amount of the asset to transfer
      */
-    function transferToken(address _asset, uint256 _amount)
-        external
-        onlyGovernor
-    {
-        // require(!assets[_asset].isSupported, "Only unsupported assets");
+    function transferToken(address _asset, uint256 _amount) external onlyGovernor {
+        require(!assets[_asset].isSupported, "!SPRTD");
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
 
@@ -410,14 +357,8 @@ contract VaultAdmin is VaultStorage {
      * @dev Withdraws all assets from the strategy and sends assets to the Vault.
      * @param _strategyAddr Strategy address.
      */
-    function withdrawAllFromStrategy(address _strategyAddr)
-        external
-        onlyGovernorOrStrategist
-    {
-        require(
-            strategies[_strategyAddr].isSupported,
-            "Strategy is not supported"
-        );
+    function withdrawAllFromStrategy(address _strategyAddr) external onlyGovernorOrStrategist {
+        require(strategies[_strategyAddr].isSupported, "!APVD");
         IStrategy strategy = IStrategy(_strategyAddr);
         strategy.withdrawAll();
     }
@@ -427,14 +368,8 @@ contract VaultAdmin is VaultStorage {
      * @param _strategyAddr Strategy address.
      * @param _amount Amount to withdraw
      */
-    function withdrawFromStrategy(address _strategyAddr, uint256 _amount)
-        external
-        onlyGovernorOrStrategist
-    {
-        require(
-            strategies[_strategyAddr].isSupported,
-            "Strategy is not supported"
-        );
+    function withdrawFromStrategy(address _strategyAddr, uint256 _amount) external onlyGovernorOrStrategist {
+        require(strategies[_strategyAddr].isSupported, "!APVD");
         IStrategy strategy = IStrategy(_strategyAddr);
         strategy.withdraw(address(this), primaryStableAddress, _amount);
     }
@@ -457,73 +392,79 @@ contract VaultAdmin is VaultStorage {
      * @param weights Array of StrategyWithWeight structs to sort to
      * @return sorted Sorted array by weight of StrategyWithWeight structs
      */
-    function sortWeightsByTarget(StrategyWithWeight[] memory weights) internal pure returns(StrategyWithWeight[] memory) {
-        uint[] memory targets = new uint[](weights.length);
-        for(uint i = 0; i < weights.length; i++) {
+    function sortWeightsByTarget(StrategyWithWeight[] memory weights) internal pure returns (StrategyWithWeight[] memory) {
+        uint256[] memory targets = new uint256[](weights.length);
+        for (uint256 i = 0; i < weights.length; i++) {
             targets[i] = weights[i].targetWeight;
         }
-        uint[] memory indices = new uint[](targets.length);
-        for (uint z = 0; z < indices.length; z++) {
+        uint256[] memory indices = new uint256[](targets.length);
+        for (uint256 z = 0; z < indices.length; z++) {
             indices[z] = z;
         }
-        Sort.quickSort(targets, 0, int(targets.length-1), indices);
+        Array.quickSort(targets, 0, int256(targets.length - 1), indices);
         StrategyWithWeight[] memory sorted = new StrategyWithWeight[](targets.length);
-        for (uint z = 0; z < indices.length; z++) {
+        for (uint256 z = 0; z < indices.length; z++) {
             sorted[z] = weights[indices[z]];
         }
         return sorted;
     }
 
-
     /**
-    * @dev Set the Weight against each strategy
-    * @param _strategyWithWeights Array of StrategyWithWeight structs to set
-    */
-    function setStrategyWithWeights(StrategyWithWeight[] calldata _strategyWithWeights) external onlyGovernor  {
+     * @dev Set the Weight against each strategy
+     * @param _strategyWithWeights Array of StrategyWithWeight structs to set
+     */
+    function setStrategyWithWeights(StrategyWithWeight[] calldata _strategyWithWeights) external onlyGovernor {
         _setStrategyWithWeights(_strategyWithWeights);
     }
 
     /**
-    * @dev Set the Weight against each strategy
-    * @param _strategyWithWeights Array of StrategyWithWeight structs to set
-    */
+     * @dev Set the Weight against each strategy
+     * @param _strategyWithWeights Array of StrategyWithWeight structs to set
+     */
     function _setStrategyWithWeights(StrategyWithWeight[] calldata _strategyWithWeights) internal onlyGovernor {
         uint256 totalTarget = 0;
+        address[] memory _oldStrategies = new address[](strategyWithWeights.length);
+        address[] memory _newStrategies = new address[](_strategyWithWeights.length);
+        for (uint8 i = 0; i < strategyWithWeights.length; i++) {
+            delete strategyWithWeightPositions[strategyWithWeights[i].strategy];
+            _oldStrategies[i] = strategyWithWeights[i].strategy;
+        }
         for (uint8 i = 0; i < _strategyWithWeights.length; i++) {
             StrategyWithWeight memory strategyWithWeight = _strategyWithWeights[i];
-            require(strategies[strategyWithWeight.strategy].isSupported, "Strategy should be supported by the Vault");
-            require(strategyWithWeight.strategy != address(0), "Weight without strategy");
-            require(
-                strategyWithWeight.minWeight <= strategyWithWeight.targetWeight,
-                "minWeight shouldn't higher than targetWeight"
-            );
-            require(
-                strategyWithWeight.targetWeight <= strategyWithWeight.maxWeight,
-                "targetWeight shouldn't higher than maxWeight"
-            );
+            require(strategies[strategyWithWeight.strategy].isSupported, "!SPRTED");
+            require(strategyWithWeight.strategy != address(0), "!STRGY");
+            require(strategyWithWeight.minWeight <= strategyWithWeight.targetWeight, "MIN<TAR");
+            require(strategyWithWeight.targetWeight <= strategyWithWeight.maxWeight, "TAR>MAX");
             totalTarget += strategyWithWeight.targetWeight;
+            _newStrategies[i] = _strategyWithWeights[i].strategy;
         }
-        require(totalTarget == TOTAL_WEIGHT, "Total target should equal to TOTAL_WEIGHT");
-        StrategyWithWeight[] memory sorted = sortWeightsByTarget(_strategyWithWeights);
-        for (uint8 i = 0; i < sorted.length; i++) {
-            _addStrategyWithWeightAt(sorted[i], i);
+        require(totalTarget == TOTAL_WEIGHT, "!=TOTAL_WEIGHT");
+
+        address[] memory _removedStrategies = Array.diff(_oldStrategies, _newStrategies);
+
+        for (uint8 i = 0; i < _removedStrategies.length; i++) {
+            _removeStrategy(_removedStrategies[i]);
+        }
+
+        for (uint8 i = 0; i < _strategyWithWeights.length; i++) {
+            _addStrategyWithWeightAt(_strategyWithWeights[i], i);
             strategyWithWeightPositions[strategyWithWeights[i].strategy] = i;
         }
+
         // truncate if need
-        if (strategyWithWeights.length > sorted.length) {
-            uint256 removeCount = strategyWithWeights.length - sorted.length;
+        if (strategyWithWeights.length > _strategyWithWeights.length) {
+            uint256 removeCount = strategyWithWeights.length - _strategyWithWeights.length;
             for (uint8 i = 0; i < removeCount; i++) {
                 strategyWithWeights.pop();
             }
         }
     }
 
-
     /**
-    * @dev Utility function to set StrategyWithWeight struct to specific postion in the strategyWithWeights[]
-    * @param strategyWithWeight StrategyWithWeight struct object to set
-    * @param index Position to set the _strategyWithWeights in  strategyWithWeights[]
-    */
+     * @dev Utility function to set StrategyWithWeight struct to specific postion in the strategyWithWeights[]
+     * @param strategyWithWeight StrategyWithWeight struct object to set
+     * @param index Position to set the _strategyWithWeights in  strategyWithWeights[]
+     */
     function _addStrategyWithWeightAt(StrategyWithWeight memory strategyWithWeight, uint256 index) internal {
         uint256 currentLength = strategyWithWeights.length;
         // expand if need
@@ -537,62 +478,30 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-    * @dev Utility function to return the StrategyWithWeight object by strategy address
-    * @param strategy address of the strategy
-    * @return StrategyWithWeight object against the address
-    */
+     * @dev Utility function to return the StrategyWithWeight object by strategy address
+     * @param strategy address of the strategy
+     * @return StrategyWithWeight object against the address
+     */
     function getStrategyWithWeight(address strategy) public view returns (StrategyWithWeight memory) {
         return strategyWithWeights[strategyWithWeightPositions[strategy]];
     }
 
     /**
-    * @dev Accessor function for strategyWithWeights
-    * @return strategyWithWeights StrategyWithWeight[] object
-    */
+     * @dev Accessor function for strategyWithWeights
+     * @return strategyWithWeights StrategyWithWeight[] object
+     */
     function getAllStrategyWithWeights() public view returns (StrategyWithWeight[] memory) {
         return strategyWithWeights;
     }
-    /***************************
-            PRIMARY STABLE
-    ****************************/
-    /**
-    * @dev Set the Primary Stable address
-    * @param _primaryStable Address of the Primary Stable
-    */
-    function setPrimaryStable(address _primaryStable) external onlyGovernor {
-        require(_primaryStable != address(0), "PrimaryStable should not be empty.");
-        primaryStableAddress = _primaryStable;
 
-    }
-
-    /***********************************
-            QuickDepositStartegies
-    ************************************/
-    /**
-    * @dev Set the quick deposit strategies for quickAllocation of funds.
-    * @param _quickDepositStrategies Array of pre-appproved startegy addresses
-    */
-    function setQuickDepositStrategies(address[] calldata _quickDepositStrategies) external onlyGovernor {
-        for (uint8 i = 0; i < _quickDepositStrategies.length; i++) {
-            require(strategies[_quickDepositStrategies[i]].isSupported, "Strategy should be supported by the Vault");
-        }
-        quickDepositStrategies = _quickDepositStrategies;
-    }
-    /**
-    * @dev Get the quick deposit strategies for quickAllocation of funds.
-    * @return QuickDepositStrategies Array of pre-appproved startegy addresses
-    */
-    function getQuickDepositStrategies() external onlyGovernor view returns (address[] memory) {
-        return quickDepositStrategies;
-    }
     /***********************************
                 setSwapper
     ************************************/
     /**
-    * @dev Set the Balancer Vault as primary swapper for the Vault
-    * @param _swappingPool Address of Pool
-    * @param _swappingPoolId Id of the Pool to use for swapping
-    */
+     * @dev Set the Balancer Vault as primary swapper for the Vault
+     * @param _swappingPool Address of Pool
+     * @param _swappingPoolId Id of the Pool to use for swapping
+     */
     function setSwapper(address _swappingPool, bytes32 _swappingPoolId) external onlyGovernor {
         swappingPool = _swappingPool;
         swappingPoolId = _swappingPoolId;
@@ -602,44 +511,46 @@ contract VaultAdmin is VaultStorage {
                 Harvester & Dripper
     ************************************/
     /**
-    * @dev Set the Harvester address in the Vault
-    * @param _harvester Address of Harvester
-    */
+     * @dev Set the Harvester address in the Vault
+     * @param _harvester Address of Harvester
+     */
     function setHarvester(address _harvester) external onlyGovernor {
-        require(_harvester != address(0), "Empty Harvester Address");
         harvesterAddress = _harvester;
     }
 
     /**
-    * @dev Set the Dripper address in the Value
-    * @param _dripper Address of the Dripper
-    */
+     * @dev Set the Dripper address in the Value
+     * @param _dripper Address of the Dripper
+     */
     function setDripper(address _dripper) external onlyGovernor {
-        require(_dripper != address(0), "Empty Dripper Address");
         dripperAddress = _dripper;
     }
-
 
     /***********************************
             Fee Parameters
     ************************************/
     /**
-    * @dev Set the Fee Distribution Parameters for Vault
-    * @param _labsAddress address of the Labs account
-    * @param _teamAddress address of the Team account
-    * @param _treasuryAddress address of the Treasury account
-    */
-    function setFeeParams(address _labsAddress, address _teamAddress, address _treasuryAddress) external onlyGovernor {
+     * @dev Set the Fee Distribution Parameters for Vault
+     * @param _labsAddress address of the Labs account
+     * @param _teamAddress address of the Team account
+     * @param _treasuryAddress address of the Treasury account
+     */
+    function setFeeParams(
+        address _labsAddress,
+        address _teamAddress,
+        address _treasuryAddress
+    ) external onlyGovernor {
         labsAddress = _labsAddress;
         teamAddress = _teamAddress;
         treasuryAddress = _treasuryAddress;
         emit FeeAddressesChanged(_labsAddress, _teamAddress, _treasuryAddress);
     }
+
     /**
-    * @dev Set Harvester Fee Parameters
-    * @param _labsFeeBps Fee in BPS for Labs
-    * @param _teamFeeBps Fee in BPS for Team
-    */
+     * @dev Set Harvester Fee Parameters
+     * @param _labsFeeBps Fee in BPS for Labs
+     * @param _teamFeeBps Fee in BPS for Team
+     */
     function setHarvesterFeeParams(uint256 _labsFeeBps, uint256 _teamFeeBps) external onlyGovernor {
         require((labsAddress != address(0)) && (teamAddress != address(0)), "!SET");
         IHarvester(harvesterAddress).setLabs(labsAddress, _labsFeeBps);
@@ -648,24 +559,40 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-    * @dev Get Fee parameters for Labs and Team
-    * @return Tuple containing the Lab address, Lab % in Bps, Team address, Team % in Bps
-    */
-    function getFeeParams() public view returns (address, uint256, address, uint256)  {
+     * @dev Get Fee parameters for Labs and Team
+     * @return Tuple containing the Lab address, Lab % in Bps, Team address, Team % in Bps
+     */
+    function getFeeParams()
+        public
+        view
+        returns (
+            address,
+            uint256,
+            address,
+            uint256
+        )
+    {
         return (labsAddress, labsFeeBps, teamAddress, teamFeeBps);
     }
+
     /**
-    * @dev Set the fee % that would be deducted at the time minting
-    *      all of the mint fees would be sent to the Treasury
-    *      Hence, seperate Bps for Labs & Treasury is not needed.
-    * @param _mintFeeBps % in bps which would be deducted at the time of minting
-    */
+     * @dev Set the fee % that would be deducted at the time minting
+     *      all of the mint fees would be sent to the Treasury
+     *      Hence, seperate Bps for Labs & Treasury is not needed.
+     * @param _mintFeeBps % in bps which would be deducted at the time of minting
+     */
     function setMintFeeBps(uint256 _mintFeeBps) external onlyGovernor {
-        require(_mintFeeBps > 0 && _mintFeeBps <= 10000, "Invalid MintFee");
+        require(_mintFeeBps > 0 && _mintFeeBps <= 10000, "!FEE");
         uint256 _previousMintFeeBps = mintFeeBps;
         mintFeeBps = _mintFeeBps;
         emit MintFeeChanged(msg.sender, _previousMintFeeBps, _mintFeeBps);
     }
+
+    function setPoolBalanceCheckExponent(uint256 _poolBalanceCheckExponent) external onlyGovernor {
+        require(_poolBalanceCheckExponent > 0, "!EXP");
+        poolBalanceCheckExponent = _poolBalanceCheckExponent;
+    }
+
     /********************************
             PAYOUT TIMESTAMPS
     *********************************/
@@ -675,7 +602,7 @@ contract VaultAdmin is VaultStorage {
     * @param _nextPayoutTime timestamp of next Payout
     */
     function setNextPayoutTime(uint256 _nextPayoutTime) external onlyGovernor {
-        require(_nextPayoutTime > 0, "Time cannot be 0");
+        require(_nextPayoutTime > 0, "T>0");
         nextPayoutTime = _nextPayoutTime;
     }
 
@@ -685,7 +612,7 @@ contract VaultAdmin is VaultStorage {
 |    * @param _payoutTimeRange duration to honor payout time. Ex: 15 * 60;
     */
     function setPayoutIntervals(uint256 _payoutPeriod, uint256 _payoutTimeRange) external onlyGovernor {
-        require((_payoutPeriod > 0) && (_payoutTimeRange > 0), "Time cannot be 0");
+        require((_payoutPeriod > 0) && (_payoutTimeRange > 0), "T>0");
         payoutPeriod = _payoutPeriod;
         payoutTimeRange = _payoutTimeRange;
     }
@@ -694,57 +621,104 @@ contract VaultAdmin is VaultStorage {
             REBASE MANAGER
     *********************************/
     /**
-    * @dev Set rebase managers to allow rebasing to specific external users
-    * @param _rebaseManager Candidate for Rebase Manager
-    */
+     * @dev Set rebase managers to allow rebasing to specific external users
+     * @param _rebaseManager Candidate for Rebase Manager
+     */
     function addRebaseManager(address _rebaseManager) external onlyGovernor {
-        require(_rebaseManager != address(0), "No Rebase Manager Provided");
-        require(!rebaseManagers[_rebaseManager], "Rebase Manager already whitelisted");
+        require(_rebaseManager != address(0), "!RBM");
+        require(!rebaseManagers[_rebaseManager], "RBM_ALDY");
         rebaseManagers[_rebaseManager] = true;
     }
 
     /**
-    * @dev Check if the an address is actually a Rebase Manager
-    * @param _sender address to check if it is among Rebase Managers
-    */
+     * @dev Check if the an address is actually a Rebase Manager
+     * @param _sender address to check if it is among Rebase Managers
+     */
     function isRebaseManager(address _sender) external view returns (bool) {
         return rebaseManagers[_sender];
     }
 
     /**
-     * Rebase Handler 
+     * Rebase Handler
      * @dev Set the rebase handler
      * @param _rebaseHandler Address of the rebase handler
      */
     function setRebaseHandler(address _rebaseHandler) external onlyGovernor {
         require(_rebaseHandler != address(0));
         rebaseHandler = _rebaseHandler;
-    }   
+    }
+
+    function setDailyExpectedYieldBps(uint256 _dailyExpectedYieldBps) external onlyGovernor {
+        dailyExpectedYieldBps = _dailyExpectedYieldBps;
+    }
+
     /***************************
               PAYOUT
     ****************************/
     /**
-    * @dev Function to collect rewards from Strategies and Balance the Vault
-    */
+     * @dev Function to collect rewards from Strategies and Balance the Vault
+     */
     function payout() external onlyGovernorOrRebaseManager {
         _payout();
     }
+
     /**
-    * @dev Function to collect rewards from Strategies and Balance the Vault
-    */
+     * @dev Function to collect rewards from Strategies and Balance the Vault
+     */
     function _payout() internal {
         if (block.timestamp + payoutTimeRange < nextPayoutTime) {
             return;
         }
 
-        IHarvester(harvesterAddress).harvestAndDistribute();
-        uint256 totalUSDCInDripper = IERC20(primaryStableAddress).balanceOf(dripperAddress);
-        IDripper(dripperAddress).collectAndRebase();
-        emit Payout(IERC20(primaryStableAddress).balanceOf(dripperAddress).subFromBigger(totalUSDCInDripper));
-        _balance();
+        // Check if the QD is present for PS (USDC)
+        require(assetDefaultStrategies[primaryStableAddress] != address(0), "!QD");
+        IERC20 _ps = IERC20(primaryStableAddress);
+        address _qd = assetDefaultStrategies[primaryStableAddress];
 
+        // log Initial State of vault
+        uint256 _t = cash.totalSupply();
+        uint256 _nav = IVaultCore(address(this)).nav();
+        uint256 _initCash = _t;
+        uint256 _rawPS = _ps.balanceOf(address(this));
+        console.log("I-TS: %s NAV: %s", _t, _nav);
+
+        // Take yield from all strategies and put it to dripper via Harvester
+        IHarvester(harvesterAddress).harvestAndDistribute();
+
+        // Log state after Harvest and Distribute
+        _t = cash.totalSupply();
+        _nav = IVaultCore(address(this)).nav();
+        console.log("H-TS: %s, NAV: %s", _t, _nav);
+
+        // Collect yield from Dripper and perform rebase
+        IDripper(dripperAddress).collectAndRebase();
+
+        // Log state
+        _t = cash.totalSupply();
+        _nav = IVaultCore(address(this)).nav();
+        console.log("R-TS: %s, NAV: %s", _t, _nav);
+
+        // Calculate how much did dripper sent to Vault
+        _rawPS = _ps.balanceOf(address(this)) - _rawPS; // Reusing old variable
+        if (_rawPS > 0) {
+            // We sent the yield sent by Dripper to its USDC's QD
+            _ps.safeTransfer(_qd, _rawPS);
+            IStrategy(_qd).deposit(address(_ps), _rawPS);
+            emit AssetAllocated(address(_ps), _qd, _rawPS);
+        }
+
+        // Log the state
+        _t = cash.totalSupply();
+        _nav = IVaultCore(address(this)).nav();
+        console.log("QD-TS: %s, NAV: %s", _t, _nav);
+
+        // Check if we got dailyExpectedYieldBps yield in the whole txn, if not revert
+        uint256 _finalCash = cash.totalSupply();
+        require((_finalCash - _initCash) > (_initCash * dailyExpectedYieldBps) / (1000000), Strings.toString(_finalCash - _initCash));
+
+        emit Payout(_rawPS);
         // update next payout time. Cycle for preventing gaps
-        for (; block.timestamp >= nextPayoutTime - payoutTimeRange;) {
+        for (; block.timestamp >= nextPayoutTime - payoutTimeRange; ) {
             nextPayoutTime = nextPayoutTime + payoutPeriod;
         }
     }
@@ -752,96 +726,78 @@ contract VaultAdmin is VaultStorage {
     /***************************
             REBALANCE
     ****************************/
-    function invokeDeposits() external onlyGovernor {
-        StrategyWithWeight[] memory stratsWithWeights = getAllStrategyWithWeights();
-        for (uint8 i; i < stratsWithWeights.length; i++) {
-            uint256 totalAssetInStrat = IStrategy(stratsWithWeights[i].strategy).checkBalance();
-            if (totalAssetInStrat > 0) {
-                console.log("Depositing %s from %s", totalAssetInStrat, stratsWithWeights[i].strategy);
-                IStrategy(stratsWithWeights[i].strategy).deposit(primaryStableAddress, totalAssetInStrat);
-            }
-        }
-    }
+
     /**
-    * @dev Balance the Vault with predefined weights
-    */
-    function balance() external onlyGovernorOrStrategist {
+     * @dev Balance the Vault with predefined weights
+     */
+    function balance() external onlyVaultOrGovernorOrStrategist {
         _balance();
     }
+
     /**
-    * @dev Balance the Vault with predefined weights
-    */
+     * @dev Balance the Vault with predefined weights
+     */
     function _balance() internal {
         IERC20 asset = IERC20(primaryStableAddress);
-        StrategyWithWeight[] memory stratsWithWeights = getAllStrategyWithWeights();
-        require(stratsWithWeights.length > 0, "Weights not set");
-        require(primaryStableAddress != address(0), "PS not set");
+        require(strategyWithWeights.length > 0, "!WGT");
+        require(primaryStableAddress != address(0), "!PS");
 
         // 1. calc total USDC equivalent
         uint256 totalAssetInStrat = 0;
         uint256 totalWeight = 0;
-        for (uint8 i; i < stratsWithWeights.length; i++) {
-            if (!stratsWithWeights[i].enabled) {// Skip if strategy is not enabled
+        for (uint8 i; i < strategyWithWeights.length; i++) {
+            if (!strategyWithWeights[i].enabled) {
+                // Skip if strategy is not enabled
                 continue;
             }
 
-            // UnstakeFull from stratsWithWeights with targetWeight == 0
-            if(stratsWithWeights[i].targetWeight == 0){
-                IStrategy(stratsWithWeights[i].strategy).withdrawAll();
-            }else {
-                totalAssetInStrat += IStrategy(stratsWithWeights[i].strategy).checkBalance();
-                totalWeight += stratsWithWeights[i].targetWeight;
+            // UnstakeFull from strategyWithWeights with targetWeight == 0
+            if (strategyWithWeights[i].targetWeight == 0) {
+                IStrategy(strategyWithWeights[i].strategy).withdrawAll();
+            } else {
+                totalAssetInStrat += IStrategy(strategyWithWeights[i].strategy).checkBalance();
+                totalWeight += strategyWithWeights[i].targetWeight;
             }
-
         }
         uint256 totalAsset = totalAssetInStrat + asset.balanceOf(address(this));
 
-        // 3. calc diffs for stratsWithWeights liquidity
-        Order[] memory stakeOrders = new Order[](stratsWithWeights.length);
+        // 3. calc diffs for strategyWithWeights liquidity
+        Order[] memory stakeOrders = new Order[](strategyWithWeights.length);
         uint8 stakeOrdersCount = 0;
         uint256 stakeRequirement = 0;
-        for (uint8 i; i < stratsWithWeights.length; i++) {
-
-            if (!stratsWithWeights[i].enabled) {// Skip if strategy is not enabled
+        for (uint8 i; i < strategyWithWeights.length; i++) {
+            if (!strategyWithWeights[i].enabled) {
+                // Skip if strategy is not enabled
                 continue;
             }
 
             uint256 targetLiquidity;
-            if (stratsWithWeights[i].targetWeight == 0) {
+            if (strategyWithWeights[i].targetWeight == 0) {
                 targetLiquidity = 0;
             } else {
-                targetLiquidity = (totalAsset * stratsWithWeights[i].targetWeight) / totalWeight;
+                targetLiquidity = (totalAsset * strategyWithWeights[i].targetWeight) / totalWeight;
             }
 
-            uint256 currentLiquidity = IStrategy(stratsWithWeights[i].strategy).checkBalance();
+            uint256 currentLiquidity = IStrategy(strategyWithWeights[i].strategy).checkBalance();
             if (targetLiquidity == currentLiquidity) {
-                // skip already at target stratsWithWeights
+                // skip already at target strategyWithWeights
                 continue;
             }
 
             if (targetLiquidity < currentLiquidity) {
                 // unstake now
-                IStrategy(stratsWithWeights[i].strategy).withdraw(
-                    address(this),
-                    address(asset),
-                    currentLiquidity - targetLiquidity
-                );
+                IStrategy(strategyWithWeights[i].strategy).withdraw(address(this), address(asset), currentLiquidity - targetLiquidity);
             } else {
                 // save to stake later
-                stakeOrders[stakeOrdersCount] = Order(
-                    true,
-                    stratsWithWeights[i].strategy,
-                    targetLiquidity - currentLiquidity
-                );
+                stakeOrders[stakeOrdersCount] = Order(true, strategyWithWeights[i].strategy, targetLiquidity - currentLiquidity);
                 stakeOrdersCount++;
                 stakeRequirement += targetLiquidity - currentLiquidity;
             }
         }
-        console.log("REBALANCE: Balance available to stake %s", asset.balanceOf(address(this)));
-        console.log("REBALANCE: Balance required to stake %s", stakeRequirement);
+        console.log("RBL: AV: %s", asset.balanceOf(address(this)));
+        console.log("RBL: RQ: %s", stakeRequirement);
         // 4.  make staking
         for (uint8 i; i < stakeOrdersCount; i++) {
-
             address strategy = stakeOrders[i].strategy;
             uint256 amount = stakeOrders[i].amount;
 
@@ -851,11 +807,7 @@ contract VaultAdmin is VaultStorage {
             }
             asset.transfer(strategy, amount);
 
-            IStrategy(strategy).deposit(
-                address(asset),
-                amount
-            );
+            IStrategy(strategy).deposit(address(asset), amount);
         }
-
     }
 }

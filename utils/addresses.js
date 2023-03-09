@@ -219,6 +219,8 @@ addresses.polygon.aaveVDebtUSDT =  "0x8038857FD47108A07d1f6Bf652ef1cBeC279A2f3";
 
 // AAVE V3
 addresses.polygon.aUSDT = "0x6ab707Aca953eDAeFBc4fD23bA73294241490620";
+addresses.polygon.aUSDC = "0x625E7708f30cA75bfd92586e17077590C60eb4cD";
+addresses.polygon.aDAI = "0x82E64f49Ed5EC1bC6e43DAD4FC8Af9bb3A2312EE";
 addresses.polygon.aaveLendingPool = "0x794a61358D6845594F94dc1DB02A252b5b4814aD";
 
 // Balancer
@@ -237,6 +239,7 @@ addresses.polygon.balancerAmDaiToken = "0x178E029173417b1F9C8bC16DCeC6f697bC3237
 addresses.polygon.balancerAmUsdtToken = "0xFf4ce5AAAb5a627bf82f4A571AB1cE94Aa365eA6",
 addresses.polygon.balancerAmUsdGauge = "0x1c514fec643add86aef0ef14f4add28cc3425306",
 addresses.polygon.balancerRewardHelper = "0xaEb406b0E430BF5Ea2Dc0B9Fe62E4E53f74B3a33";
+
 
 // a3crv
 addresses.polygon.am3crv =  "0xE7a24EF0C5e95Ffb0f6684b813A78F2a3AD7D171"; // aaveCurve Token
@@ -264,11 +267,14 @@ addresses.polygon.tetuDaiSmartVault = "0xb4607d4b8ecfafd063b3a3563c02801c4c7366b
 
 // Stargate
 addresses.polygon.STG = "0x2F6F07CDcf3588944Bf4C42aC74ff24bF56e7590"; // reward token
+
 addresses.polygon.sUSDC = "0x1205f31718499dBf1fCa446663B532Ef87481fe1"; // LP token
 addresses.polygon.sUSDT = "0x29e38769f23701A2e4A8Ef0492e19dA4604Be62c"; // LP token
+addresses.polygon.sDAI = "0x1c272232Df0bb6225dA87f4dEcD9d37c32f63Eea"; // LP token
+
 addresses.polygon.stargateChef = "0x8731d54E9D02c286767d56ac03e8037C07e01e98"; // Stargate Chef
-addresses.polygon.stargateRouter = "0x45A01E4e04F14f7A4a6702c74187c5F6222033cd"; // Tetu Smart vault
-addresses.polygon.stgUsdcSwapRouter = "0x1b02da8cb0d097eb8d57a175b88c7d8b47997506"; // tetu-usdc swap router
+addresses.polygon.stargateRouter = "0x45A01E4e04F14f7A4a6702c74187c5F6222033cd"; 
+addresses.polygon.stgUsdcSwapRouter = "0x1b02da8cb0d097eb8d57a175b88c7d8b47997506";
 
 // Dodo
 addresses.polygon.DODO = "0xe4Bf2864ebeC7B7fDf6Eeca9BaCAe7cDfDAffe78";

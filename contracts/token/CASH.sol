@@ -494,27 +494,33 @@ contract CASH is Initializable, InitializableERC20Detailed, Governable {
      * to upside and downside.
      */
     function rebaseOptIn() public nonReentrant {
-        require(_isNonRebasingAccount(msg.sender), "Account has not opted out");
+        _rebaseOptIn(msg.sender);
+    }
+    function rebaseOptIn(address _sender) public onlyGovernor nonReentrant {
+        _rebaseOptIn(_sender);
+    }
+    function _rebaseOptIn(address _sender) internal {
+        require(_isNonRebasingAccount(_sender), "Account has not opted out");
 
         // Convert balance into the same amount at the current exchange rate
-        uint256 newCreditBalance = _creditBalances[msg.sender]
+        uint256 newCreditBalance = _creditBalances[_sender]
             .mul(_rebasingCreditsPerToken)
-            .div(_creditsPerToken(msg.sender));
+            .div(_creditsPerToken(_sender));
 
         // Decreasing non rebasing supply
-        nonRebasingSupply = nonRebasingSupply.sub(balanceOf(msg.sender));
+        nonRebasingSupply = nonRebasingSupply.sub(balanceOf(_sender));
 
-        _creditBalances[msg.sender] = newCreditBalance;
+        _creditBalances[_sender] = newCreditBalance;
 
         // Increase rebasing credits, totalSupply remains unchanged so no
         // adjustment necessary
-        _rebasingCredits = _rebasingCredits.add(_creditBalances[msg.sender]);
+        _rebasingCredits = _rebasingCredits.add(_creditBalances[_sender]);
 
-        rebaseState[msg.sender] = RebaseOptions.OptIn;
+        rebaseState[_sender] = RebaseOptions.OptIn;
 
         // Delete any fixed credits per token
-        delete nonRebasingCreditsPerToken[msg.sender];
-    }
+        delete nonRebasingCreditsPerToken[_sender];
+    } 
 
     /**
      * @dev Explicitly mark that an address is non-rebasing.
@@ -577,21 +583,5 @@ contract CASH is Initializable, InitializableERC20Detailed, Governable {
         );
     }
 
-    function resetMint(address[] calldata _accounts, uint256[] calldata _amounts) external onlyGovernor {
-        _rebasingCreditsPerToken = 1e18;
-        _rebasingCredits = 0;
-        _totalSupply = 0;
-        // nonRebasingSupply = 0;
-        require(_accounts.length == _amounts.length, "Invalid input");
-        for (uint256 i = 0; i < _accounts.length; i++) {
-            if (_accounts[i] == 0xA8EC46A09a56da39011C82220EEd0Cf22A257F89 || _accounts[i] == 0x0319000133d3AdA02600f0875d2cf03D442C3367 || _accounts[i] == 0x1a2Ce410A034424B784D4b228f167A061B94CFf4) {
-                console.log("Skipping");
-                _totalSupply += _amounts[i];
-                continue;
-            }
-            _creditBalances[_accounts[i]] = 0;
-            // nonRebasingCreditsPerToken[_accounts[i]] = 0;
-            _mint(_accounts[i], _amounts[i]);
-        }
-    }
+    
 }

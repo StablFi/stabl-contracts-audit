@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for investing stablecoins via Stargate
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { IStargatePool } from "./../connectors/stargate/IStargatePool.sol";
@@ -95,18 +95,10 @@ contract StargateStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
         minSwap = _params.minSwap;
 
         isDirectDepositAllowed = true;
-        super._initialize(
-            _platformAddress,
-            _vaultAddress,
-            _rewardTokenAddresses,
-            _assets,
-            _pTokens
-        );
+        super._initialize(_platformAddress, _vaultAddress, _rewardTokenAddresses, _assets, _pTokens);
     }
 
-    function setDirectDepositAllowed(
-        bool _isDirectDepositAllowed
-    ) external onlyGovernor {
+    function setDirectDepositAllowed(bool _isDirectDepositAllowed) external onlyGovernor {
         isDirectDepositAllowed = _isDirectDepositAllowed;
     }
 
@@ -115,43 +107,35 @@ contract StargateStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
         _setUniswapRouter(_stgSwapRouter);
     }
 
-    function setCurvePool(
-        address _curvePool,
-        address[] calldata tokens
-    ) external onlyGovernor {
+    function setCurvePool(address _curvePool, address[] calldata tokens) external onlyGovernor {
         curvePool = _curvePool;
         curvePoolIndices[tokens[0]] = 0;
         curvePoolIndices[tokens[1]] = 1;
         curvePoolIndices[tokens[2]] = 2;
     }
 
-    function setOracleRouter() external onlyGovernor {
+    function poolBalanceCheckExponent() external view returns (uint256) {
+        return IMiniVault(vaultAddress).poolBalanceCheckExponent();
+    }
+
+    function setOracleRouter() external onlyVaultOrGovernor {
         oracleRouter = IMiniVault(vaultAddress).priceProvider();
     }
 
     function directDeposit() external onlyVault {
         _stake(token0.balanceOf(address(this)));
 
-        emit Deposit(
-            address(token0),
-            address(platformAddress),
-            token0.balanceOf(address(this))
-        );
+        emit Deposit(address(token0), address(platformAddress), token0.balanceOf(address(this)));
     }
 
-    function directDepositRequirement(
-        uint256 _psAmount
-    ) external view onlyVault returns (uint256) {
+    function directDepositRequirement(uint256 _psAmount) external view onlyVault returns (uint256) {
         if (address(token0) == address(primaryStable)) {
             return _psAmount;
         }
         return howMuchToSwap(curvePool, address(token0), address(primaryStable), _psAmount);
     }
 
-    function deposit(
-        address _asset,
-        uint256 _amount
-    ) external override onlyVault nonReentrant {
+    function deposit(address _asset, uint256 _amount) external override onlyVault nonReentrant {
         require(_asset == address(primaryStable), "Token not supported.");
         require(_amount > 0, "Must deposit something");
         _swapPrimaryStableToToken0();
@@ -180,32 +164,23 @@ contract StargateStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
     ) external override onlyVault nonReentrant {
         require(_asset == address(primaryStable), "Token not supported.");
         uint256 _eq = _equivalentInToken0(_amount);
-        uint256 numberOfShares = (_eq.addBasisPoints(40) *
-            lpToken.totalSupply()) /
-            lpToken.totalLiquidity() /
-            lpToken.convertRate();
+        uint256 numberOfShares = (_eq.addBasisPoints(40) * lpToken.totalSupply()) / lpToken.totalLiquidity() / lpToken.convertRate();
         if (numberOfShares > lpBalance()) {
-            numberOfShares = lpBalance();
+            _withdrawAll();
+        } else if (numberOfShares > 0) {
+            chef.withdraw(poolId, numberOfShares);
+            stargateRouter.instantRedeemLocal(uint16(routerPoolId), numberOfShares, address(this));
         }
-        chef.withdraw(poolId, numberOfShares);
-        stargateRouter.instantRedeemLocal(uint16(routerPoolId), numberOfShares, address(this));
 
         _swapAssetToPrimaryStable();
         require(primaryStable.balanceOf(address(this)) >= _amount, "Not enough balance");
         primaryStable.safeTransfer(_beneficiary, _amount);
     }
 
-    function _equivalentInToken0(
-        uint256 _amount
-    ) internal view returns (uint256) {
+    function _equivalentInToken0(uint256 _amount) internal view returns (uint256) {
         uint256 _eq = _amount;
         if (address(primaryStable) != address(token0)) {
-            _eq = onSwap(
-                curvePool,
-                address(primaryStable),
-                address(token0),
-                _amount
-            );
+            _eq = onSwap(curvePool, address(primaryStable), address(token0), _amount);
         }
         return _eq;
     }
@@ -214,14 +189,32 @@ contract StargateStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function withdrawAll() external override onlyVault nonReentrant {
-        // exit from vault
-        uint256 lpBal = lpBalance();
-        chef.withdraw(poolId, lpBal);
-        stargateRouter.instantRedeemLocal(uint16(routerPoolId), lpBal, address(this));
-
+        _withdrawAll();
         _swapAssetToPrimaryStable();
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
         primaryStable.safeTransfer(vaultAddress, primaryStableBalance);
+    }
+
+    function _withdrawAll() internal {
+        // exit from vault
+        uint256 lpBal = lpBalance();
+        if (lpBal > 0) {
+            uint256 _nav = netAssetValue();
+            chef.withdraw(poolId, lpBal);
+            uint256 _amountSD = stargateRouter.instantRedeemLocal(uint16(routerPoolId), lpBal, address(this));
+            // Calculate the total token0 present in the contract after withdrawl
+            _amountSD =
+                _convert(
+                    address(token0),
+                    address(primaryStable),
+                    _amountSD + ((address(token0) != address(primaryStable)) ? token0.balanceOf(address(this)) : 0)
+                ).scaleBy(Helpers.getDecimals(address(primaryStable)), Helpers.getDecimals(address(token0))) +
+                ((address(token0) != address(primaryStable)) ? primaryStable.balanceOf(address(this)) : 0);
+            console.log("Total withdrawn (in PS): %s", _amountSD);
+            console.log("NAV: %s", _nav);
+            // Total withdrawn (in PS) should not deviate by more than 0.3% from the NAV
+            require(_amountSD >= _nav.subBasisPoints(30) && _amountSD <= _nav.addBasisPoints(30), "INCON_WITHD_ALL");
+        }
     }
 
     function collectRewardTokens() external override onlyHarvester nonReentrant {
@@ -232,58 +225,34 @@ contract StargateStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
         chef.deposit(poolId, 0);
 
         uint256 rewardBal = rewardToken.balanceOf(address(this));
-        uint256 rewardPrimaryStableBal;
+        uint256 _initialPS = primaryStable.balanceOf(address(this));
         if (rewardBal > minSwap) {
-            rewardPrimaryStableBal = _swapExactTokensForTokens(
-                address(rewardToken),
-                address(primaryStable),
-                rewardBal,
-                address(this)
-            );
+            _swapExactTokensForTokens(address(rewardToken), address(primaryStable), rewardBal, address(this));
         }
+        uint256 rewardPrimaryStableBal = primaryStable.balanceOf(address(this)) - _initialPS;
+        console.log("Stargate - STG -> USDC: ", rewardPrimaryStableBal);
 
         if (rewardPrimaryStableBal > 0) {
             primaryStable.transfer(harvesterAddress, rewardPrimaryStableBal);
-            emit RewardTokenCollected(
-                harvesterAddress,
-                address(primaryStable),
-                rewardPrimaryStableBal
-            );
+            emit RewardTokenCollected(harvesterAddress, address(primaryStable), rewardPrimaryStableBal);
         }
     }
 
     function checkBalance() external view override returns (uint256) {
-        uint256 balanceWithInvestments = 
-            lpBalance() * lpToken.convertRate() * lpToken.totalLiquidity() / lpToken.totalSupply();
+        uint256 balanceWithInvestments = (lpBalance() * lpToken.convertRate() * lpToken.totalLiquidity()) / lpToken.totalSupply();
 
         // swap to PrimaryStable
-        if (
-            address(token0) != address(primaryStable) &&
-            balanceWithInvestments > 0
-        ) {
-            balanceWithInvestments = onSwap(
-                curvePool,
-                address(token0),
-                address(primaryStable),
-                balanceWithInvestments
-            );
+        if (address(token0) != address(primaryStable) && balanceWithInvestments > 0) {
+            balanceWithInvestments = onSwap(curvePool, address(token0), address(primaryStable), balanceWithInvestments);
         }
 
         return balanceWithInvestments + primaryStable.balanceOf(address(this));
     }
 
-    function netAssetValue() external view returns (uint256) {
-        uint256 balanceWithInvestments = 
-            lpBalance() * lpToken.convertRate() * lpToken.totalLiquidity() / lpToken.totalSupply();
-        if (
-            address(token0) != address(primaryStable) &&
-            balanceWithInvestments > 0
-        ) {
-            balanceWithInvestments = _convert(
-                address(token0),
-                address(primaryStable),
-                balanceWithInvestments
-            ).scaleBy(
+    function netAssetValue() public view returns (uint256) {
+        uint256 balanceWithInvestments = (lpBalance() * lpToken.convertRate() * lpToken.totalLiquidity()) / lpToken.totalSupply();
+        if (address(token0) != address(primaryStable) && balanceWithInvestments > 0) {
+            balanceWithInvestments = _convert(address(token0), address(primaryStable), balanceWithInvestments).scaleBy(
                 Helpers.getDecimals(address(primaryStable)),
                 Helpers.getDecimals(address(token0))
             );
@@ -293,7 +262,7 @@ contract StargateStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
     }
 
     function lpBalance() public view returns (uint256) {
-        (uint256 amount,) = chef.userInfo(poolId, address(this));
+        (uint256 amount, ) = chef.userInfo(poolId, address(this));
         return amount;
     }
 
@@ -308,10 +277,10 @@ contract StargateStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
         }
         uint256 fromPrice = IOracle(oracleRouter).price(from);
         uint256 toPrice = IOracle(oracleRouter).price(to);
-        if ((toPrice > 10 ** 8) && limit) {
-            toPrice = 10 ** 8;
+        if ((toPrice > 10**8) && limit) {
+            toPrice = 10**8;
         }
-        return _amount * fromPrice / toPrice;
+        return (_amount * fromPrice) / toPrice;
     }
 
     function _convert(
@@ -323,17 +292,8 @@ contract StargateStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
     }
 
     function _swapAssetToPrimaryStable() internal {
-        if (
-            (address(token0) != address(primaryStable)) &&
-            (token0.balanceOf(address(this)) > 0)
-        ) {
-            swap(
-                curvePool,
-                address(token0),
-                address(primaryStable),
-                token0.balanceOf(address(this)),
-                oracleRouter
-            );
+        if ((address(token0) != address(primaryStable)) && (token0.balanceOf(address(this)) > 0)) {
+            swap(curvePool, address(token0), address(primaryStable), token0.balanceOf(address(this)), oracleRouter);
             require(token0.balanceOf(address(this)) == 0, "Leftover token0");
         }
     }
@@ -341,27 +301,16 @@ contract StargateStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
     function _swapPrimaryStableToToken0() internal {
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
         if (address(primaryStable) != address(token0)) {
-            swap(
-                curvePool,
-                address(primaryStable),
-                address(token0),
-                primaryStableBalance,
-                oracleRouter
-            );
+            swap(curvePool, address(primaryStable), address(token0), primaryStableBalance, oracleRouter);
         }
     }
 
-    function supportsAsset(
-        address _asset
-    ) external view override returns (bool) {
+    function supportsAsset(address _asset) external view override returns (bool) {
         return _asset == address(primaryStable);
     }
 
     /* NOT NEEDED */
     function safeApproveAllTokens() external override {}
 
-    function _abstractSetPToken(
-        address _asset,
-        address _cToken
-    ) internal override {}
+    function _abstractSetPToken(address _asset, address _cToken) internal override {}
 }

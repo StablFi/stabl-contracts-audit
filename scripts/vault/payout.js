@@ -61,6 +61,20 @@ async function upgradeTetu(signer) {
   await USDT.connect(signer).upgradeTo(implementation.address);
 
 }
+
+async function upgradeDripper(signer) {
+  const upgradable = "Dripper";
+  const toUpgrade = [
+    "0x4b2b1dC2ecc46551D88389f7F06ef2BEde77b4E1",
+  ];
+  await deployWithConfirmation(upgradable);
+  const USDC = await ethers.getContractAt("DripperProxy", toUpgrade[0]);
+  const implementation = await ethers.getContract(upgradable);
+  await USDC.connect(signer).upgradeTo(implementation.address);
+
+}
+
+
 async function main() {
   let usdc = await ethers.getContractAt(erc20Abi, addresses.polygon.USDC);
   let cash = await hre.ethers.getContractAt("CASH", "0x80487b4f8f70e793A81a42367c225ee0B94315DF");
@@ -77,6 +91,7 @@ async function main() {
   let signer = await ethers.provider.getSigner(governor);
   await upgradeVault(signer);
   await upgradeTetu(signer);
+  await upgradeDripper(signer);
 
   let cashTotalSupply = await cash.totalSupply();
   let vaultCheckBalance = await vault.checkBalance();

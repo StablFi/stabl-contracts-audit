@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity  ^0.8.0;
 
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/balancer/interfaces/IVault.sol";
 import "../interfaces/balancer/interfaces/IGeneralPool.sol";
@@ -16,7 +17,7 @@ import { StableMath } from "../utils/StableMath.sol";
 
 abstract contract MiniBalancerExchange {
     using StableMath for uint256;
-
+    using SafeERC20 for IERC20;
     int256 public constant MAX_VALUE = 10 ** 27;
     uint256 public constant MAX_SLIPPAGE = 1e16; // = 1%
 

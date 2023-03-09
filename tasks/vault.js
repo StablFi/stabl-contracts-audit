@@ -581,6 +581,42 @@ async function setMintFeeBps(taskArguments, hre) {
   await hre.ethers.provider.waitForTransaction(transaction.hash);
   console.log("setMintFeeBps transaction confirmed");
 }
+async function setRedeemFeeBps(taskArguments, hre) {
+  const {
+    isMainnet,
+    isRinkeby,
+    isFork,
+    isPolygonStaging,
+  } = require("../test/helpers");
+  const { executeProposal } = require("../utils/deploy");
+  const { proposeArgs } = require("../utils/governor");
+
+  const { governorAddr } = await getNamedAccounts();
+  let sGovernor = hre.ethers.provider.getSigner(governorAddr);
+
+  const vaultProxy = await hre.ethers.getContract("VaultProxy");
+  const vault = await hre.ethers.getContractAt(
+    "contracts/interfaces/IVault.sol:IVault",
+    vaultProxy.address
+  );
+
+  let bps = taskArguments.value;
+  console.log("Setting setRedeemFeeBps to ", bps / 100, "%");
+  if (!(isMainnet || isPolygonStaging)) {
+    const prodGovernor = await vault.governor();
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [prodGovernor],
+    });
+    sGovernor = await ethers.provider.getSigner(prodGovernor);
+  }
+  let transaction;
+  transaction = await vault.connect(sGovernor)["setRedeemFeeBps(uint256)"](bps);
+  console.log("Sent. Transaction hash:", transaction.hash);
+  console.log("Waiting for confirmation...");
+  await hre.ethers.provider.waitForTransaction(transaction.hash);
+  console.log("setRedeemFeeBps transaction confirmed");
+}
 
 async function setFeeCollectors(taskArguments, hre) {
   const {
@@ -714,6 +750,7 @@ module.exports = {
   setMaxSupplyDiff,
   setQuickDepositStrategy,
   setMintFeeBps,
+  setRedeemFeeBps,
   setFeeCollectors,
   setPerformanceFee,
   withdrawAllFromStrategy,

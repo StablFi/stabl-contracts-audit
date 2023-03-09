@@ -276,6 +276,99 @@ module.exports = deploymentWithProposal(
       cGainsDAIStrategyProxy.address
     );
 
+
+    // BALANCER STRATEGY:
+    // balancer-usdc
+    // const cBalancerUsdcStrategyProxy = await ethers.getContract(
+    //   "BalancerStrategyUSDCProxy"
+    // );
+    // const cBalancerStrategyUsdc = await ethers.getContractAt(
+    //   "BalancerStrategy",
+    //   cBalancerUsdcStrategyProxy.address
+    // );
+    // console.log(
+    //   "cBalancerUsdcStrategyProxy.address",
+    //   cBalancerUsdcStrategyProxy.address
+    // );
+
+    // // balancer-usdt
+    // const cBalancerUsdtStrategyProxy = await ethers.getContract(
+    //   "BalancerStrategyUSDTProxy"
+    // );
+    // const cBalancerStrategyUsdt = await ethers.getContractAt(
+    //   "BalancerStrategy",
+    //   cBalancerUsdtStrategyProxy.address
+    // );
+    // console.log(
+    //   "cBalancerUsdtStrategyProxy.address",
+    //   cBalancerUsdtStrategyProxy.address
+    // );
+
+    // // balancer-dai
+    // const cBalancerDaiStrategyProxy = await ethers.getContract(
+    //   "BalancerStrategyDAIProxy"
+    // );
+    // const cBalancerStrategyDai = await ethers.getContractAt(
+    //   "BalancerStrategy",
+    //   cBalancerDaiStrategyProxy.address
+    // );
+    // console.log(
+    //   "cBalancerDaiStrategyProxy.address",
+    //   cBalancerDaiStrategyProxy.address
+    // );
+
+    // stargate-usdc
+    const cStargateUsdcStrategyProxy = await ethers.getContract(
+      "StargateStrategyUSDCProxy"
+    );
+    const cStargateStrategyUsdc = await ethers.getContractAt(
+      "StargateStrategy",
+      cStargateUsdcStrategyProxy.address
+    );
+    console.log(
+      "cStargateUsdcStrategyProxy.address",
+      cStargateUsdcStrategyProxy.address
+    );
+
+    // aave-usdt
+    const cAaveSupplyUsdtStrategyProxy = await ethers.getContract(
+      "AaveSupplyStrategyUSDTProxy"
+    );
+    const cAaveSupplyStrategyUsdt = await ethers.getContractAt(
+      "AaveSupplyStrategy",
+      cAaveSupplyUsdtStrategyProxy.address
+    );
+    console.log(
+      "cAaveSupplyUsdtStrategyProxy.address",
+      cAaveSupplyUsdtStrategyProxy.address
+    );
+
+    const cAaveSupplyUsdcStrategyProxy = await ethers.getContract(
+      "AaveSupplyStrategyUSDCProxy"
+    );
+    const cAaveSupplyStrategyUsdc = await ethers.getContractAt(
+      "AaveSupplyStrategy",
+      cAaveSupplyUsdcStrategyProxy.address
+    );
+    console.log(
+      "cAaveSupplyUsdcStrategyProxy.address",
+      cAaveSupplyUsdcStrategyProxy.address
+    );
+
+
+    const cAaveSupplyDaiStrategyProxy = await ethers.getContract(
+      "AaveSupplyStrategyDAIProxy"
+    );
+    const cAaveSupplyStrategyDai = await ethers.getContractAt(
+      "AaveSupplyStrategy",
+      cAaveSupplyDaiStrategyProxy.address
+    );
+    console.log(
+      "cAaveSupplyDaiStrategyProxy.address",
+      cAaveSupplyDaiStrategyProxy.address
+    );
+
+
     let weights = [
       // {
       //     "strategy": cDystopiaStrategyUsdcDaiProxy.address,
@@ -292,7 +385,7 @@ module.exports = deploymentWithProposal(
       //   contract: "DystopiaStrategy",
       //   name: "Dystopia USDC - USDT",
       //   minWeight: 0,
-      //   targetWeight: 1,
+      //   targetWeight: 0,
       //   maxWeight: 100,
       //   enabled: true,
       //   enabledReward: true,
@@ -322,7 +415,7 @@ module.exports = deploymentWithProposal(
       //   contract: "MeshSwapStrategy",
       //   name: "MeshSwap USDT",
       //   minWeight: 0,
-      //   targetWeight: 2,
+      //   targetWeight: 0,
       //   maxWeight: 100,
       //   enabled: true,
       //   enabledReward: true,
@@ -332,7 +425,7 @@ module.exports = deploymentWithProposal(
       //   contract: "MeshSwapStrategy",
       //   name: "MeshSwap USDC",
       //   minWeight: 0,
-      //   targetWeight: 2,
+      //   targetWeight: 0,
       //   maxWeight: 100,
       //   enabled: true,
       //   enabledReward: true,
@@ -342,7 +435,7 @@ module.exports = deploymentWithProposal(
       //   contract: "MeshSwapStrategyDual",
       //   name: "MeshSwap USDC - USDT",
       //   minWeight: 0,
-      //   targetWeight: 2,
+      //   targetWeight: 0,
       //   maxWeight: 100,
       //   enabled: true,
       //   enabledReward: true,
@@ -352,7 +445,7 @@ module.exports = deploymentWithProposal(
       //   contract: "MeshSwapStrategyDual",
       //   name: "MeshSwap USDC - DAI",
       //   minWeight: 0,
-      //   targetWeight: 2,
+      //   targetWeight: 0,
       //   maxWeight: 100,
       //   enabled: true,
       //   enabledReward: true,
@@ -362,7 +455,7 @@ module.exports = deploymentWithProposal(
       //   contract: "MeshSwapStrategyDual",
       //   name: "MeshSwap USDT - DAI",
       //   minWeight: 0,
-      //   targetWeight: 2,
+      //   targetWeight: 0,
       //   maxWeight: 100,
       //   enabled: true,
       //   enabledReward: true,
@@ -372,7 +465,7 @@ module.exports = deploymentWithProposal(
       //   contract: "QuickSwapStrategy",
       //   name: "QuickSwap USDC - DAI",
       //   minWeight: 0,
-      //   targetWeight: 5,
+      //   targetWeight: 0,
       //   maxWeight: 100,
       //   enabled: true,
       //   enabledReward: true,
@@ -382,7 +475,7 @@ module.exports = deploymentWithProposal(
       //   contract: "QuickSwapStrategy",
       //   name: "QuickSwap USDC - USDT",
       //   minWeight: 0,
-      //   targetWeight: 4,
+      //   targetWeight: 0,
       //   maxWeight: 100,
       //   enabled: true,
       //   enabledReward: true,
@@ -393,7 +486,7 @@ module.exports = deploymentWithProposal(
       //   contract: "Am3CurveStrategy",
       //   name: "Am3Curve - USDC",
       //   minWeight: 0,
-      //   targetWeight: 1,
+      //   targetWeight: 0,
       //   maxWeight: 100,
       //   enabled: true,
       //   enabledReward: true,
@@ -403,7 +496,7 @@ module.exports = deploymentWithProposal(
       //   contract: "SynapseStrategy",
       //   name: "Synapse - USDC",
       //   minWeight: 0,
-      //   targetWeight: 73,
+      //   targetWeight: 0,
       //   maxWeight: 100,
       //   enabled: true,
       //   enabledReward: true,
@@ -428,20 +521,90 @@ module.exports = deploymentWithProposal(
       //   enabled: true,
       //   enabledReward: true,
       // },
+      // {
+      //   strategy: cGainsDAIStrategy.address,
+      //   contract: "GainsStrategy",
+      //   name: "Gains - DAI",
+      //   minWeight: 0,
+      //   targetWeight: 0,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
+      // {
+      //   strategy: cTetuStrategyDai.address,
+      //   contract: "TetuStrategy",
+      //   name: "TetuStrategy - DAI",
+      //   minWeight: 0,
+      //   targetWeight: 0,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
+      // {
+      //   strategy: cTetuStrategyUsdt.address,
+      //   contract: "TetuStrategy",
+      //   name: "TetuStrategy - USDT",
+      //   minWeight: 0,
+      //   targetWeight: 0,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
+      // {
+      //   strategy: cTetuStrategyUsdc.address,
+      //   contract: "TetuStrategy",
+      //   name: "TetuStrategy - USDC",
+      //   minWeight: 0,
+      //   targetWeight: 0,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
+      // {
+      //   strategy: cBalancerStrategyUsdc.address,
+      //   contract: "BalancerStrategy",
+      //   name: "BalancerStrategy - USDC",
+      //   minWeight: 0,
+      //   targetWeight: 0,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
+      // {
+      //   strategy: cBalancerStrategyUsdt.address,
+      //   contract: "BalancerStrategy",
+      //   name: "BalancerStrategy - USDT",
+      //   minWeight: 0,
+      //   targetWeight: 10,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
+      // {
+      //   strategy: cBalancerStrategyDai.address,
+      //   contract: "BalancerStrategy",
+      //   name: "BalancerStrategy - DAI",
+      //   minWeight: 0,
+      //   targetWeight: 50,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
+      // {
+      //   strategy: cStargateStrategyUsdc.address,
+      //   contract: "StargateStrategy",
+      //   name: "Stargate - USDC",
+      //   minWeight: 0,
+      //   targetWeight: 0,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
       {
-        strategy: cGainsDAIStrategy.address,
-        contract: "GainsStrategy",
-        name: "Gains - DAI",
-        minWeight: 0,
-        targetWeight: 0,
-        maxWeight: 100,
-        enabled: true,
-        enabledReward: true,
-      },
-      {
-        strategy: cTetuStrategyDai.address,
-        contract: "TetuStrategy",
-        name: "TetuStrategy - DAI",
+        strategy: cAaveSupplyStrategyUsdt.address,
+        contract: "AaveSupplyStrategy",
+        name: "AaveSupplyStrategy - USDT",
         minWeight: 0,
         targetWeight: 30,
         maxWeight: 100,
@@ -449,25 +612,26 @@ module.exports = deploymentWithProposal(
         enabledReward: true,
       },
       {
-        strategy: cTetuStrategyUsdt.address,
-        contract: "TetuStrategy",
-        name: "TetuStrategy - USDT",
+        strategy: cAaveSupplyStrategyDai.address,
+        contract: "AaveSupplyStrategy",
+        name: "AaveSupplyStrategy - DAI",
         minWeight: 0,
-        targetWeight: 45,
+        targetWeight: 30,
         maxWeight: 100,
         enabled: true,
         enabledReward: true,
       },
       {
-        strategy: cTetuStrategyUsdc.address,
-        contract: "TetuStrategy",
-        name: "TetuStrategy - USDC",
+        strategy: cAaveSupplyStrategyUsdc.address,
+        contract: "AaveSupplyStrategy",
+        name: "AaveSupplyStrategy - USDC",
         minWeight: 0,
-        targetWeight: 25,
+        targetWeight: 40,
         maxWeight: 100,
         enabled: true,
         enabledReward: true,
       },
+      
     ];
 
     let allStrategies = await cVaultCore.getAllStrategies();

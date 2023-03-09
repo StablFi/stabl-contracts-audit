@@ -380,6 +380,7 @@ const getAssetAddresses = async (deployments) => {
 
       sUSDC: addresses.polygon.sUSDC,
       sUSDT: addresses.polygon.sUSDT,
+      sDAI: addresses.polygon.sDAI,
       stargateChef: addresses.polygon.stargateChef,
       stargateRouter: addresses.polygon.stargateRouter,
       stgUsdcSwapRouter: addresses.polygon.stgUsdcSwapRouter,
@@ -408,6 +409,7 @@ const getAssetAddresses = async (deployments) => {
       balancerAmDaiToken: addresses.polygon.balancerAmDaiToken, // token: am-dai
       balancerAmUsdtToken: addresses.polygon.balancerAmUsdtToken, // token: am-usdt
       balancerAmUsdcToken: addresses.polygon.balancerAmUsdcToken, // token: am-usdc
+
 
       redeemFeeBps: addresses.polygon.redeemFeeBps,
       mintFeeBps: addresses.polygon.mintFeeBps,
@@ -527,7 +529,7 @@ async function propose(fixture, governorArgsArray, description) {
 }
 
 async function runStrategyLogic(governor, strategyName, strategyAddress) {
-  if (strategyName == 'Tetu Supply Strategy') {
+  if (strategyName == 'Tetu Strategy') {
 
     let governanceAddress = "0xcc16d636dD05b52FF1D8B9CE09B09BC62b11412B"; // governance addr
     // Send some MATIC to governance
@@ -536,7 +538,7 @@ async function runStrategyLogic(governor, strategyName, strategyAddress) {
       value: utils.parseEther("100"),
     });
     
-    console.log("whitelisting Aave Supply Strategy");
+    console.log("whitelisting Tetu Strategy: ", strategyAddress);
     await hre.network.provider.request({
         method: "hardhat_impersonateAccount",
         params: [governanceAddress],

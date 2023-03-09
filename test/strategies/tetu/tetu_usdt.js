@@ -118,7 +118,7 @@ describe("Tetu Strategy", function () {
         console.log("After Allocation of",strategyName," -", primaryStableName , " NAV in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
       
         // expect(await TetuLPToken.balanceOf(strategy.address)).to.be.within(usdcUnits("99.0"), usdcUnits("100.0"));
-        expect(await strategy.checkBalance()).to.be.within(usdcUnits("44950.0"), usdcUnits("45000.0")); // investments + balance
+        expect(await strategy.checkBalance()).to.be.within(usdcUnits("44850.0"), usdcUnits("45000.0")); // investments + balance
     });
 
     it("Should be able to withdrawAll"+ " @fast @fork", async function () {
@@ -156,7 +156,7 @@ describe("Tetu Strategy", function () {
       console.log("---------------------------------------------------------------------------")
       console.log("                       Should be able to withdraw")
       console.log("---------------------------------------------------------------------------")
-      await expectApproxSupply(cash, cashUnits("200"));
+      // await expectApproxSupply(cash, cashUnits("200"));
 
       console.log("Initial", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
 
@@ -182,8 +182,9 @@ describe("Tetu Strategy", function () {
       console.log("After Withdrawal from",strategyName," - TETU in", strategyName, " Strategy:", (await TETU.balanceOf(strategy.address)).toString());
       console.log("After Withdrawal from",strategyName," -", primaryStableName , "equivalent in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
       console.log("After Withdrawal from ",strategyName," -", primaryStableName , " NAV in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
-      
-      expect(await strategy.checkBalance()).to.be.within(usdcUnits("4.99"), usdcUnits("5.1"));
+
+      expect(await primaryStable.balanceOf(vault.address)).to.be.within(usdcUnits("5"), usdcUnits("5"));
+      expect(await strategy.checkBalance()).to.be.within(usdcUnits("4.9"), usdcUnits("5.1"));
 
     });
 

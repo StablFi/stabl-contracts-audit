@@ -10,7 +10,7 @@ pragma solidity ^0.8.0;
 import "./VaultStorage.sol";
 
 contract VaultInitializer is VaultStorage {
-    function initialize(address _priceProvider, address _cash)
+    function initialize(address _priceProvider, address _cash, address _primaryStable)
         external
         onlyGovernor
         initializer
@@ -39,5 +39,7 @@ contract VaultInitializer is VaultStorage {
         allStrategies = new address[](0);
         // Initialize all quick deposit strategies
         quickDepositStrategies = new address[](0);
+        // Intialize PS
+        primaryStableAddress = _primaryStable;
     }
 }

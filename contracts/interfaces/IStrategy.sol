@@ -10,6 +10,8 @@ interface IStrategy {
     function isDirectDepositAllowed() external returns (bool);
     function directDeposit() external;
     function directDepositRequirement(uint256 _psAmount) external  returns (uint256);
+    function poolBalanceCheckExponent() external view  returns (uint256);
+    function setOracleRouter() external;
 
     /**
      * @dev Deposit the given asset to platform

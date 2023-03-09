@@ -57,11 +57,16 @@ const configureVault = async (harvesterProxy) => {
   );
   log("Added USDC asset to Vault");
 
-  log("Set the primaryStable to the vault " + assetAddresses.primaryStable );
-  await withConfirmation(
-    cVault.connect(sGovernor).setPrimaryStable(assetAddresses.primaryStable)
-  );
+  // log("Set the primaryStable to the vault " + assetAddresses.primaryStable );
+  // await withConfirmation(
+  //   cVault.connect(sGovernor).setPrimaryStable(assetAddresses.primaryStable)
+  // );
   log("PrimaryStable: " + (await cVault.primaryStableAddress()))
+
+  log("Set the poolBalanceCheckExponent to the vault");
+  await withConfirmation(
+    cVault.connect(sGovernor).setPoolBalanceCheckExponent(5)
+  );
 
   log(
     "Set Harvester" );
@@ -283,7 +288,7 @@ const deployCore = async () => {
   await withConfirmation(
     cVault
       .connect(sGovernor)
-      .initialize(cOracleRouter.address, cCASHProxy.address)
+      .initialize(cOracleRouter.address, cCASHProxy.address, assetAddresses.primaryStable)
   );
   log("Initialized Vault");
 

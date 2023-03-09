@@ -2,7 +2,7 @@ const { isFork } = require("../test/helpers");
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "096_deploy_stargate_usdc", forceDeploy: isFork, tags: ["test", "main", "stargate"], dependencies: ["001_core"] },
+  { deployName: "093_deploy_stargate_usdt", forceDeploy: true, tags: ["test", "main", "stargate_usdt"], dependencies: [] },
   async ({
     oracleAddresses,
     assetAddresses,
@@ -33,23 +33,20 @@ module.exports = deploymentWithProposal(
     // 1. Deploy new proxy
     // New strategy will be living at a clean address
     const dStargateStrategyProxy = await deployWithConfirmation(
-      "StargateStrategyUSDCProxy"
+      "StargateStrategyUSDTProxy"
     );
-    console.log("StargateStrategyUSDCProxy getting contract");
-    const cStargateStrategyProxy = await ethers.getContractAt(
-      "StargateStrategyUSDCProxy",
-      dStargateStrategyProxy.address
-    );
+    console.log("StargateStrategyUSDTProxy getting contract");
+    const cStargateStrategyProxy = await ethers.getContract("StargateStrategyUSDTProxy");
 
     // 2. Deploy new implementation
     console.log("2. Deploy new implementation")
     const dStargateStrategyImpl = await deployWithConfirmation("StargateStrategy");
     const cStargateStrategy = await ethers.getContractAt(
       "StargateStrategy",
-      dStargateStrategyProxy.address
+      cStargateStrategyProxy.address
     );
 
-    // 3. Init the proxy to point at the implementation
+    // // 3. Init the proxy to point at the implementation
     console.log("3. Init the proxy to point at the implementation")
     await withConfirmation(
       cStargateStrategyProxy
@@ -62,7 +59,7 @@ module.exports = deploymentWithProposal(
       )
     );
     // 4. Init and configure new StargateStrategy strategy
-    console.log("4. Init and configure new StargateStrategy for USDC")
+    console.log("4. Init and configure new StargateStrategy for USDT")
     const initFunction =
       "initialize(address,address,address[],address[],address[],address,(address,address,address,uint256,uint256,uint256))";
     await withConfirmation(
@@ -70,14 +67,14 @@ module.exports = deploymentWithProposal(
         assetAddresses.STG, // platform address(stargate token address)
         cVaultProxy.address, // vault address
         [assetAddresses.USDC], // reward token (USDC)
-        [assetAddresses.USDC], // assets (USDC)
+        [assetAddresses.USDT], // assets (USDT)
         [assetAddresses.STG], // pToken address (Stargate)
         assetAddresses.USDC, // primary token
-        [assetAddresses.sUSDC, // Stargate USDC LP token
+        [assetAddresses.sUSDT, // Stargate USDT LP token
         assetAddresses.stargateChef, // Stargate chef
         assetAddresses.stargateRouter, // Router for adding liquidity
-        1, // router pool id for adding liquidity
-        0, // pool id for staking LP
+        2, // router pool id for adding liquidity
+        1, // pool id for staking LP
         125000000000], // min amount of STG to sell to USDC in 1e18
         await getTxOpts()
       )

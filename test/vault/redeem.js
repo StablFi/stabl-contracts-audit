@@ -27,13 +27,21 @@ describe("Vault Redeem", function () {
     console.log("strategy set & whitelisted");
   });
   it("Should allow a redeem with DAI @fork @special", async () => {
-    const { cash, vault, dai, matt, Labs, Team, usdc } = await loadFixture(defaultFixture);
+    const { cash, vault, dai, matt, anna,Labs, Team, usdc, governor } = await loadFixture(defaultFixture);
     console.log("")
+
+    // Get quickDepositStrategies
+    const quickDepositStrategies = await vault.getQuickDepositStrategies();
+    console.log("quickDepositStrategies: ", quickDepositStrategies);
+    await runStrategyLogic(governor, "Tetu Strategy", quickDepositStrategies[0]);
 
     console.log("MATT CASH Balance: ", cashUnitsFormat((await cash.balanceOf(matt.address)).toString()))
     console.log("MATT DAI Balance: ", daiUnitsFormat((await dai.balanceOf(matt.address)).toString()))
     console.log("Total Vault Value: ", usdcUnitsFormat(await vault.totalValue()).toString())
     console.log("Total Cash Supply: ", cashUnitsFormat(await cash.totalSupply()).toString())
+
+
+
 
     console.log("Minting 100 DAI")
     await dai.connect(matt).approve(vault.address, daiUnits("100.0"));

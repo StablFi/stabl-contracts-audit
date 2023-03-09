@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../connectors/uniswap/v2/interfaces/IUniswapV2Router02.sol";
 import "../utils/OvnMath.sol";
 abstract contract UniswapV2Exchange {
+    using SafeERC20 for IERC20;
 
     uint256 public constant BASIS_POINTS_FOR_SLIPPAGE = 4;
 

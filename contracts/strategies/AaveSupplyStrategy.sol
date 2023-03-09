@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for investing stablecoins via Aave
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { ILendingPool } from "../connectors/aave/interfaces/ILendingPool.sol";
@@ -73,58 +73,42 @@ contract AaveSupplyStrategy is InitializableAbstractStrategy, CurveExchange {
         aToken = IERC20(_aaveContracts[1]);
 
         isDirectDepositAllowed = true;
-        super._initialize(
-            _platformAddress,
-            _vaultAddress,
-            _rewardTokenAddresses,
-            _assets,
-            _pTokens
-        );
+        super._initialize(_platformAddress, _vaultAddress, _rewardTokenAddresses, _assets, _pTokens);
     }
 
-    function setDirectDepositAllowed(
-        bool _isDirectDepositAllowed
-    ) external onlyGovernor {
+    function setDirectDepositAllowed(bool _isDirectDepositAllowed) external onlyGovernor {
         isDirectDepositAllowed = _isDirectDepositAllowed;
     }
 
-    function setCurvePool(
-        address _curvePool,
-        address[] calldata tokens
-    ) external onlyGovernor {
+    function setCurvePool(address _curvePool, address[] calldata tokens) external onlyGovernor {
         curvePool = _curvePool;
         curvePoolIndices[tokens[0]] = 0;
         curvePoolIndices[tokens[1]] = 1;
         curvePoolIndices[tokens[2]] = 2;
     }
 
-    function setOracleRouter() external onlyGovernor {
+    function setOracleRouter() external onlyVaultOrGovernor {
         oracleRouter = IMiniVault(vaultAddress).priceProvider();
+    }
+
+    function poolBalanceCheckExponent() external view returns (uint256) {
+        return IMiniVault(vaultAddress).poolBalanceCheckExponent();
     }
 
     function directDeposit() external onlyVault {
         _stake(token0.balanceOf(address(this)));
 
-        emit Deposit(
-            address(token0),
-            address(platformAddress),
-            token0.balanceOf(address(this))
-        );
+        emit Deposit(address(token0), address(platformAddress), token0.balanceOf(address(this)));
     }
 
-    function directDepositRequirement(
-        uint256 _psAmount
-    ) external view onlyVault returns (uint256) {
+    function directDepositRequirement(uint256 _psAmount) external view onlyVault returns (uint256) {
         if (address(token0) == address(primaryStable)) {
             return _psAmount;
         }
         return howMuchToSwap(curvePool, address(token0), address(primaryStable), _psAmount);
     }
 
-    function deposit(
-        address _asset,
-        uint256 _amount
-    ) external override onlyVault nonReentrant {
+    function deposit(address _asset, uint256 _amount) external override onlyVault nonReentrant {
         require(_asset == address(primaryStable), "Token not supported.");
         require(_amount > 0, "Must deposit something");
         _swapPrimaryStableToToken0();
@@ -154,25 +138,20 @@ contract AaveSupplyStrategy is InitializableAbstractStrategy, CurveExchange {
         if (numberOfShares > storedATokenBalance) {
             numberOfShares = storedATokenBalance;
         }
-        storedATokenBalance -= numberOfShares;
-        pool.withdraw(address(token0), numberOfShares, address(this));
+        if (numberOfShares > 0) {
+            storedATokenBalance -= numberOfShares;
+            pool.withdraw(address(token0), numberOfShares, address(this));
+        }
 
         _swapAssetToPrimaryStable();
-        require(primaryStable.balanceOf(address(this)) >= _amount, "Not enough balance");
+        require(primaryStable.balanceOf(address(this)) >= _amount, "AAVE: Not enough balance");
         primaryStable.safeTransfer(_beneficiary, _amount);
     }
 
-    function _equivalentInToken0(
-        uint256 _amount
-    ) internal view returns (uint256) {
+    function _equivalentInToken0(uint256 _amount) internal view returns (uint256) {
         uint256 _eq = _amount;
         if (address(primaryStable) != address(token0)) {
-            _eq = onSwap(
-                curvePool,
-                address(primaryStable),
-                address(token0),
-                _amount
-            );
+            _eq = onSwap(curvePool, address(primaryStable), address(token0), _amount);
         }
         return _eq;
     }
@@ -181,8 +160,10 @@ contract AaveSupplyStrategy is InitializableAbstractStrategy, CurveExchange {
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function withdrawAll() external override onlyVault nonReentrant {
-        storedATokenBalance = 0;
-        pool.withdraw(address(token0), type(uint256).max, address(this));
+        if (lpBalance() > 0) {
+            storedATokenBalance = 0;
+            pool.withdraw(address(token0), type(uint256).max, address(this));
+        }
 
         _swapAssetToPrimaryStable();
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
@@ -204,11 +185,7 @@ contract AaveSupplyStrategy is InitializableAbstractStrategy, CurveExchange {
             uint256 afterBal = primaryStable.balanceOf(address(this)) - beforeBal;
             if (afterBal > 0) {
                 primaryStable.transfer(harvesterAddress, afterBal);
-                emit RewardTokenCollected(
-                    harvesterAddress,
-                    address(primaryStable),
-                    afterBal
-                );
+                emit RewardTokenCollected(harvesterAddress, address(primaryStable), afterBal);
             }
         }
     }
@@ -217,16 +194,8 @@ contract AaveSupplyStrategy is InitializableAbstractStrategy, CurveExchange {
         uint256 balanceWithInvestments = storedATokenBalance;
 
         // swap to PrimaryStable
-        if (
-            address(token0) != address(primaryStable) &&
-            balanceWithInvestments > 0
-        ) {
-            balanceWithInvestments = onSwap(
-                curvePool,
-                address(token0),
-                address(primaryStable),
-                balanceWithInvestments
-            );
+        if (address(token0) != address(primaryStable) && balanceWithInvestments > 0) {
+            balanceWithInvestments = onSwap(curvePool, address(token0), address(primaryStable), balanceWithInvestments);
         }
 
         return balanceWithInvestments + primaryStable.balanceOf(address(this));
@@ -234,15 +203,8 @@ contract AaveSupplyStrategy is InitializableAbstractStrategy, CurveExchange {
 
     function netAssetValue() external view returns (uint256) {
         uint256 balanceWithInvestments = storedATokenBalance;
-        if (
-            address(token0) != address(primaryStable) &&
-            balanceWithInvestments > 0
-        ) {
-            balanceWithInvestments = _convert(
-                address(token0),
-                address(primaryStable),
-                balanceWithInvestments
-            ).scaleBy(
+        if (address(token0) != address(primaryStable) && balanceWithInvestments > 0) {
+            balanceWithInvestments = _convert(address(token0), address(primaryStable), balanceWithInvestments).scaleBy(
                 Helpers.getDecimals(address(primaryStable)),
                 Helpers.getDecimals(address(token0))
             );
@@ -266,10 +228,10 @@ contract AaveSupplyStrategy is InitializableAbstractStrategy, CurveExchange {
         }
         uint256 fromPrice = IOracle(oracleRouter).price(from);
         uint256 toPrice = IOracle(oracleRouter).price(to);
-        if ((toPrice > 10 ** 8) && limit) {
-            toPrice = 10 ** 8;
+        if ((toPrice > 10**8) && limit) {
+            toPrice = 10**8;
         }
-        return _amount * fromPrice / toPrice;
+        return (_amount * fromPrice) / toPrice;
     }
 
     function _convert(
@@ -281,17 +243,8 @@ contract AaveSupplyStrategy is InitializableAbstractStrategy, CurveExchange {
     }
 
     function _swapAssetToPrimaryStable() internal {
-        if (
-            (address(token0) != address(primaryStable)) &&
-            (token0.balanceOf(address(this)) > 0)
-        ) {
-            swap(
-                curvePool,
-                address(token0),
-                address(primaryStable),
-                token0.balanceOf(address(this)),
-                oracleRouter
-            );
+        if ((address(token0) != address(primaryStable)) && (token0.balanceOf(address(this)) > 0)) {
+            swap(curvePool, address(token0), address(primaryStable), token0.balanceOf(address(this)), oracleRouter);
             require(token0.balanceOf(address(this)) == 0, "Leftover token0");
         }
     }
@@ -299,27 +252,16 @@ contract AaveSupplyStrategy is InitializableAbstractStrategy, CurveExchange {
     function _swapPrimaryStableToToken0() internal {
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
         if (address(primaryStable) != address(token0)) {
-            swap(
-                curvePool,
-                address(primaryStable),
-                address(token0),
-                primaryStableBalance,
-                oracleRouter
-            );
+            swap(curvePool, address(primaryStable), address(token0), primaryStableBalance, oracleRouter);
         }
     }
 
-    function supportsAsset(
-        address _asset
-    ) external view override returns (bool) {
+    function supportsAsset(address _asset) external view override returns (bool) {
         return _asset == address(primaryStable);
     }
 
     /* NOT NEEDED */
     function safeApproveAllTokens() external override {}
 
-    function _abstractSetPToken(
-        address _asset,
-        address _cToken
-    ) internal override {}
+    function _abstractSetPToken(address _asset, address _cToken) internal override {}
 }

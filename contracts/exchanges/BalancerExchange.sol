@@ -2,6 +2,8 @@
 pragma solidity  ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import "../interfaces/balancer/interfaces/IVault.sol";
 import "../interfaces/balancer/interfaces/IGeneralPool.sol";
 import "../interfaces/balancer/interfaces/IMinimalSwapInfoPool.sol";
@@ -10,6 +12,7 @@ import { StableMath } from "../utils/StableMath.sol";
 
 abstract contract BalancerExchange {
     using StableMath for uint256;
+    using SafeERC20 for IERC20;
 
     int256 public constant MAX_VALUE = 10 ** 27;
     uint256 public constant MAX_SLIPPAGE = 1e16; // = 1%

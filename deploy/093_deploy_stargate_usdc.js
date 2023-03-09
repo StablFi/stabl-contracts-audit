@@ -2,7 +2,7 @@ const { isFork } = require("../test/helpers");
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "097_deploy_aave_usdt", forceDeploy: isFork, tags: ["test", "main", "aave"], dependencies: ["001_core"] },
+  { deployName: "093_deploy_stargate_usdc", forceDeploy: true, tags: ["test", "main", "stargate_usdc"], dependencies: [] },
   async ({
     oracleAddresses,
     assetAddresses,
@@ -32,68 +32,69 @@ module.exports = deploymentWithProposal(
     console.log("1. Deploy new proxy")
     // 1. Deploy new proxy
     // New strategy will be living at a clean address
-    const dAaveSupplyStrategyProxy = await deployWithConfirmation(
-      "AaveSupplyStrategyUSDTProxy"
+    const dStargateStrategyProxy = await deployWithConfirmation(
+      "StargateStrategyUSDCProxy"
     );
-    console.log("AaveSupplyStrategyUSDCProxy getting contract");
-    const cAaveSupplyStrategyProxy = await ethers.getContractAt(
-      "AaveSupplyStrategyUSDTProxy",
-      dAaveSupplyStrategyProxy.address
-    );
+    console.log("StargateStrategyUSDCProxy getting contract");
+    const cStargateStrategyProxy = await ethers.getContract("StargateStrategyUSDCProxy");
 
     // 2. Deploy new implementation
     console.log("2. Deploy new implementation")
-    const dAaveSupplyStrategyImpl = await deployWithConfirmation("AaveSupplyStrategy");
-    const cAaveSupplyStrategy = await ethers.getContractAt(
-      "AaveSupplyStrategy",
-      dAaveSupplyStrategyProxy.address
+    const dStargateStrategyImpl = await deployWithConfirmation("StargateStrategy");
+    const cStargateStrategy = await ethers.getContractAt(
+      "StargateStrategy",
+      cStargateStrategyProxy.address
     );
 
-    // 3. Init the proxy to point at the implementation
+    // // 3. Init the proxy to point at the implementation
     console.log("3. Init the proxy to point at the implementation")
     await withConfirmation(
-      cAaveSupplyStrategyProxy
+      cStargateStrategyProxy
         .connect(sDeployer)
       ["initialize(address,address,bytes)"](
-        dAaveSupplyStrategyImpl.address,
+        dStargateStrategyImpl.address,
         deployerAddr,
         [],
         await getTxOpts()
       )
     );
-    // 4. Init and configure new AaveSupplyStrategy strategy
-    console.log("4. Init and configure new AaveSupplyStrategy for USDT")
+    // 4. Init and configure new StargateStrategy strategy
+    console.log("4. Init and configure new StargateStrategy for USDC")
     const initFunction =
-      "initialize(address,address,address[],address[],address[],address,address[])";
+      "initialize(address,address,address[],address[],address[],address,(address,address,address,uint256,uint256,uint256))";
     await withConfirmation(
-      cAaveSupplyStrategy.connect(sDeployer)[initFunction](
-        assetAddresses.aUSDT, // platform address(aave aToken address)
+      cStargateStrategy.connect(sDeployer)[initFunction](
+        assetAddresses.STG, // platform address(stargate token address)
         cVaultProxy.address, // vault address
         [assetAddresses.USDC], // reward token (USDC)
-        [assetAddresses.USDT], // assets (USDC)
-        [assetAddresses.aUSDT], // pToken address (aToken)
+        [assetAddresses.USDC], // assets (USDC)
+        [assetAddresses.STG], // pToken address (Stargate)
         assetAddresses.USDC, // primary token
-        [assetAddresses.aaveLendingPool, // Lending pool
-        assetAddresses.aUSDT], // aToken
+        [assetAddresses.sUSDC, // Stargate USDC LP token
+        assetAddresses.stargateChef, // Stargate chef
+        assetAddresses.stargateRouter, // Router for adding liquidity
+        1, // router pool id for adding liquidity
+        0, // pool id for staking LP
+        125000000000], // min amount of STG to sell to USDC in 1e18
         await getTxOpts()
       )
     );
 
     // 4.1 Setting the _setRouter
     console.log("4.2. Setting the _setRouter")
-    /*const _setRouter = "_setRouter(address)";
+    const _setRouter = "_setRouter(address)";
     await withConfirmation(
-      cAaveSupplyStrategy.connect(sDeployer)[_setRouter](
+      cStargateStrategy.connect(sDeployer)[_setRouter](
         assetAddresses.stgUsdcSwapRouter,
         await getTxOpts()
       )
-    );*/
+    );
 
     // 4.2 Setting the setOracleRouter
     console.log("4.2. Setting the setOracleRouter")
     const setOracleRouter = "setOracleRouter()";
     await withConfirmation(
-      cAaveSupplyStrategy.connect(sDeployer)[setOracleRouter](
+      cStargateStrategy.connect(sDeployer)[setOracleRouter](
         await getTxOpts()
       )
     );
@@ -102,7 +103,7 @@ module.exports = deploymentWithProposal(
     console.log("4.2. Setting the Curve")
     const setCurvePool = "setCurvePool(address,address[])";
     await withConfirmation(
-      cAaveSupplyStrategy.connect(sDeployer)[setCurvePool](
+      cStargateStrategy.connect(sDeployer)[setCurvePool](
         assetAddresses.am3crvSwap,
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
         await getTxOpts()
@@ -112,7 +113,7 @@ module.exports = deploymentWithProposal(
     // 5. Transfer governance
     console.log("5. Transfer governance")
     await withConfirmation(
-      cAaveSupplyStrategy
+      cStargateStrategy
         .connect(sDeployer)
         .transferGovernance(governorAddr, await getTxOpts())
     );
@@ -132,31 +133,31 @@ module.exports = deploymentWithProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Switch to new AaveSupplyStrategy strategy",
+      name: "Switch to new StargateStrategy strategy",
       actions: [
-        // 1. Accept governance of new AaveSupplyStrategy
+        // 1. Accept governance of new StargateStrategy
         {
-          contract: cAaveSupplyStrategy,
+          contract: cStargateStrategy,
           signature: "claimGovernance()",
           args: [],
         },
-        // 2. Add new AaveSupplyStrategy strategy to vault
+        // 2. Add new StargateStrategy strategy to vault
         {
           contract: cVaultAdmin,
           signature: "approveStrategy(address)",
-          args: [cAaveSupplyStrategy.address],
+          args: [cStargateStrategy.address],
         },
 
         // 10. Set harvester address
         {
-          contract: cAaveSupplyStrategy,
+          contract: cStargateStrategy,
           signature: "setHarvesterAddress(address)",
           args: [dHarvesterProxy.address],
         },
         {
           contract: cHarvester,
           signature: "setSupportedStrategy(address,bool)",
-          args: [cAaveSupplyStrategyProxy.address, true],
+          args: [cStargateStrategyProxy.address, true],
         },
       ],
     };

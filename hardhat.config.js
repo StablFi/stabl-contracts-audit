@@ -61,6 +61,7 @@ const {
   setMaxSupplyDiff,
   setQuickDepositStrategy,
   setMintFeeBps,
+  setRedeemFeeBps,
   setFeeCollectors,
   setPerformanceFee,
   withdrawFromStrategy,
@@ -175,6 +176,10 @@ task("set_mint_fee_bps", "Set Mint Fee Bps")
   .addParam("value", "The BPS value")
   .setAction(setMintFeeBps);
 
+task("set_redeem_fee_bps", "Set Mint Fee Bps")
+  .addParam("value", "The BPS value")
+  .setAction(setRedeemFeeBps);
+
 task("set_fee_collectors", "Set Fee collecting accounts")
   .addParam("labs", "Labs address")
   .addParam("treasury", "Treasury address")
@@ -185,6 +190,8 @@ task("set_performance_fee", "Set Fee Bps for Harvester")
   .addParam("labsbps", "Labs BPS")
   .addParam("teambps", "Team BPS")
   .setAction(setPerformanceFee);
+
+
 
 task("vault_remove_strategy", "Removed strategy from Vault")
   .addParam("strategy", "The strategy's address")
@@ -288,8 +295,8 @@ module.exports = {
     polygon_staging: {
       url: `${process.env.PROVIDER_URL}`,
       accounts: [STAGING_DEPLOYER_GATEPASS],
-      gasPrice: 300e9,
-      gasMultiplier: 1.5,
+      gasPrice: 250e9,
+      // gasMultiplier: 1.5,
       // gasPrice: 200000000000,
       // blockGasLimit: 20000000
     },
@@ -299,7 +306,12 @@ module.exports = {
       gasPrice: 300e9,
       gasMultiplier: 1.5,
       // gasPrice: 200000000000,
-      // blockGasLimit: 20000000
+      // blockGasLimit: 20000000   
+    },
+    stabl: {
+      url: "https://internal-rpc.stabl.fi",
+      accounts: [STAGING_DEPLOYER_GATEPASS],
+      timeout: 100_000
     },
   },
   mocha: {

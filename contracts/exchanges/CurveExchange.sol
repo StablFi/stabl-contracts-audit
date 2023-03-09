@@ -2,6 +2,7 @@
 pragma solidity  ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { OvnMath } from "../utils/OvnMath.sol";
 import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { StableMath } from "../utils/StableMath.sol";
@@ -9,12 +10,14 @@ import  "./../connectors/curve/CurveStuff.sol";
 import "../utils/Helpers.sol";
 import { ICurveCalculator } from "../interfaces/ICurveCalculator.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
+import { IStrategy } from "../interfaces/IStrategy.sol";
 
 import "hardhat/console.sol";
 abstract contract CurveExchange {
     using OvnMath for uint256;
     using StableMath for uint256;
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
 
     function swap(
         address _curvePool,
@@ -44,7 +47,8 @@ abstract contract CurveExchange {
         uint256 _dai = IStableSwapPool(_curvePool).balances(0);
         uint256 _usdc = IStableSwapPool(_curvePool).balances(1);
         uint256 _usdt = IStableSwapPool(_curvePool).balances(2);
-        if (_dai < 10**(5+18) || _usdc < 10**(5+6) || _usdt < 10**(5+6)) {
+        uint256 _poolBalanceCheckExponent = IStrategy(address(this)).poolBalanceCheckExponent();
+        if (_dai < 10**(_poolBalanceCheckExponent+18) || _usdc < 10**(_poolBalanceCheckExponent+6) || _usdt < 10**(_poolBalanceCheckExponent+6)) {
             revert("CRV_EM");
         }
         console.log("CRV_PL_PASS");

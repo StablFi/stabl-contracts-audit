@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for investing stablecoins via Synapse
  */
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import { IPool } from "./../connectors/synapse/IPool.sol";
@@ -29,7 +29,6 @@ import "hardhat/console.sol";
 
 
 contract DodoStrategy is InitializableAbstractStrategy, BalancerExchange, DodoExchange {
-    using SafeMath for uint256;
     using StableMath for uint256;
     using SafeERC20 for IERC20;
     using OvnMath for uint256;

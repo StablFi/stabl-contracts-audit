@@ -2,7 +2,8 @@
 pragma solidity ^0.8.0;
 
 interface IVault {
-    struct StrategyWeight {
+
+    struct StrategyWithWeight {
         address strategy;
         uint256 minWeight;
         uint256 targetWeight;
@@ -49,6 +50,7 @@ interface IVault {
         address _teamAddress,
         uint256 _teamFeeBps
     );
+    
 
     // Governable.sol
     function transferGovernance(address _newGovernor) external;
@@ -196,14 +198,16 @@ interface IVault {
 
     function payout() external;
 
+    function strategyWithWeights() external view returns (StrategyWithWeight[] memory);
+
     function setStrategyWithWeights(
-        StrategyWeight[] calldata _strategyWeights
+        StrategyWithWeight[] calldata _strategyWeights
     ) external;
 
     function getAllStrategyWithWeights()
         external
         view
-        returns (StrategyWeight[] memory);
+        returns (StrategyWithWeight[] memory);
 
     function strategyWithWeightPositions(
         address _strategyWeight
@@ -257,4 +261,5 @@ interface IVault {
     function addRebaseManager(address _rebaseManager) external;
 
     function isRebaseManager(address _sender) external returns (bool);
+    function isStrategySupported(address _addr) external view returns (bool);
 }

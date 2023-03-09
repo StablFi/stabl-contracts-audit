@@ -252,45 +252,6 @@ module.exports = deploymentWithProposal(
     );
     console.log("cTetuDaiStrategyProxy.address", cTetuDaiStrategyProxy.address);
 
-    // stargate-usdc
-    const cStargateUsdcStrategyProxy = await ethers.getContract(
-      "StargateStrategyUSDCProxy"
-    );
-    const cStargateStrategyUsdc = await ethers.getContractAt(
-      "StargateStrategy",
-      cStargateUsdcStrategyProxy.address
-    );
-    console.log(
-      "cStargateUsdcStrategyProxy.address",
-      cStargateUsdcStrategyProxy.address
-    );
-
-    // aave-usdt
-    const cAaveSupplyUsdtStrategyProxy = await ethers.getContract(
-      "AaveSupplyStrategyUSDTProxy"
-    );
-    const cAaveSupplyStrategyUsdt = await ethers.getContractAt(
-      "AaveSupplyStrategy",
-      cAaveSupplyUsdtStrategyProxy.address
-    );
-    console.log(
-      "cAaveSupplyUsdtStrategyProxy.address",
-      cAaveSupplyUsdtStrategyProxy.address
-    );
-
-    // stargate-usdt
-    const cStargateUsdtStrategyProxy = await ethers.getContract(
-      "StargateStrategyUSDTProxy"
-    );
-    const cStargateStrategyUsdt = await ethers.getContractAt(
-      "StargateStrategy",
-      cStargateUsdtStrategyProxy.address
-    );
-    console.log(
-      "cStargateUsdtStrategyProxy.address",
-      cStargateUsdtStrategyProxy.address
-    );
-
     const cClearpoolWintermuteStrategyProxy = await ethers.getContract(
       "ClearpoolWintermuteStrategyProxy"
     );
@@ -355,6 +316,58 @@ module.exports = deploymentWithProposal(
       "cBalancerDaiStrategyProxy.address",
       cBalancerDaiStrategyProxy.address
     );
+
+    // stargate-usdc
+    const cStargateUsdcStrategyProxy = await ethers.getContract(
+      "StargateStrategyUSDCProxy"
+    );
+    const cStargateStrategyUsdc = await ethers.getContractAt(
+      "StargateStrategy",
+      cStargateUsdcStrategyProxy.address
+    );
+    console.log(
+      "cStargateUsdcStrategyProxy.address",
+      cStargateUsdcStrategyProxy.address
+    );
+
+    // aave-usdt
+    const cAaveSupplyUsdtStrategyProxy = await ethers.getContract(
+      "AaveSupplyStrategyUSDTProxy"
+    );
+    const cAaveSupplyStrategyUsdt = await ethers.getContractAt(
+      "AaveSupplyStrategy",
+      cAaveSupplyUsdtStrategyProxy.address
+    );
+    console.log(
+      "cAaveSupplyUsdtStrategyProxy.address",
+      cAaveSupplyUsdtStrategyProxy.address
+    );
+
+    const cAaveSupplyUsdcStrategyProxy = await ethers.getContract(
+      "AaveSupplyStrategyUSDCProxy"
+    );
+    const cAaveSupplyStrategyUsdc = await ethers.getContractAt(
+      "AaveSupplyStrategy",
+      cAaveSupplyUsdcStrategyProxy.address
+    );
+    console.log(
+      "cAaveSupplyUsdcStrategyProxy.address",
+      cAaveSupplyUsdcStrategyProxy.address
+    );
+
+
+    const cAaveSupplyDaiStrategyProxy = await ethers.getContract(
+      "AaveSupplyStrategyDAIProxy"
+    );
+    const cAaveSupplyStrategyDai = await ethers.getContractAt(
+      "AaveSupplyStrategy",
+      cAaveSupplyDaiStrategyProxy.address
+    );
+    console.log(
+      "cAaveSupplyDaiStrategyProxy.address",
+      cAaveSupplyDaiStrategyProxy.address
+    );
+
 
     let weights = [
       // {
@@ -518,92 +531,102 @@ module.exports = deploymentWithProposal(
       //   enabled: true,
       //   enabledReward: true,
       // },
-      {
-        strategy: cStargateStrategyUsdt.address,
-        contract: "StargateStrategy",
-        name: "StargateStrategy - USDT",
-        minWeight: 0,
-        targetWeight: 20,
-        maxWeight: 100,
-        enabled: true,
-        enabledReward: true,
-      },
+      // {
+      //   strategy: cTetuStrategyDai.address,
+      //   contract: "TetuStrategy",
+      //   name: "TetuStrategy - DAI",
+      //   minWeight: 0,
+      //   targetWeight: 20,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
+      // {
+      //   strategy: cTetuStrategyUsdt.address,
+      //   contract: "TetuStrategy",
+      //   name: "TetuStrategy - USDT",
+      //   minWeight: 0,
+      //   targetWeight: 20,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
+      // {
+      //   strategy: cTetuStrategyUsdc.address,
+      //   contract: "TetuStrategy",
+      //   name: "TetuStrategy - USDC",
+      //   minWeight: 0,
+      //   targetWeight: 20,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
+      // {
+      //   strategy: cBalancerStrategyUsdc.address,
+      //   contract: "BalancerStrategy",
+      //   name: "BalancerStrategy - USDC",
+      //   minWeight: 0,
+      //   targetWeight: 10,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
+      // {
+      //   strategy: cBalancerStrategyUsdt.address,
+      //   contract: "BalancerStrategy",
+      //   name: "BalancerStrategy - USDT",
+      //   minWeight: 0,
+      //   targetWeight: 10,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
+      // {
+      //   strategy: cBalancerStrategyDai.address,
+      //   contract: "BalancerStrategy",
+      //   name: "BalancerStrategy - DAI",
+      //   minWeight: 0,
+      //   targetWeight: 50,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
+      // {
+      //   strategy: cStargateStrategyUsdc.address,
+      //   contract: "StargateStrategy",
+      //   name: "Stargate - USDC",
+      //   minWeight: 0,
+      //   targetWeight: 0,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
       {
         strategy: cAaveSupplyStrategyUsdt.address,
         contract: "AaveSupplyStrategy",
         name: "AaveSupplyStrategy - USDT",
         minWeight: 0,
-        targetWeight: 10,
+        targetWeight: 30,
         maxWeight: 100,
         enabled: true,
         enabledReward: true,
       },
       {
-        strategy: cStargateStrategyUsdc.address,
-        contract: "StargateStrategy",
-        name: "StargateStrategy - USDC",
+        strategy: cAaveSupplyStrategyDai.address,
+        contract: "AaveSupplyStrategy",
+        name: "AaveSupplyStrategy - DAI",
         minWeight: 0,
-        targetWeight: 10,
+        targetWeight: 30,
         maxWeight: 100,
         enabled: true,
         enabledReward: true,
       },
       {
-        strategy: cTetuStrategyDai.address,
-        contract: "TetuStrategy",
-        name: "TetuStrategy - DAI",
+        strategy: cAaveSupplyStrategyUsdc.address,
+        contract: "AaveSupplyStrategy",
+        name: "AaveSupplyStrategy - USDC",
         minWeight: 0,
-        targetWeight: 10,
-        maxWeight: 100,
-        enabled: true,
-        enabledReward: true,
-      },
-      {
-        strategy: cTetuStrategyUsdt.address,
-        contract: "TetuStrategy",
-        name: "TetuStrategy - USDT",
-        minWeight: 0,
-        targetWeight: 10,
-        maxWeight: 100,
-        enabled: true,
-        enabledReward: true,
-      },
-      {
-        strategy: cTetuStrategyUsdc.address,
-        contract: "TetuStrategy",
-        name: "TetuStrategy - USDC",
-        minWeight: 0,
-        targetWeight: 10,
-        maxWeight: 100,
-        enabled: true,
-        enabledReward: true,
-      },
-      {
-        strategy: cBalancerStrategyUsdc.address,
-        contract: "BalancerStrategy",
-        name: "BalancerStrategy - USDC",
-        minWeight: 0,
-        targetWeight: 10,
-        maxWeight: 100,
-        enabled: true,
-        enabledReward: true,
-      },
-      {
-        strategy: cBalancerStrategyUsdt.address,
-        contract: "BalancerStrategy",
-        name: "BalancerStrategy - USDT",
-        minWeight: 0,
-        targetWeight: 10,
-        maxWeight: 100,
-        enabled: true,
-        enabledReward: true,
-      },
-      {
-        strategy: cBalancerStrategyDai.address,
-        contract: "BalancerStrategy",
-        name: "BalancerStrategy - DAI",
-        minWeight: 0,
-        targetWeight: 10,
+        targetWeight: 40,
         maxWeight: 100,
         enabled: true,
         enabledReward: true,

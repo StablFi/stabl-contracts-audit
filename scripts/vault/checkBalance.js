@@ -64,7 +64,7 @@ async function upgradeTetu(signer) {
 }
 
 async function main() {
-  const staging = true;
+  const staging = false;
 
   let usdc = await ethers.getContractAt(erc20Abi, addresses.polygon.USDC);
   let cash = await hre.ethers.getContractAt("CASH", "0x80487b4f8f70e793A81a42367c225ee0B94315DF");
@@ -82,27 +82,29 @@ async function main() {
 
 
   let governor = await vault.governor();
+  console.log("Governor:", governor)
 
-  if (hre.network.name === "hardhat") {
-    // Impersonate as governor
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [governor],
-    });
-    let signer = await ethers.provider.getSigner(governor);
-    await upgradeVault(signer);
-    await upgradeTetu(signer);
-  }
+  // if (hre.network.name === "hardhat") {
+  //   // Impersonate as governor
+  //   await hre.network.provider.request({
+  //     method: "hardhat_impersonateAccount",
+  //     params: [governor],
+  //   });
+  //   let signer = await ethers.provider.getSigner(governor);
+  //   await upgradeVault(signer);
+  //   await upgradeTetu(signer);
+  // }
 
-  let cashTotalSupply = await cash.totalSupply();
-  let vaultCheckBalance = await vault.checkBalance();
-  let vaultNetAssetValue = await vault.nav();
+
 
   // Print block number
   console.log("Block number: ", await ethers.provider.getBlockNumber());
+  let cashTotalSupply = await cash.totalSupply();
   console.log("CASH.totalSupply() : ", cashUnitsFormat(cashTotalSupply))
+  let vaultCheckBalance = await vault.checkBalance();
   console.log("Vault.checkBalance() : ", usdcUnitsFormat(vaultCheckBalance))
-  console.log("Vault.netAssetValue() : ", usdcUnitsFormat(vaultNetAssetValue))
+  // let vaultNetAssetValue = await vault.nav();
+  // console.log("Vault.netAssetValue() : ", usdcUnitsFormat(vaultNetAssetValue))
   console.log("Dripper USDC Balance: ", usdcUnitsFormat(await usdc.balanceOf(dripper.address)))
   console.log("Harvester USDC Balance: ", usdcUnitsFormat(await usdc.balanceOf(harvester.address)))
   console.log("Strategy count: ", (await vault.getStrategyCount()).toString())

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../connectors/dodo/IDODOV1Helper.sol";
 import "../connectors/dodo/IDODOProxy.sol";
@@ -19,6 +20,7 @@ import "../connectors/dodo/IDODOV2.sol";
     Note: Best Trading path is calculated by off-chain program. DODOProxy's swap functions is only used for executing.
 */
 abstract contract DodoExchange {
+    using SafeERC20 for IERC20;
 
     IDODOV1Helper private dodoV1Helper;
     IDODOProxy private dodoProxy;

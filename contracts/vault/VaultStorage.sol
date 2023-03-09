@@ -9,7 +9,7 @@ pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
@@ -20,9 +20,7 @@ import "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
 contract VaultStorage is Initializable, Governable {
-    using SafeMath for uint256;
     using StableMath for uint256;
-    using SafeMath for int256;
     using SafeERC20 for IERC20;
 
     event AssetSupported(address _asset);
@@ -39,6 +37,8 @@ contract VaultStorage is Initializable, Governable {
     event VaultBufferUpdated(uint256 _vaultBuffer);
     event RedeemFeeUpdated(uint256 _redeemFeeBps);
     event PriceProviderUpdated(address _priceProvider);
+    event PriceProviderStrategyUpdated(address _priceProvider, address _strategy);
+    event PriceProviderStrategyUpdationFailed(address _priceProvider, address _strategy);
     event AllocateThresholdUpdated(uint256 _threshold);
     event RebaseThresholdUpdated(uint256 _threshold);
     event StrategistUpdated(address _address);
@@ -49,8 +49,9 @@ contract VaultStorage is Initializable, Governable {
     event MintFeeCharged(address _address, uint256 _fee);
     event MintFeeChanged(address _sender, uint256 _previousFeeBps, uint256 _newFeeBps);
     event FeeAddressesChanged(address _labsAddress, address _teamAddress, address _treasuryAddress);
-    event HarvesterFeeParamsChanged(address _labsAddress,uint256 _labsFeeBps, address _teamAddress, uint256 _teamFeeBps);
+    event HarvesterFeeParamsChanged(address _labsAddress, uint256 _labsFeeBps, address _teamAddress, uint256 _teamFeeBps);
     event Payout(uint256 _dripperTransferred);
+    event TreasuryRemitted(uint256 _amount);
 
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {
@@ -72,13 +73,13 @@ contract VaultStorage is Initializable, Governable {
     // Pausing bools
     bool public rebasePaused = false;
     bool public capitalPaused = true;
-    
+
     // Redemption fee in basis points
     uint256 public redeemFeeBps;
     address public labsAddress;
-    uint256 public labsFeeBps;  // Not used
+    uint256 public labsFeeBps; // Not used
     address public teamAddress;
-    uint256 public teamFeeBps;  // Not Used
+    uint256 public teamFeeBps; // Not Used
 
     // Buffer of assets to keep in Vault to handle (most) withdrawals
     uint256 public vaultBuffer;
@@ -90,8 +91,7 @@ contract VaultStorage is Initializable, Governable {
     CASH internal cash;
 
     //keccak256("CASH.vault.governor.admin.impl");
-    bytes32 constant adminImplPosition =
-        0x10e4e34101c81b29558fe5b91534ae1af03c346313e21b0f6446695a8e18e243;
+    bytes32 constant adminImplPosition = 0x10e4e34101c81b29558fe5b91534ae1af03c346313e21b0f6446695a8e18e243;
 
     // Address of the contract responsible for post rebase syncs with AMMs
     address private _deprecated_rebaseHooksAddr = address(0);
@@ -112,8 +112,7 @@ contract VaultStorage is Initializable, Governable {
     // Trustee contract that can collect a percentage of yield [REMOVE_ON_PRODUCTION] 🚨
     address public trusteeAddress;
 
-    // Amount of yield collected in basis points [REMOVE_ON_PRODUCTION] 🚨
-    uint256 public trusteeFeeBps;
+    uint256 public amountDueForRebase;
 
     // Deprecated: Tokens that should be swapped for stablecoins [REMOVE_ON_PRODUCTION] 🚨
     address[] private _deprecated_swapTokens;
@@ -133,7 +132,6 @@ contract VaultStorage is Initializable, Governable {
     address public harvesterAddress;
     address public dripperAddress;
 
-
     struct StrategyWithWeight {
         address strategy;
         uint256 minWeight;
@@ -145,7 +143,6 @@ contract VaultStorage is Initializable, Governable {
 
     mapping(address => uint256) public strategyWithWeightPositions;
     StrategyWithWeight[] public strategyWithWeights;
-
 
     uint256 public constant TOTAL_WEIGHT = 100000; // 100000 ~ 100%
     // next payout time in epoch seconds
@@ -174,16 +171,15 @@ contract VaultStorage is Initializable, Governable {
     address public treasuryAddress;
 
     address public rebaseHandler;
+    uint256 public poolBalanceCheckExponent;
+    uint256 public dailyExpectedYieldBps; // 1%  = 10000
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
      * @param newImpl address of the implementation
      */
     function setAdminImpl(address newImpl) external onlyGovernor {
-        require(
-            Address.isContract(newImpl),
-            "new implementation is not a contract"
-        );
+        require(Address.isContract(newImpl), "new implementation is not a contract");
         bytes32 position = adminImplPosition;
         assembly {
             sstore(position, newImpl)

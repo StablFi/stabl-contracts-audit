@@ -3,9 +3,7 @@ pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
-
 import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
 import { Initializable } from "../utils/Initializable.sol";
@@ -18,7 +16,6 @@ import "hardhat/console.sol";
 
 contract Harvester is Initializable, Governable {
     using SafeERC20 for IERC20;
-    using SafeMath for uint256;
     using StableMath for uint256;
 
     event UniswapUpdated(address _address);
@@ -225,7 +222,9 @@ contract Harvester is Initializable, Governable {
         address[] memory allStrategies = IVault(vaultAddress)
             .getAllStrategies();
         for (uint256 i = 0; i < allStrategies.length; i++) {
-            _harvest(allStrategies[i]);
+            if (supportedStrategies[allStrategies[i]] == true) {
+                _harvest(allStrategies[i]);
+            }
         }
     }
     /**

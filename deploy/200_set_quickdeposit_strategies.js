@@ -2,7 +2,7 @@ const { isFork } = require("../test/helpers");
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "200_set_quickdeposit_strategies", forceDeploy: true , tags: ["test", "main", "mainnet", "quickdeposit"] ,  dependencies: ["001_core"]},
+  { deployName: "200_set_quickdeposit_strategies", forceDeploy: false , tags: ["test", "main", "mainnet", "quickdeposit"] ,  dependencies: ["001_core"]},
   async ({
     oracleAddresses,
     assetAddresses,
