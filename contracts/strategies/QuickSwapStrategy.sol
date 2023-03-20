@@ -89,8 +89,6 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
             _assets,
             _pTokens
         );
-        _abstractSetPToken(_assets[0],_pTokens[0]);
-        _abstractSetPToken(_assets[1],_pTokens[1]);
         for (uint8 i = 0; i < 5; i++) {
             minThresholds.push(0);
         }
@@ -161,13 +159,13 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         address _asset,
         uint256 _amount
     )   external
-        override
+        
         onlyVault
         nonReentrant {
         require(_asset == address(primaryStable), "Token not supported.");
         _deposit(_asset, _amount);
     }
-    function depositAll() external override onlyVault nonReentrant {
+    function depositAll() external  onlyVault nonReentrant {
         _deposit(address(primaryStable), primaryStable.balanceOf(address(this)));
     }
     function _lpToWithdraw(uint256 _amount0ToSwap, uint256 _amount1ToSwap, uint256 _totalLP, uint256 _r0, uint256 _r1) internal pure returns (uint256) {
@@ -180,7 +178,7 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         address _beneficiary,
         address _asset,
         uint256 _amount
-    ) external override onlyVaultOrGovernor nonReentrant  {
+    ) external  onlyVaultOrGovernor nonReentrant  {
         require(_asset == address(primaryStable), "Token not supported.");
         (uint256 reserve0, uint256 reserve1,) = quickSwapPair.getReserves();
         (uint256 _amount0ToSwap,uint256 _amount1ToSwap) = divideBasedOnReserves(_amount.sub(primaryStable.balanceOf(address(this))));
@@ -209,7 +207,7 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         primaryStable.safeTransfer(_beneficiary, _amount);
     }
 
-    function withdrawAll() external override onlyVault nonReentrant  {
+    function withdrawAll() external  onlyVault nonReentrant  {
         (uint256 reserve0, uint256 reserve1,) = quickSwapPair.getReserves();
 
         unstakeDragonForLP();
@@ -242,7 +240,6 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
     function checkBalance()
         external
         view
-        override
         returns (uint256)
     {
         uint256 token0Balance = token0.balanceOf(address(this));
@@ -377,36 +374,8 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
     }
 
 
-     /**
-     * @dev Retuns bool indicating whether asset is supported by strategy
-     * @param _asset Address of the asset
-     */
-    function supportsAsset(address _asset)
-        external
-        view
-        override
-        returns (bool)
-    {
-        return _asset == address(primaryStable);
-    }
+     
 
-    /**
-     * @dev Approve the spending of all assets by their corresponding cToken,
-     *      if for some reason is it necessary.
-     */
-    function safeApproveAllTokens() external override {
-    }
-
-    /**
-     * @dev Internal method to respond to the addition of new asset / cTokens
-     *      We need to approve the cToken and give it permission to spend the asset
-     * @param _asset Address of the asset to approve
-     * @param _cToken The cToken for the approval
-     */
-    function _abstractSetPToken(address _asset, address _cToken)
-        internal
-        override
-    {
-    }
+   
    
 }

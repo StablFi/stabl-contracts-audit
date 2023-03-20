@@ -146,7 +146,7 @@ contract SynapseStrategy is InitializableAbstractStrategy, DystopiaExchange, Cur
         synapseStakerPool.withdraw(synapseStakerPoolId, _amount, address(this));
     }
 
-    function deposit(address _asset, uint256 _amount) external override onlyVault nonReentrant {
+    function deposit(address _asset, uint256 _amount) external  onlyVault nonReentrant {
         require(_asset == address(primaryStable), "Token not supported.");
         require(_amount > 0, "Must deposit something");
         emit Deposit(_asset, address(platformAddress), _amount);
@@ -161,7 +161,7 @@ contract SynapseStrategy is InitializableAbstractStrategy, DystopiaExchange, Cur
         _stakeLP();
     }
 
-    function depositAll() external view override onlyVault {
+    function depositAll() external view  onlyVault {
         revert("Not implemented");
     }
 
@@ -169,7 +169,7 @@ contract SynapseStrategy is InitializableAbstractStrategy, DystopiaExchange, Cur
         address _beneficiary,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant {
+    ) external  onlyVault nonReentrant {
         require(_asset == address(primaryStable), "Token not supported.");
 
         uint256[] memory _amounts = new uint256[](4);
@@ -191,7 +191,7 @@ contract SynapseStrategy is InitializableAbstractStrategy, DystopiaExchange, Cur
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
+    function withdrawAll() external onlyVaultOrGovernor nonReentrant {
         _withdrawAll();
         primaryStable.safeTransfer(vaultAddress, primaryStable.balanceOf(address(this)));
     }
@@ -235,7 +235,7 @@ contract SynapseStrategy is InitializableAbstractStrategy, DystopiaExchange, Cur
         return _amount + IERC20(pTokenAddress).balanceOf(address(this));
     }
 
-    function checkBalance() public view override returns (uint256) {
+    function checkBalance() public view  returns (uint256) {
         uint256 _tokenIndex = synapsePool.getTokenIndex(address(primaryStable));
         uint256 _psBalance = primaryStable.balanceOf(address(this));
         if (lpBalance() > 0) {
@@ -248,7 +248,7 @@ contract SynapseStrategy is InitializableAbstractStrategy, DystopiaExchange, Cur
         return checkBalance(); // We are always be getting PS from Synapse. No swapping needed
     }
 
-    function supportsAsset(address _asset) external view override returns (bool) {
+    function supportsAsset(address _asset) external view returns (bool) {
         return _asset == address(primaryStable);
     }
 
@@ -259,8 +259,4 @@ contract SynapseStrategy is InitializableAbstractStrategy, DystopiaExchange, Cur
         }
     }
 
-    /* NOT NEEDED */
-    function safeApproveAllTokens() external override {}
-
-    function _abstractSetPToken(address _asset, address _cToken) internal override {}
 }

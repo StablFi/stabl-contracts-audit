@@ -23,7 +23,6 @@ const {
     advanceTime,
   } = require("../../test/helpers");
 
-
 const whale = "0x06959153B974D0D5fDfd87D561db6d8d4FA0bb0B" // Make sure address have DAI & MATIC  both
 const mintDAI = async (recipient, amount) => {
       await hre.network.provider.request({
@@ -50,7 +49,7 @@ async function main() {
         params: [governor],
     });
     const governorSigner = await ethers.provider.getSigner(governor);
-
+    await vaultAdmin.connect(governorSigner).unpauseCapital();
     const whaleSigner = await ethers.provider.getSigner(whale);
     let cashTotalSupply = await cash.totalSupply();
     let vaultCheckBalance = await vault.checkBalance();
@@ -79,8 +78,6 @@ async function main() {
     console.log("CASH.totalSupply() : ", cashUnitsFormat(cashTotalSupply))
     console.log("Vault.checkBalance() : ", usdcUnitsFormat(vaultCheckBalance))
     console.log("Difference in Value & Supply : ", cashUnitsFormat(cashTotalSupply.sub( BigNumber.from(cashUnits(usdcUnitsFormat(vaultCheckBalance))))) )
-
-    
 
 }
 

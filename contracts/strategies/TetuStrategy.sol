@@ -19,7 +19,7 @@ import "../exchanges/UniswapV2Exchange.sol";
 import "../exchanges/CurveExchange.sol";
 import "../interfaces/IMiniVault.sol";
 import "../interfaces/IOracle.sol";
-
+import "../swapper/ISwapper.sol";
 import "hardhat/console.sol";
 
 contract TetuStrategy is InitializableAbstractStrategy, UniswapV2Exchange, CurveExchange {
@@ -45,6 +45,8 @@ contract TetuStrategy is InitializableAbstractStrategy, UniswapV2Exchange, Curve
     mapping(address => int128) internal curvePoolIndices;
 
     bool public isDirectDepositAllowed;
+
+    address public swapper;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -102,6 +104,10 @@ contract TetuStrategy is InitializableAbstractStrategy, UniswapV2Exchange, Curve
         curvePoolIndices[tokens[2]] = 2;
     }
 
+    function setSwapper(address _swapper) external onlyGovernor {
+        swapper = _swapper;
+    }
+
     function setOracleRouter() external onlyVaultOrGovernor {
         oracleRouter = IMiniVault(vaultAddress).priceProvider();
     }
@@ -127,51 +133,12 @@ contract TetuStrategy is InitializableAbstractStrategy, UniswapV2Exchange, Curve
         return howMuchToSwap(curvePool, address(token0), address(primaryStable), _psAmount);
     }
 
-    function deposit(address _asset, uint256 _amount) external override onlyVault nonReentrant {
-        require(_asset == address(primaryStable), "Token not supported.");
-        require(_amount > 0, "Must deposit something");
-        _swapPrimaryStableToToken0();
-        console.log("TETU_DEPOSIT %s", token0.balanceOf(address(this)));
-        _stake(token0.balanceOf(address(this)));
-        console.log("TETU_DEPOSIT LP: %s", lpBalance());
-
-        emit Deposit(_asset, address(platformAddress), token0.balanceOf(address(this)));
-    }
 
     function _stake(uint256 _amount) internal {
         token0.approve(address(smartVault), _amount);
         smartVault.depositAndInvest(_amount);
     }
 
-    function depositAll() public override onlyVault nonReentrant {
-        uint256 totalBalance = token0.balanceOf(address(this));
-        _stake(totalBalance);
-    }
-
-    function withdraw(
-        address _beneficiary,
-        address _asset,
-        uint256 _amount
-    ) external override onlyVault nonReentrant {
-        require(_asset == address(primaryStable), "Token not supported.");
-        uint256 _eq = _equivalentInToken0(_amount);
-        console.log("EQ: ", _eq);
-        if (lpBalance() > 0) {
-            uint256 numberOfShares = (_eq.addBasisPoints(40) * smartVault.totalSupply()) / smartVault.underlyingBalanceWithInvestment();
-            if (numberOfShares > lpBalance()) {
-                console.log("WITHDRAW_ALL");
-                _withdrawAll();
-            } else {
-                smartVault.withdraw(numberOfShares);
-            }
-        }
-        console.log("T0: ", token0.balanceOf(address(this)));
-        _swapAssetToPrimaryStable();
-        uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
-        console.log("PS: ", primaryStableBalance);
-        require(primaryStableBalance >= _amount, "Not enough balance");
-        primaryStable.safeTransfer(_beneficiary, _amount);
-    }
 
     function _equivalentInToken0(uint256 _amount) internal view returns (uint256) {
         uint256 _eq = _amount;
@@ -181,18 +148,6 @@ contract TetuStrategy is InitializableAbstractStrategy, UniswapV2Exchange, Curve
         return _eq;
     }
 
-    /**
-     * @dev Remove all assets from platform and send them to Vault contract.
-     */
-    function withdrawAll() external override onlyVault nonReentrant {
-        _withdrawAll();
-        _swapAssetToPrimaryStable();
-        uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
-        if (primaryStableBalance > 0) {
-            // transfer to vault.
-            primaryStable.safeTransfer(vaultAddress, primaryStableBalance);
-        }
-    }
 
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
@@ -222,7 +177,8 @@ contract TetuStrategy is InitializableAbstractStrategy, UniswapV2Exchange, Curve
         console.log("TetuStrategy - Tetu ", tetuBalance);
 
         if (tetuBalance > 10**13) {
-            _swapExactTokensForTokens(address(tetuToken), address(primaryStable), tetuBalance, address(this));
+            tetuToken.approve(address(swapper), tetuBalance);
+            ISwapper(swapper).swapCommon(address(tetuToken), address(primaryStable), tetuBalance);
         }
 
         uint256 balance = primaryStable.balanceOf(address(this)).sub(_initialPS);
@@ -233,7 +189,7 @@ contract TetuStrategy is InitializableAbstractStrategy, UniswapV2Exchange, Curve
         }
     }
 
-    function checkBalance() external view override returns (uint256) {
+    function checkBalance() external view returns (uint256) {
         uint256 balanceWithInvestments = smartVault.underlyingBalanceWithInvestmentForHolder(address(this));
 
         // swap to PrimaryStable
@@ -250,66 +206,95 @@ contract TetuStrategy is InitializableAbstractStrategy, UniswapV2Exchange, Curve
     }
 
     function netAssetValue() external view returns (uint256) {
-        uint256 balanceWithInvestments = smartVault.underlyingBalanceWithInvestmentForHolder(address(this));
-        if (address(token0) != address(primaryStable) && (balanceWithInvestments + token0.balanceOf(address(this))) > 0) {
-            balanceWithInvestments = _convert(address(token0), address(primaryStable), balanceWithInvestments + token0.balanceOf(address(this)))
-                .scaleBy(Helpers.getDecimals(address(primaryStable)), Helpers.getDecimals(address(token0)));
-        }
-
-        return balanceWithInvestments + primaryStable.balanceOf(address(this));
+        (uint256 _dai, uint256 _usdt, uint256 _usdc) = assetsInUsd();
+        return _dai + _usdt + _usdc;
     }
 
     function lpBalance() public view returns (uint256) {
         return smartVault.underlyingBalanceWithInvestmentForHolder(address(this));
     }
 
-    function _convert(
-        address from,
-        address to,
-        uint256 _amount,
-        bool limit
-    ) internal view returns (uint256) {
-        if (from == to) {
-            return _amount;
+    function _inUsd(address _asset, uint256 _amount) internal view returns (uint256) {
+        return IOracle(oracleRouter).price(_asset) * _amount / (10**Helpers.getDecimals(_asset));
+    }
+
+    function _getAssetAmount(address _asset) internal view returns (uint256, uint256) {
+        if (address(token0) == _asset) {
+            return (token0.balanceOf(address(this)), lpBalance()); // Tetu's lpBalance is in terms of token0
         }
-        uint256 fromPrice = IOracle(oracleRouter).price(from);
-        uint256 toPrice = IOracle(oracleRouter).price(to);
-        if ((toPrice > 10**8) && limit) {
-            toPrice = 10**8;
+        return (IERC20(_asset).balanceOf(address(this)), 0);
+    }
+    function assetsInUsd() public view returns (uint256, uint256, uint256) {
+        address[] memory _assets = IMiniVault(vaultAddress).getSupportedAssets();
+        uint256[] memory _assetsInUsd = new uint256[](_assets.length);
+        for (uint256 i = 0; i < _assets.length; i++) {
+            (uint256 _stray, uint256 _staked) = _getAssetAmount(_assets[i]);
+            _assetsInUsd[i] = _inUsd(_assets[i], _stray + _staked);
         }
-        return _amount.mul(fromPrice).div(toPrice);
+        return (_assetsInUsd[0], _assetsInUsd[1], _assetsInUsd[2]);
+    }
+    function liquidateAll() external onlyVault nonReentrant{
+        _withdrawAll();
+        _withdrawStrayAssets();
+    }
+    function withdrawUsd(uint256 _amountInUsd) external onlyVault nonReentrant returns (uint256, uint256, uint256) {
+        (uint256 _daiInUsd, uint256 _usdtInUsd, uint256 _usdcInUsd) = _calculateUsd(_amountInUsd);
+        address[] memory _assets = IMiniVault(vaultAddress).getSupportedAssets();
+
+        // @dev _withdrawAsset will return the amount of asset withdrawn (not their worth in USD), 
+        // we are using the previous variable for potential gas savings
+        _daiInUsd = _withdrawAsset(_assets[0], _daiInUsd);
+        _usdtInUsd = _withdrawAsset(_assets[1], _usdtInUsd);
+        _usdcInUsd = _withdrawAsset(_assets[2], _usdcInUsd);
+        return (_daiInUsd, _usdtInUsd, _usdcInUsd);
+    }
+    function _calculateUsd(uint256 _amountInUsd) internal view returns (uint256, uint256, uint256) {
+        (uint256 _daiInUsd, uint256 _usdtInUsd, uint256 _usdcInUsd) = assetsInUsd();
+        uint256 _totalInUsd = _daiInUsd + _usdtInUsd + _usdcInUsd;
+        require(_amountInUsd <= _daiInUsd + _usdtInUsd + _usdcInUsd, "TetuStrategy - LOW_BAL");
+
+        // Vars reused: daiInUsd = _daiInUsdWithdraw and so on | Preventing Stack deep errors.
+        _daiInUsd = _daiInUsd.mul(_amountInUsd).div(_totalInUsd);
+        _usdtInUsd = _usdtInUsd.mul(_amountInUsd).div(_totalInUsd);
+        _usdcInUsd = _usdcInUsd.mul(_amountInUsd).div(_totalInUsd);
+
+        return (_daiInUsd, _usdtInUsd, _usdcInUsd);
+    }
+    function calculateUsd(uint256 _amountInUsd) external view  returns (uint256, uint256, uint256) {
+        return _calculateUsd(_amountInUsd);
     }
 
-    function _convert(
-        address from,
-        address to,
-        uint256 _amount
-    ) internal view returns (uint256) {
-        return _convert(from, to, _amount, true);
+    function withdrawStrayAssets() external onlyVault nonReentrant {
+        _withdrawStrayAssets();
     }
-
-    function _swapAssetToPrimaryStable() internal {
-        if ((address(token0) != address(primaryStable)) && (token0.balanceOf(address(this)) > 0)) {
-            swap(curvePool, address(token0), address(primaryStable), token0.balanceOf(address(this)), oracleRouter);
-            if (token0.balanceOf(address(this)) > 0) {
-                revert("Tetu Strategy - Token0 to PrimarySwap failed");
-            }
+    function _withdrawStrayAssets() internal {
+        address[] memory _assets = IMiniVault(vaultAddress).getSupportedAssets();
+        for (uint256 i = 0; i < _assets.length; i++) {
+            IERC20(_assets[i]).safeTransfer(vaultAddress, IERC20(_assets[i]).balanceOf(address(this)));
         }
     }
+    function _withdrawAsset(address _asset, uint256 _amountInUsd) internal returns (uint256) {
+        if (_amountInUsd == 0) {
+            return 0;
+        }
+        uint256 _inTokenAmount = _amountInUsd * (10**Helpers.getDecimals(_asset)) / IOracle(oracleRouter).price(_asset); // USD -> Token
+        uint256 _toUnstakeAmount = _inTokenAmount.subOrZero(IERC20(_asset).balanceOf(address(this)));
+        if (_toUnstakeAmount > 0 && address(token0) == _asset) {
+            _directWithdraw(_toUnstakeAmount);
+        }
+        require(IERC20(_asset).balanceOf(address(this)) >= _inTokenAmount, "TetuStrategy - LOW_BAL_IN_TOKEN");
+        IERC20(_asset).safeTransfer(vaultAddress, _inTokenAmount);
+        return _inTokenAmount;
+    }
 
-    function _swapPrimaryStableToToken0() internal {
-        uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
-        if (address(primaryStable) != address(token0)) {
-            swap(curvePool, address(primaryStable), address(token0), primaryStableBalance, oracleRouter);
+    // @dev STRATEGY DEPENDENT FUNCTION
+    // @dev This function will withdraw the token0 amount from the startegie's pool
+    function _directWithdraw(uint256 _amountOfToken0) internal {
+        uint256 numberOfShares = (_amountOfToken0.addBasisPoints(40) * smartVault.totalSupply()) / smartVault.underlyingBalanceWithInvestment();
+        if (numberOfShares > lpBalance()) {
+            smartVault.exit();
+        } else {
+            smartVault.withdraw(numberOfShares);
         }
     }
-
-    function supportsAsset(address _asset) external view override returns (bool) {
-        return _asset == address(primaryStable);
-    }
-
-    /* NOT NEEDED */
-    function safeApproveAllTokens() external override {}
-
-    function _abstractSetPToken(address _asset, address _cToken) internal override {}
 }

@@ -583,5 +583,24 @@ contract CASH is Initializable, InitializableERC20Detailed, Governable {
         );
     }
 
+    function changeSupplyWithRebasingCreditsPerToken(uint256 __rebasingCreditsPerToken) external
+        onlyGovernor
+        nonReentrant 
+    {
+        _rebasingCreditsPerToken = __rebasingCreditsPerToken;
+        require(_rebasingCreditsPerToken > 0, "Invalid change in supply");
+
+        _totalSupply = _rebasingCredits
+            .divPrecisely(_rebasingCreditsPerToken)
+            .add(nonRebasingSupply);
+
+        emit TotalSupplyUpdatedHighres(
+            _totalSupply,
+            _rebasingCredits,
+            _rebasingCreditsPerToken
+        );
+        
+    }
+
     
 }

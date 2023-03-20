@@ -86,11 +86,6 @@ describe("Tetu Strategy", function () {
     harvester = fixture.harvester;
     dripper = fixture.dripper;
 
-    console.log("Setting the", strategyName ,"as quick deposit strategy");
-    await vault
-      .connect(governor)
-      .setQuickDepositStrategies([strategy.address]);
-
     await runStrategyLogic(governor, "Tetu Strategy", strategy.address); // require whitelisting first.
     console.log("strategy set & whitelisted");
 });
@@ -193,7 +188,6 @@ describe("Tetu Strategy", function () {
         console.log("                        Should collect rewards")
         console.log("---------------------------------------------------------------------------")
         console.log("Matt", primaryStableName , "balance: ",  primaryStableUnitsFormat(await primaryStable.balanceOf(matt.address)).toString())
-
 
         console.log("Initial Tetu LP Tokens: ",  usdcUnitsFormat(await TetuLPToken.balanceOf(strategy.address)).toString())
         console.log("Initial", primaryStableName , "in Vault:", (await primaryStable.balanceOf(vault.address)).toString());

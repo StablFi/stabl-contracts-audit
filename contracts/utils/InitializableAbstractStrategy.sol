@@ -95,12 +95,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         platformAddress = _platformAddress;
         vaultAddress = _vaultAddress;
         rewardTokenAddresses = _rewardTokenAddresses;
-
         uint256 assetCount = _assets.length;
-        require(assetCount == _pTokens.length, "Invalid input arrays");
-        for (uint256 i = 0; i < assetCount; i++) {
-            _setPTokenAddress(_assets[i], _pTokens[i]);
-        }
     }
 
     /**
@@ -151,94 +146,6 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Set the reward token addresses.
-     * @param _rewardTokenAddresses Address array of the reward token
-     */
-    function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses)
-        external
-        onlyGovernor
-    {
-        for (uint256 i = 0; i < _rewardTokenAddresses.length; i++) {
-            require(
-                _rewardTokenAddresses[i] != address(0),
-                "Can not set an empty address as a reward token"
-            );
-        }
-
-        emit RewardTokenAddressesUpdated(
-            rewardTokenAddresses,
-            _rewardTokenAddresses
-        );
-        rewardTokenAddresses = _rewardTokenAddresses;
-    }
-
-    /**
-     * @dev Get the reward token addresses.
-     * @return address[] the reward token addresses.
-     */
-    function getRewardTokenAddresses()
-        external
-        view
-        returns (address[] memory)
-    {
-        return rewardTokenAddresses;
-    }
-
-    /**
-     * @dev Provide support for asset by passing its pToken address.
-     *      This method can only be called by the system Governor
-     * @param _asset    Address for the asset
-     * @param _pToken   Address for the corresponding platform token
-     */
-    function setPTokenAddress(address _asset, address _pToken)
-        external
-        onlyGovernor
-    {
-        _setPTokenAddress(_asset, _pToken);
-    }
-
-    /**
-     * @dev Remove a supported asset by passing its index.
-     *      This method can only be called by the system Governor
-     * @param _assetIndex Index of the asset to be removed
-     */
-    function removePToken(uint256 _assetIndex) external onlyGovernor {
-        require(_assetIndex < assetsMapped.length, "Invalid index");
-        address asset = assetsMapped[_assetIndex];
-        address pToken = assetToPToken[asset];
-
-        if (_assetIndex < assetsMapped.length - 1) {
-            assetsMapped[_assetIndex] = assetsMapped[assetsMapped.length - 1];
-        }
-        assetsMapped.pop();
-        assetToPToken[asset] = address(0);
-
-        emit PTokenRemoved(asset, pToken);
-    }
-
-    /**
-     * @dev Provide support for asset by passing its pToken address.
-     *      Add to internal mappings and execute the platform specific,
-     * abstract method `_abstractSetPToken`
-     * @param _asset    Address for the asset
-     * @param _pToken   Address for the corresponding platform token
-     */
-    function _setPTokenAddress(address _asset, address _pToken) internal {
-        require(assetToPToken[_asset] == address(0), "pToken already set");
-        require(
-            _asset != address(0) && _pToken != address(0),
-            "Invalid addresses"
-        );
-
-        assetToPToken[_asset] = _pToken;
-        assetsMapped.push(_asset);
-
-        emit PTokenAdded(_asset, _pToken);
-
-        _abstractSetPToken(_asset, _pToken);
-    }
-
-    /**
      * @dev Transfer token to governor. Intended for recovering tokens stuck in
      *      strategy contracts, i.e. mistaken sends.
      * @param _asset Address for the asset
@@ -267,56 +174,5 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
                  Abstract
     ****************************************/
 
-    function _abstractSetPToken(address _asset, address _pToken)
-        internal
-        virtual;
 
-    function safeApproveAllTokens() external virtual;
-
-    /**
-     * @dev Deposit an amount of asset into the platform
-     * @param _asset               Address for the asset
-     * @param _amount              Units of asset to deposit
-     */
-    function deposit(address _asset, uint256 _amount) external virtual;
-
-    /**
-     * @dev Deposit balance of all supported assets into the platform
-     */
-    function depositAll() external virtual;
-
-    /**
-     * @dev Withdraw an amount of asset from the platform.
-     * @param _recipient         Address to which the asset should be sent
-     * @param _asset             Address of the asset
-     * @param _amount            Units of asset to withdraw
-     */
-    function withdraw(
-        address _recipient,
-        address _asset,
-        uint256 _amount
-    ) external virtual;
-
-    /**
-     * @dev Withdraw all assets from strategy sending assets to Vault.
-     */
-    function withdrawAll() external virtual;
-
-    /**
-     * @dev Get the total primary stable value held in the platform.
-     *      This includes any interest that was generated since depositing.
-     * @return balance    Total value of the asset in the platform
-     */
-    function checkBalance()
-        external
-        view
-        virtual
-        returns (uint256 balance);
-
-    /**
-     * @dev Check if an asset is supported.
-     * @param _asset    Address of the asset
-     * @return bool     Whether asset is supported
-     */
-    function supportsAsset(address _asset) external view virtual returns (bool);
 }

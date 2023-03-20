@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
  */
 interface IStrategy {
 
-    function token0() external returns (address);
+    function token0() external view returns (address);
     function isDirectDepositAllowed() external returns (bool);
     function directDeposit() external;
     function directDepositRequirement(uint256 _psAmount) external  returns (uint256);
@@ -75,4 +75,11 @@ interface IStrategy {
     function getRewardTokenAddresses() external view returns (address[] memory);
 
     function setThresholds(address[] calldata _minThresholds) external;
+
+    function liquidateAll() external;
+    function withdrawUsd(uint256 _amountInUsd) external returns (uint256, uint256, uint256);
+    function calculateUsd(uint256 _amountInUsd) external view returns (uint256, uint256, uint256);
+    
+    function withdrawStrayAssets() external;
+    function assetsInUsd() external view returns (uint256, uint256, uint256);
 }

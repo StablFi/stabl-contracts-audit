@@ -117,7 +117,7 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
     }
 
     /// Deposit into the strategy ///
-    function depositAll() external override onlyVault nonReentrant {
+    function depositAll() external  onlyVault nonReentrant {
         _deposit(primary(), _primaryStableBalance());
     }
 
@@ -125,7 +125,6 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
         address _asset,
         uint256 _amount
     )   external
-        override
         onlyVault
         nonReentrant {
 
@@ -192,7 +191,7 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
     }
 
     /// Withdraw from strategy ///
-    function withdrawAll() external override onlyVaultOrGovernor nonReentrant  {
+    function withdrawAll() external onlyVaultOrGovernor nonReentrant  {
         _withdrawFromPool(uint128(lpBalance()));
         _swapAssetsToPrimaryStable();
         primaryStable.safeTransfer(vaultAddress, _primaryStableBalance());
@@ -203,7 +202,7 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
         address _beneficiary,
         address _asset,
         uint256 _amount
-    ) external override onlyVaultOrGovernor nonReentrant {
+    ) external  onlyVaultOrGovernor nonReentrant {
 
         _onlyPrimary(_asset);
         _withdrawFromPool(
@@ -297,7 +296,7 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
             primary(),
             balance
         );
-        primaryStable.transfer(harvesterAddress, balance);
+        primaryStable.safeTransfer(harvesterAddress, balance);
     }
 
     function _swapAssetsToPrimaryStable() internal {
@@ -374,7 +373,6 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
     function checkBalance()
         external
         view
-        override
         returns (uint256 balance)
     {
         (,,,,uint256 token0Balance, uint256 token1Balance) = balanceOfTokens();
@@ -449,39 +447,7 @@ contract KyberElasticStrategy is InitializableAbstractStrategy, KyberExchange, C
         return primaryStableBalanceFromToken0 + primaryStableBalanceFromToken1;
     }
 
-     /**
-     * @dev Retuns bool indicating whether asset is supported by strategy
-     * @param _asset Address of the asset
-     */
-    function supportsAsset(address _asset)
-        external
-        view
-        override
-        returns (bool)
-    {
-        return _asset == primary();
-    }
 
-    /**
-     * @dev Approve the spending of all assets by their corresponding cToken,
-     *      if for some reason is it necessary.
-     */
-    function safeApproveAllTokens() external override {
-        // NOT NEEDED
-    }
-
-    /**
-     * @dev Internal method to respond to the addition of new asset / cTokens
-     *      We need to approve the cToken and give it permission to spend the asset
-     * @param _asset Address of the asset to approve
-     * @param _cToken The cToken for the approval
-     */
-    function _abstractSetPToken(address _asset, address _cToken)
-        internal
-        override
-    {
-        // NOT NEEDED
-    }
 
      /// Tick Positioning ///
     function inRange() private view returns (bool) {

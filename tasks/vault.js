@@ -110,7 +110,7 @@ async function harvestSupportStrategy(taskArguments, hre) {
   let transaction;
   transaction = await harvester
     .connect(sGovernor)
-    ["setSupportedStrategy(address,bool)"](strategyAddress, true);
+  ["setSupportedStrategy(address,bool)"](strategyAddress, true);
   console.log("Sent. Transaction hash:", transaction.hash);
   console.log("Waiting for confirmation...");
   await hre.ethers.provider.waitForTransaction(transaction.hash);
@@ -145,7 +145,7 @@ async function removeStrategy(taskArguments, hre) {
   let transaction;
   transaction = await harvester
     .connect(sGovernor)
-    ["setSupportedStrategy(address,bool)"](strategyAddress, false);
+  ["setSupportedStrategy(address,bool)"](strategyAddress, false);
   console.log("Sent. Transaction hash:", transaction.hash);
   console.log("Waiting for confirmation...");
   await hre.ethers.provider.waitForTransaction(transaction.hash);
@@ -153,7 +153,7 @@ async function removeStrategy(taskArguments, hre) {
 
   transaction = await vault
     .connect(sGovernor)
-    ["removeStrategy(address)"](strategyAddress);
+  ["removeStrategy(address)"](strategyAddress);
   console.log("Sent. Transaction hash:", transaction.hash);
   console.log("Waiting for confirmation...");
   await hre.ethers.provider.waitForTransaction(transaction.hash);
@@ -261,23 +261,13 @@ async function capital(taskArguments, hre) {
   const signature = pause ? "pauseCapital()" : "unpauseCapital()";
   const propArgs = await proposeArgs([{ contract: cVault, signature }]);
 
-  if (isMainnet) {
-    // On Mainnet this has to be handled manually via a multi-sig tx.
-    console.log("propose, enqueue and execute a governance proposal.");
-    console.log(`Governor address: ${governorAddr}`);
-    console.log(`Proposal [targets, values, sigs, datas]:`);
-    console.log(JSON.stringify(propArgs, null, 2));
-  } else if (isFork) {
-    // On Fork, simulate the governance proposal and execution flow that takes place on Mainnet.
-    await executeProposal(propArgs, propDescription);
+
+  if (pause) {
+    cVault.connect(sGovernor).pauseCapital();
+    console.log("Capital paused on vault.");
   } else {
-    if (pause) {
-      cVault.connect(sGovernor).pauseCapital();
-      console.log("Capital paused on vault.");
-    } else {
-      cVault.connect(sGovernor).unpauseCapital();
-      console.log("Capital unpaused on vault.");
-    }
+    cVault.connect(sGovernor).unpauseCapital();
+    console.log("Capital unpaused on vault.");
   }
 }
 
@@ -421,7 +411,7 @@ async function payout(taskArguments, hre) {
 
   // Print ether balance of govenor
   const balance = await sGovernor.getBalance();
-  console.log("Governor balance:", hre.ethers.utils.formatEther(balance)); 
+  console.log("Governor balance:", hre.ethers.utils.formatEther(balance));
 
   const vaultProxy = await hre.ethers.getContract("VaultProxy");
   const vault = await hre.ethers.getContractAt(
@@ -494,7 +484,7 @@ async function setMaxSupplyDiff(taskArguments, hre) {
   // await vaultAdmin.connect(prodGovernorSigner).setMaxSupplyDiff("500000000000000");
   transaction = await vault
     .connect(sGovernor)
-    ["setMaxSupplyDiff(uint256)"](percent);
+  ["setMaxSupplyDiff(uint256)"](percent);
   console.log("Sent. Transaction hash:", transaction.hash);
   console.log("Waiting for confirmation...");
   await hre.ethers.provider.waitForTransaction(transaction.hash);
@@ -534,7 +524,7 @@ async function setQuickDepositStrategy(taskArguments, hre) {
   let transaction;
   transaction = await vault
     .connect(sGovernor)
-    ["setQuickDepositStrategies(address[])"]([strategyAddress]);
+  ["setQuickDepositStrategies(address[])"]([strategyAddress]);
   console.log("Sent. Transaction hash:", transaction.hash);
   console.log("Waiting for confirmation...");
   await hre.ethers.provider.waitForTransaction(transaction.hash);
@@ -648,7 +638,7 @@ async function setFeeCollectors(taskArguments, hre) {
   let transaction;
   transaction = await vault
     .connect(sGovernor)
-    ["setFeeParams(address,address,address)"](labs, team, treasury);
+  ["setFeeParams(address,address,address)"](labs, team, treasury);
   console.log("Sent. Transaction hash:", transaction.hash);
   console.log("Waiting for confirmation...");
   await hre.ethers.provider.waitForTransaction(transaction.hash);
@@ -683,7 +673,7 @@ async function setPerformanceFee(taskArguments, hre) {
   let transaction;
   transaction = await vault
     .connect(sGovernor)
-    ["setHarvesterFeeParams(uint256,uint256)"](labsBps, teamBps);
+  ["setHarvesterFeeParams(uint256,uint256)"](labsBps, teamBps);
   console.log("Sent. Transaction hash:", transaction.hash);
   console.log("Waiting for confirmation...");
   await hre.ethers.provider.waitForTransaction(transaction.hash);
@@ -705,7 +695,7 @@ async function withdrawAllFromStrategy(taskArguments, hre) {
   let transaction;
   transaction = await vault
     .connect(sGovernor)
-    ["withdrawAllFromStrategy(address)"](strategyAddress);
+  ["withdrawAllFromStrategy(address)"](strategyAddress);
   console.log("Sent. Transaction hash:", transaction.hash);
   console.log("Waiting for confirmation...");
   await hre.ethers.provider.waitForTransaction(transaction.hash);
@@ -728,7 +718,7 @@ async function withdrawFromStrategy(taskArguments, hre) {
   let transaction;
   transaction = await vault
     .connect(sGovernor)
-    ["withdrawFromStrategy(address,uint256)"](strategyAddress, amount);
+  ["withdrawFromStrategy(address,uint256)"](strategyAddress, amount);
   console.log("Sent. Transaction hash:", transaction.hash);
   console.log("Waiting for confirmation...");
   await hre.ethers.provider.waitForTransaction(transaction.hash);

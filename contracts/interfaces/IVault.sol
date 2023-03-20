@@ -209,6 +209,8 @@ interface IVault {
         view
         returns (StrategyWithWeight[] memory);
 
+    function getStrategiesFromWeights() external view returns (address[] memory);
+
     function strategyWithWeightPositions(
         address _strategyWeight
     ) external view returns (uint256);
@@ -218,14 +220,6 @@ interface IVault {
         address _balancerPoolId
     ) external;
 
-    function setQuickDepositStrategies(
-        address[] calldata _quickDepositStartegies
-    ) external;
-
-    function getQuickDepositStrategies()
-        external
-        view
-        returns (address[] memory);
 
     function setPrimaryStable(address _primaryStable) external;
 

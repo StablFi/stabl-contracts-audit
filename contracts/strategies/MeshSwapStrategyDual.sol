@@ -77,9 +77,6 @@ contract MeshSwapStrategyDual is InitializableAbstractStrategy, UniswapV2Exchang
         }
         meshSwapPair = IMeshSwapLP(_pTokens[0]);
         _setUniswapRouter(_router);
-        _abstractSetPToken(_assets[0],_pTokens[0]);
-        _abstractSetPToken(_assets[1],_pTokens[1]);
-
         super._initialize(
             _platformAddress,
             _vaultAddress,
@@ -158,13 +155,12 @@ contract MeshSwapStrategyDual is InitializableAbstractStrategy, UniswapV2Exchang
         address _asset,
         uint256 _amount
     )   external
-        override
         onlyVault
         nonReentrant {
         require(_asset == address(primaryStable), "Token not supported.");
         _deposit(_asset, _amount);
     }
-    function depositAll() external override onlyVault nonReentrant {
+    function depositAll() external  onlyVault nonReentrant {
         _deposit(address(primaryStable), primaryStable.balanceOf(address(this)));
     }
     function _lpToWithdraw(uint256 _amount0ToSwap, uint256 _amount1ToSwap, uint256 _totalLP, uint256 _r0, uint256 _r1) internal pure returns (uint256) {
@@ -177,7 +173,7 @@ contract MeshSwapStrategyDual is InitializableAbstractStrategy, UniswapV2Exchang
         address _beneficiary,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant  {
+    ) external  onlyVault nonReentrant  {
         require(_asset == address(primaryStable), "Token not supported.");
         (uint256 reserve0, uint256 reserve1,) = meshSwapPair.getReserves();
         (uint256 _amount0ToSwap,uint256 _amount1ToSwap) = divideBasedOnReserves(_amount.sub(primaryStable.balanceOf(address(this))));
@@ -206,7 +202,7 @@ contract MeshSwapStrategyDual is InitializableAbstractStrategy, UniswapV2Exchang
         primaryStable.safeTransfer(_beneficiary, _amount);
     }
 
-    function withdrawAll() external override onlyVault nonReentrant  {
+    function withdrawAll() external  onlyVault nonReentrant  {
         (uint256 reserve0, uint256 reserve1,) = meshSwapPair.getReserves();
         uint256 lpTokenBalance = meshSwapPair.balanceOf(address(this));
         if (lpTokenBalance > 0) {
@@ -233,7 +229,6 @@ contract MeshSwapStrategyDual is InitializableAbstractStrategy, UniswapV2Exchang
     function checkBalance()
         external
         view
-        override
         returns (uint256)
     {
         uint256 token0Balance = token0.balanceOf(address(this));
@@ -352,21 +347,5 @@ contract MeshSwapStrategyDual is InitializableAbstractStrategy, UniswapV2Exchang
         // minThresholds[3] - lp token minimum swapping threshold
         // minThresholds[4] - reward token (MESH) minimum swapping threshold
         minThresholds = _minThresholds;
-    }
-
-    function supportsAsset(address _asset)
-        external
-        view
-        override
-        returns (bool)
-    {
-        return _asset == address(primaryStable);
-    }
-    function safeApproveAllTokens() external override {
-        // NOT NEEDED
-    }
-    function _abstractSetPToken(address _asset, address _cToken) internal override
-    {
-        // NOT NEEDED
     }
 }

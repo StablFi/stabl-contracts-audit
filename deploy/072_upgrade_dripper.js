@@ -3,7 +3,7 @@ const { deploymentWithProposal, withConfirmation, deployWithConfirmation } = req
 const { MAX_UINT256 } = require("../utils/constants");
 
 module.exports = deploymentWithProposal(
-  { deployName: "071_upgrade_dripper" , forceDeploy: isMainnet || isPolygonStaging, tags: ["test", "main", "upgrade_dripper"],  dependencies: ["001_core"] },
+  { deployName: "072_upgrade_dripper" , forceDeploy: isMainnet || isPolygonStaging, tags: ["test", "main", "upgrade_dripper"],  dependencies: ["001_core"] },
   async ({ ethers, assetAddresses }) => {
 
     // Deploy a new vault core contract.

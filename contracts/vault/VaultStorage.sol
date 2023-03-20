@@ -51,7 +51,7 @@ contract VaultStorage is Initializable, Governable {
     event FeeAddressesChanged(address _labsAddress, address _teamAddress, address _treasuryAddress);
     event HarvesterFeeParamsChanged(address _labsAddress, uint256 _labsFeeBps, address _teamAddress, uint256 _teamFeeBps);
     event Payout(uint256 _dripperTransferred);
-    event TreasuryRemitted(uint256 _amount);
+    event TreasuryRemitted(address _token, uint256 _amount);
 
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {
@@ -71,7 +71,7 @@ contract VaultStorage is Initializable, Governable {
     // Address of the Oracle price provider contract
     address public priceProvider;
     // Pausing bools
-    bool public rebasePaused = false;
+    bool public dontRebaseDuringDepeg; // Reusing rebasePaused
     bool public capitalPaused = true;
 
     // Redemption fee in basis points

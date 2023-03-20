@@ -220,7 +220,7 @@ contract Harvester is Initializable, Governable {
      */
     function _harvest() internal {
         address[] memory allStrategies = IVault(vaultAddress)
-            .getAllStrategies();
+            .getStrategiesFromWeights();
         for (uint256 i = 0; i < allStrategies.length; i++) {
             if (supportedStrategies[allStrategies[i]] == true) {
                 _harvest(allStrategies[i]);

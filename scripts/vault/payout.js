@@ -21,6 +21,8 @@ const {
   isFork,
   usdcUnitsFormat,
   cashUnitsFormat,
+  daiUnitsFormat,
+  usdUnitsFormat,
 } = require("../../test/helpers");
 const { deployWithConfirmation } = require('../../utils/deploy');
 
@@ -34,7 +36,7 @@ async function upgradeVault(signer) {
 
   const cVaultProxy = await ethers.getContractAt(
     "VaultProxy",
-    "0xd1bb7d35db39954d43e16f65F09DD0766A772cFF"
+    "0xa6c6E539167e8efa5BE0525E1F16c51e57dF896E"
   );
   const cVaultCore = await ethers.getContract("VaultCore");
   const cVaultAdmin = await ethers.getContract("VaultAdmin");
@@ -47,9 +49,9 @@ async function upgradeVault(signer) {
 async function upgradeTetu(signer) {
   const upgradable = "TetuStrategy";
   const toUpgrade = [
-    "0x9D7416C2Ce07CB7a71335fbcdE2f89A30B262064",
-    "0x407889eD44bEe744907675d52ae4d996e8425be2",
-    "0x58D85fAb1aE932244643E133e267b1952217E81a",
+    "0x21a5683b28D732479958A16f32485ff8474138EC",
+    "0xC87A68d140Dba5BEF1B4fa1acDb89FD4C2547d40",
+    "0x0B76799f1Fe8859E03EE84E2AD8F7D8950b3a8d6",
   ];
   await deployWithConfirmation(upgradable);
   const USDC = await ethers.getContractAt("TetuStrategyUSDCProxy", toUpgrade[0]);
@@ -61,7 +63,6 @@ async function upgradeTetu(signer) {
   await USDT.connect(signer).upgradeTo(implementation.address);
 
 }
-
 async function upgradeDripper(signer) {
   const upgradable = "Dripper";
   const toUpgrade = [
@@ -74,14 +75,38 @@ async function upgradeDripper(signer) {
 
 }
 
+async function upgradeHarvester(signer) {
+  const upgradable = "Harvester";
+  const toUpgrade = [
+    "0xb659Cbde75D7aaB10490c86170b50fb0364Bd573",
+  ];
+  await deployWithConfirmation(upgradable);
+  const USDC = await ethers.getContractAt("HarvesterProxy", toUpgrade[0]);
+  const implementation = await ethers.getContract(upgradable);
+  await USDC.connect(signer).upgradeTo(implementation.address);
+
+}
 
 async function main() {
   let usdc = await ethers.getContractAt(erc20Abi, addresses.polygon.USDC);
+  let dai = await ethers.getContractAt(erc20Abi, addresses.polygon.DAI);
+  let usdt = await ethers.getContractAt(erc20Abi, addresses.polygon.USDT);
+
+  let staging = true;
   let cash = await hre.ethers.getContractAt("CASH", "0x80487b4f8f70e793A81a42367c225ee0B94315DF");
   let vault = await hre.ethers.getContractAt("VaultCore", "0xd1bb7d35db39954d43e16f65F09DD0766A772cFF");
   let vaultAdmin = await hre.ethers.getContractAt("VaultAdmin", "0xd1bb7d35db39954d43e16f65F09DD0766A772cFF");
   let dripper = await hre.ethers.getContractAt("Dripper", "0x4b2b1dc2ecc46551d88389f7f06ef2bede77b4e1");
   let harvester = await hre.ethers.getContractAt("Harvester", "0xdbb57b33583fa86d4b31e88cf951caf6fd561ffe");
+
+  if (staging) {
+    cash = await hre.ethers.getContractAt("CASH", "0xACFDeCB377e7A8b26ce033BDb01cb7630Ef07809");
+    vault = await hre.ethers.getContractAt("VaultCore", "0xa6c6E539167e8efa5BE0525E1F16c51e57dF896E");
+    vaultAdmin = await hre.ethers.getContractAt("VaultAdmin", "0xa6c6E539167e8efa5BE0525E1F16c51e57dF896E");
+    dripper = await hre.ethers.getContractAt("Dripper", "0xe5FDf6f6EC63271d8ed1056891BE0998d9ad8fa9");
+    harvester = await hre.ethers.getContractAt("Harvester", "0xb659Cbde75D7aaB10490c86170b50fb0364Bd573");
+  }
+
   let governor = await vault.governor();
   // Impersonate as governor
   await hre.network.provider.request({
@@ -91,7 +116,8 @@ async function main() {
   let signer = await ethers.provider.getSigner(governor);
   await upgradeVault(signer);
   await upgradeTetu(signer);
-  await upgradeDripper(signer);
+  await upgradeHarvester(signer);
+  // await upgradeDripper(signer);
 
   let cashTotalSupply = await cash.totalSupply();
   let vaultCheckBalance = await vault.checkBalance();
@@ -110,23 +136,34 @@ async function main() {
     let balance = (await strat.checkBalance()).toString();
     total += parseInt(balance)
     let lpBalance = "NA";
+    let nav = "NA";
     try {
       lpBalance = (await strat.lpBalance()).toString();
     } catch (error) {
     }
+    try {
+      nav = usdUnitsFormat(await strat.netAssetValue());
+    } catch (error) {
+    }
     console.log("Balance of ", element, ":", usdcUnitsFormat(await strat.checkBalance()), " - LP: ", lpBalance);
+    console.log(" - NAV: ", nav);
+    console.log(" - Stray USDC: ", usdcUnitsFormat(await usdc.balanceOf(element)));
+    console.log(" - Stray USDT: ", usdcUnitsFormat(await usdt.balanceOf(element)));
+    console.log(" - Stray DAI : ", daiUnitsFormat(await dai.balanceOf(element)));
   }
   console.log("Total Balance in Strategies: ", usdcUnitsFormat(total.toString()));
   let vaultBalance = await usdc.balanceOf(vault.address);
   console.log("Stray USDC in Vault: ", usdcUnitsFormat(vaultBalance.toString()));
   console.log("USDC Vault + Each Strategy: ", usdcUnitsFormat((parseInt(vaultBalance) + total).toString()));
+  console.log("NAV: ", usdUnitsFormat(await vault.nav()));
+  console.log("CASH TS: ", cashUnitsFormat(await cash.totalSupply()));
 
   let original = await vault.checkBalance();
 
   console.log("Setting new weights");
 
   const weights = [{
-    strategy: "0x58D85fAb1aE932244643E133e267b1952217E81a",
+    strategy: "0x0B76799f1Fe8859E03EE84E2AD8F7D8950b3a8d6",
     contract: "TetuStrategy",
     minWeight: 0,
     targetWeight: 30000,
@@ -135,7 +172,7 @@ async function main() {
     enabledReward: true,
   },
   {
-    strategy: "0x407889eD44bEe744907675d52ae4d996e8425be2",
+    strategy: "0xC87A68d140Dba5BEF1B4fa1acDb89FD4C2547d40",
     contract: "TetuStrategy",
     minWeight: 0,
     targetWeight: 45000,
@@ -144,7 +181,7 @@ async function main() {
     enabledReward: true,
   },
   {
-    strategy: "0x9D7416C2Ce07CB7a71335fbcdE2f89A30B262064",
+    strategy: "0x21a5683b28D732479958A16f32485ff8474138EC",
     contract: "TetuStrategy",
     minWeight: 0,
     targetWeight: 25000,
@@ -154,7 +191,7 @@ async function main() {
   }];
 
   await vaultAdmin.connect(signer).setStrategyWithWeights(weights);
-  console.log("New weights");
+  // console.log("New weights");
   const set_weights = {};
   let i = 0;
   while (true) {
@@ -171,7 +208,7 @@ async function main() {
 
   console.log("Payout...")
   await vaultAdmin.connect(signer).setNextPayoutTime(Math.floor((new Date()).getTime() / 1000) - 1000);
-  await vaultAdmin.connect(signer).balance();
+  await vaultAdmin.connect(signer).payout();
 
   cashTotalSupply = await cash.totalSupply();
   vaultCheckBalance = await vault.checkBalance();
@@ -194,8 +231,17 @@ async function main() {
       lpBalance = (await strat.lpBalance()).toString();
     } catch (error) {
     }
+    let nav = "NA";
+    try {
+      nav = usdUnitsFormat(await strat.netAssetValue());
+    } catch (error) {
+    }
 
-    console.log("Balance of ", element, " [Weight:", (set_weights[element]) ? set_weights[element] : 0, " %] :", usdcUnitsFormat(await strat.checkBalance()), " - LP: ", lpBalance, " - Stray: ", usdcUnitsFormat(await usdc.balanceOf(element)));
+    console.log("Balance of ", element, " [Weight:", (set_weights[element]) ? set_weights[element] : 0, " %] :", usdcUnitsFormat(await strat.checkBalance()), " - LP: ", lpBalance);
+    console.log(" - NAV: ", nav);
+    console.log(" - Stray USDC: ", usdcUnitsFormat(await usdc.balanceOf(element)));
+    console.log(" - Stray USDT: ", usdcUnitsFormat(await usdt.balanceOf(element)));
+    console.log(" - Stray DAI : ", daiUnitsFormat(await dai.balanceOf(element)));
   }
   console.log("Total Balance in Strategies: ", usdcUnitsFormat(total.toString()));
   vaultBalance = await usdc.balanceOf(vault.address);
@@ -204,7 +250,8 @@ async function main() {
 
   let later = await vault.checkBalance();
   console.log("Slippage: ", usdcUnitsFormat((parseInt(later) - parseInt(original)).toString()));
-
+  console.log("NAV: ", usdUnitsFormat(await vault.nav()));
+  console.log("CASH TS: ", cashUnitsFormat(await cash.totalSupply()));
 }
 
 // We recommend this pattern to be able to use async/await everywhere

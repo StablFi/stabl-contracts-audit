@@ -13,7 +13,7 @@ npx hardhat deploy --network polygon_staging_0 --tags upgrade_rebase_handler
 module.exports = deploymentWithProposal(
     {
         deployName: "202_set_default_strategies_staging",
-        forceDeploy: true,
+        forceDeploy: false,
         tags: ["test", "test_polygon", "set_default_strategies_staging"],
         dependencies: [],
     },
@@ -25,9 +25,9 @@ module.exports = deploymentWithProposal(
 
         ];
         const strategies = [
-            "AaveSupplyStrategyDAIProxy",
-            "AaveSupplyStrategyUSDCProxy",
-            "AaveSupplyStrategyUSDTProxy",
+            "TetuStrategyDAIProxy",
+            "TetuStrategyUSDCProxy",
+            "TetuStrategyUSDTProxy",
         ];
 
         let json = [];

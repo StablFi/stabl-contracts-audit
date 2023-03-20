@@ -276,7 +276,6 @@ module.exports = deploymentWithProposal(
       cGainsDAIStrategyProxy.address
     );
 
-
     // BALANCER STRATEGY:
     // balancer-usdc
     // const cBalancerUsdcStrategyProxy = await ethers.getContract(
@@ -355,7 +354,6 @@ module.exports = deploymentWithProposal(
       cAaveSupplyUsdcStrategyProxy.address
     );
 
-
     const cAaveSupplyDaiStrategyProxy = await ethers.getContract(
       "AaveSupplyStrategyDAIProxy"
     );
@@ -367,7 +365,6 @@ module.exports = deploymentWithProposal(
       "cAaveSupplyDaiStrategyProxy.address",
       cAaveSupplyDaiStrategyProxy.address
     );
-
 
     let weights = [
       // {
@@ -531,36 +528,36 @@ module.exports = deploymentWithProposal(
       //   enabled: true,
       //   enabledReward: true,
       // },
-      // {
-      //   strategy: cTetuStrategyDai.address,
-      //   contract: "TetuStrategy",
-      //   name: "TetuStrategy - DAI",
-      //   minWeight: 0,
-      //   targetWeight: 0,
-      //   maxWeight: 100,
-      //   enabled: true,
-      //   enabledReward: true,
-      // },
-      // {
-      //   strategy: cTetuStrategyUsdt.address,
-      //   contract: "TetuStrategy",
-      //   name: "TetuStrategy - USDT",
-      //   minWeight: 0,
-      //   targetWeight: 0,
-      //   maxWeight: 100,
-      //   enabled: true,
-      //   enabledReward: true,
-      // },
-      // {
-      //   strategy: cTetuStrategyUsdc.address,
-      //   contract: "TetuStrategy",
-      //   name: "TetuStrategy - USDC",
-      //   minWeight: 0,
-      //   targetWeight: 0,
-      //   maxWeight: 100,
-      //   enabled: true,
-      //   enabledReward: true,
-      // },
+      {
+        strategy: cTetuStrategyDai.address,
+        contract: "TetuStrategy",
+        name: "TetuStrategy - DAI",
+        minWeight: 0,
+        targetWeight: 30,
+        maxWeight: 100,
+        enabled: true,
+        enabledReward: true,
+      },
+      {
+        strategy: cTetuStrategyUsdt.address,
+        contract: "TetuStrategy",
+        name: "TetuStrategy - USDT",
+        minWeight: 0,
+        targetWeight: 30,
+        maxWeight: 100,
+        enabled: true,
+        enabledReward: true,
+      },
+      {
+        strategy: cTetuStrategyUsdc.address,
+        contract: "TetuStrategy",
+        name: "TetuStrategy - USDC",
+        minWeight: 0,
+        targetWeight: 40,
+        maxWeight: 100,
+        enabled: true,
+        enabledReward: true,
+      },
       // {
       //   strategy: cBalancerStrategyUsdc.address,
       //   contract: "BalancerStrategy",
@@ -601,36 +598,36 @@ module.exports = deploymentWithProposal(
       //   enabled: true,
       //   enabledReward: true,
       // },
-      {
-        strategy: cAaveSupplyStrategyUsdt.address,
-        contract: "AaveSupplyStrategy",
-        name: "AaveSupplyStrategy - USDT",
-        minWeight: 0,
-        targetWeight: 30,
-        maxWeight: 100,
-        enabled: true,
-        enabledReward: true,
-      },
-      {
-        strategy: cAaveSupplyStrategyDai.address,
-        contract: "AaveSupplyStrategy",
-        name: "AaveSupplyStrategy - DAI",
-        minWeight: 0,
-        targetWeight: 30,
-        maxWeight: 100,
-        enabled: true,
-        enabledReward: true,
-      },
-      {
-        strategy: cAaveSupplyStrategyUsdc.address,
-        contract: "AaveSupplyStrategy",
-        name: "AaveSupplyStrategy - USDC",
-        minWeight: 0,
-        targetWeight: 40,
-        maxWeight: 100,
-        enabled: true,
-        enabledReward: true,
-      },
+      // {
+      //   strategy: cAaveSupplyStrategyUsdt.address,
+      //   contract: "AaveSupplyStrategy",
+      //   name: "AaveSupplyStrategy - USDT",
+      //   minWeight: 0,
+      //   targetWeight: 30,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
+      // {
+      //   strategy: cAaveSupplyStrategyDai.address,
+      //   contract: "AaveSupplyStrategy",
+      //   name: "AaveSupplyStrategy - DAI",
+      //   minWeight: 0,
+      //   targetWeight: 30,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
+      // {
+      //   strategy: cAaveSupplyStrategyUsdc.address,
+      //   contract: "AaveSupplyStrategy",
+      //   name: "AaveSupplyStrategy - USDC",
+      //   minWeight: 0,
+      //   targetWeight: 40,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
       
     ];
 

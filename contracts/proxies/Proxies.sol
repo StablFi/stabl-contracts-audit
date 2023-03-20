@@ -313,3 +313,9 @@ contract BalancerStrategyUSDTProxy is InitializeGovernedUpgradeabilityProxy {
 contract BalancerStrategyDAIProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+contract SwapperProxy is InitializeGovernedUpgradeabilityProxy {
+}
+contract BalancerSwapPlaceProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

@@ -108,7 +108,7 @@ contract AaveSupplyStrategy is InitializableAbstractStrategy, CurveExchange {
         return howMuchToSwap(curvePool, address(token0), address(primaryStable), _psAmount);
     }
 
-    function deposit(address _asset, uint256 _amount) external override onlyVault nonReentrant {
+    function deposit(address _asset, uint256 _amount) external  onlyVault nonReentrant {
         require(_asset == address(primaryStable), "Token not supported.");
         require(_amount > 0, "Must deposit something");
         _swapPrimaryStableToToken0();
@@ -123,7 +123,7 @@ contract AaveSupplyStrategy is InitializableAbstractStrategy, CurveExchange {
         pool.supply(address(token0), _amount, address(this), 0);
     }
 
-    function depositAll() public override onlyVault nonReentrant {
+    function depositAll() public  onlyVault nonReentrant {
         _stake(token0.balanceOf(address(this)));
     }
 
@@ -131,7 +131,7 @@ contract AaveSupplyStrategy is InitializableAbstractStrategy, CurveExchange {
         address _beneficiary,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant {
+    ) external  onlyVault nonReentrant {
         require(_asset == address(primaryStable), "Token not supported.");
         uint256 _eq = _equivalentInToken0(_amount);
         uint256 numberOfShares = _eq.addBasisPoints(40);
@@ -159,7 +159,7 @@ contract AaveSupplyStrategy is InitializableAbstractStrategy, CurveExchange {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function withdrawAll() external override onlyVault nonReentrant {
+    function withdrawAll() external  onlyVault nonReentrant {
         if (lpBalance() > 0) {
             storedATokenBalance = 0;
             pool.withdraw(address(token0), type(uint256).max, address(this));
@@ -190,7 +190,7 @@ contract AaveSupplyStrategy is InitializableAbstractStrategy, CurveExchange {
         }
     }
 
-    function checkBalance() external view override returns (uint256) {
+    function checkBalance() external view  returns (uint256) {
         uint256 balanceWithInvestments = storedATokenBalance;
 
         // swap to PrimaryStable
@@ -256,12 +256,6 @@ contract AaveSupplyStrategy is InitializableAbstractStrategy, CurveExchange {
         }
     }
 
-    function supportsAsset(address _asset) external view override returns (bool) {
-        return _asset == address(primaryStable);
-    }
 
-    /* NOT NEEDED */
-    function safeApproveAllTokens() external override {}
 
-    function _abstractSetPToken(address _asset, address _cToken) internal override {}
 }

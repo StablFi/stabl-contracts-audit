@@ -10,8 +10,8 @@ module.exports = deploymentWithProposal(
     const dVaultCore = await deployWithConfirmation("VaultCore");
     console.log("Deployed VaultCore");
     // Deploy a new vault admin contract.
-    // const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
-    // console.log("Deployed VaultAdmin");
+    const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+    console.log("Deployed VaultAdmin");
 
     const cVaultProxy = await ethers.getContract("VaultProxy");
     const cVaultCoreProxy = await ethers.getContractAt(
@@ -34,11 +34,11 @@ module.exports = deploymentWithProposal(
           signature: "upgradeTo(address)",
           args: [cVaultCore.address],
         },
-        // {
-        //   contract: cVaultCoreProxy,
-        //   signature: "setAdminImpl(address)",
-        //   args: [cVaultAdmin.address],
-        // }
+        {
+          contract: cVaultCoreProxy,
+          signature: "setAdminImpl(address)",
+          args: [cVaultAdmin.address],
+        }
         // ,{
         //   contract: cVaultAdminProxy,
         //   signature: "setDailyExpectedYieldBps(uint256)",

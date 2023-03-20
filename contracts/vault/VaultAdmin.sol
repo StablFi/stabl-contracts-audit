@@ -8,12 +8,13 @@ pragma solidity ^0.8.0;
  */
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IHarvester } from "../interfaces/IHarvester.sol";
 import { IVaultCore } from "../interfaces/IVaultCore.sol";
 import { IDripper } from "../interfaces/IDripper.sol";
+import { IRebaseHandler } from "../interfaces/IRebaseHandler.sol";
+
 import "./VaultStorage.sol";
 import "../utils/Array.sol";
 import "hardhat/console.sol";
@@ -26,17 +27,17 @@ contract VaultAdmin is VaultStorage {
      * @dev Verifies that the caller is the Vault, Governor, or Strategist.
      */
     modifier onlyVaultOrGovernorOrStrategist() {
-        require(msg.sender == address(this) || msg.sender == strategistAddr || isGovernor(), "Caller is not the Vault, Governor, or Strategist");
+        require(msg.sender == address(this) || msg.sender == strategistAddr || isGovernor(), "!VAULT_GOV_STRAT");
         _;
     }
 
     modifier onlyGovernorOrStrategist() {
-        require(msg.sender == strategistAddr || isGovernor(), "Caller is not the Strategist or Governor");
+        require(msg.sender == strategistAddr || isGovernor(), "!GOV_STRAT");
         _;
     }
 
     modifier onlyGovernorOrRebaseManager() {
-        require(isGovernor() || rebaseManagers[msg.sender], "Caller is not the Governor or Rebase Manager");
+        require(isGovernor() || rebaseManagers[msg.sender], "!GOV_RBM");
         _;
     }
 
@@ -73,40 +74,12 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Set a minimum amount of CASH in a mint or redeem that triggers a
-     * rebase
-     * @param _threshold CASH amount with 18 fixed decimals.
-     */
-    function setRebaseThreshold(uint256 _threshold) external onlyGovernor {
-        rebaseThreshold = _threshold;
-        emit RebaseThresholdUpdated(_threshold);
-    }
-
-    /**
      * @dev Set address of Strategist
      * @param _address Address of Strategist
      */
     function setStrategistAddr(address _address) external onlyGovernor {
         strategistAddr = _address;
         emit StrategistUpdated(_address);
-    }
-
-    /**
-     * @dev Set the default Strategy for an asset, i.e. the one which the asset
-            will be automatically allocated to and withdrawn from
-     * @param _asset Address of the asset
-     * @param _strategy Address of the Strategy
-     */
-    function setAssetDefaultStrategy(address _asset, address _strategy) external onlyGovernorOrStrategist {
-        emit AssetDefaultStrategyUpdated(_asset, _strategy);
-        // If its a zero address being passed for the strategy we are removing
-        // the default strategy
-        if (_strategy != address(0)) {
-            // Make sure the strategy meets some criteria
-            require(strategies[_strategy].isSupported, "!STRT_APRVD");
-            require(assets[_asset].isSupported, "!AST_SPRTD");
-        }
-        assetDefaultStrategies[_asset] = _strategy;
     }
 
     /**
@@ -150,12 +123,6 @@ contract VaultAdmin is VaultStorage {
     function _removeStrategy(address _addr) internal {
         require(strategies[_addr].isSupported, "!APRVD");
 
-        for (uint256 i = 0; i < allAssets.length; i++) {
-            require(assetDefaultStrategies[allAssets[i]] != _addr, "RMV_DFLT");
-        }
-
-        // Initialize strategyIndex with out of bounds result so function will
-        // revert if no valid index found
         uint256 strategyIndex = allStrategies.length;
         for (uint256 i = 0; i < allStrategies.length; i++) {
             if (allStrategies[i] == _addr) {
@@ -176,25 +143,7 @@ contract VaultAdmin is VaultStorage {
             try strategy.collectRewardTokens() {} catch {
                 // If it fails, we don't care
             }
-
-            // Withdraw all assets
-            strategy.withdrawAll();
-
-            emit StrategyRemoved(_addr);
-        }
-
-        // Removing strategy from quickDeposit
-        strategyIndex = quickDepositStrategies.length;
-        for (uint256 i = 0; i < quickDepositStrategies.length; i++) {
-            if (quickDepositStrategies[i] == _addr) {
-                strategyIndex = i;
-                break;
-            }
-        }
-
-        if (strategyIndex < quickDepositStrategies.length) {
-            quickDepositStrategies[strategyIndex] = quickDepositStrategies[quickDepositStrategies.length - 1];
-            quickDepositStrategies.pop();
+            strategy.liquidateAll();
             emit StrategyRemoved(_addr);
         }
 
@@ -213,6 +162,9 @@ contract VaultAdmin is VaultStorage {
             // RECOMMENDED: To reset weights through its setStrategyWithWeights() function after strategy removal.
             uint256 weightOfRemovable = strategyWithWeights[strategyIndex].targetWeight;
             strategyWithWeights[strategyIndex] = strategyWithWeights[strategyWithWeights.length - 1];
+            
+            strategyWithWeightPositions[strategyWithWeights[strategyIndex].strategy] = strategyIndex;
+
             strategyWithWeights.pop();
             if (strategyWithWeights.length > 0) {
                 strategyWithWeights[0].targetWeight += weightOfRemovable;
@@ -223,35 +175,6 @@ contract VaultAdmin is VaultStorage {
 
         // Remove support from Harvestor
         IHarvester(harvesterAddress).setSupportedStrategy(_addr, false);
-    }
-
-    /**
-     * @notice Move assets from one Strategy to another
-     * @param _strategyFromAddress Address of Strategy to move assets from.
-     * @param _strategyToAddress Address of Strategy to move assets to.
-     * @param _assets Array of asset address that will be moved
-     * @param _amounts Array of amounts of each corresponding asset to move.
-     */
-    function reallocate(
-        address _strategyFromAddress,
-        address _strategyToAddress,
-        address[] calldata _assets,
-        uint256[] calldata _amounts
-    ) external onlyGovernorOrStrategist {
-        require(strategies[_strategyFromAddress].isSupported, "!FRM_STRT");
-        require(strategies[_strategyToAddress].isSupported, "!TO_STRT");
-        require(_assets.length == _amounts.length, "!LEN");
-
-        IStrategy strategyFrom = IStrategy(_strategyFromAddress);
-        IStrategy strategyTo = IStrategy(_strategyToAddress);
-
-        for (uint256 i = 0; i < _assets.length; i++) {
-            require(strategyTo.supportsAsset(_assets[i]), "!SPRTD");
-            // Withdraw from Strategy and pass other Strategy as recipient
-            strategyFrom.withdraw(address(strategyTo), _assets[i], _amounts[i]);
-        }
-        // Tell new Strategy to deposit into protocol
-        strategyTo.depositAll();
     }
 
     /**
@@ -266,23 +189,7 @@ contract VaultAdmin is VaultStorage {
     /***************************************
                     Pause
     ****************************************/
-
-    /**
-     * @dev Set the deposit paused flag to true to prevent rebasing.
-     */
-    function pauseRebase() external onlyGovernorOrStrategist {
-        rebasePaused = true;
-        emit RebasePaused();
-    }
-
-    /**
-     * @dev Set the deposit paused flag to true to allow rebasing.
-     */
-    function unpauseRebase() external onlyGovernor {
-        rebasePaused = false;
-        emit RebaseUnpaused();
-    }
-
+    
     /**
      * @dev Set the deposit paused flag to true to prevent capital movement.
      */
@@ -326,7 +233,6 @@ contract VaultAdmin is VaultStorage {
      */
     function priceUSDMint(address asset) external view returns (uint256) {
         uint256 price = IOracle(priceProvider).price(asset);
-        require(price >= MINT_MINIMUM_ORACLE, "Asset price below peg");
         if (price > 1e8) {
             price = 1e8;
         }
@@ -359,19 +265,17 @@ contract VaultAdmin is VaultStorage {
      */
     function withdrawAllFromStrategy(address _strategyAddr) external onlyGovernorOrStrategist {
         require(strategies[_strategyAddr].isSupported, "!APVD");
-        IStrategy strategy = IStrategy(_strategyAddr);
-        strategy.withdrawAll();
+        IStrategy(_strategyAddr).liquidateAll();
     }
 
     /**
      * @dev Withdraws assets from the strategy and sends assets to the Vault.
      * @param _strategyAddr Strategy address.
-     * @param _amount Amount to withdraw
+     * @param _usd _usd to withdraw
      */
-    function withdrawFromStrategy(address _strategyAddr, uint256 _amount) external onlyGovernorOrStrategist {
+    function withdrawFromStrategy(address _strategyAddr, uint256 _usd) external onlyGovernorOrStrategist {
         require(strategies[_strategyAddr].isSupported, "!APVD");
-        IStrategy strategy = IStrategy(_strategyAddr);
-        strategy.withdraw(address(this), primaryStableAddress, _amount);
+        IStrategy(_strategyAddr).withdrawUsd(_usd);
     }
 
     /**
@@ -380,35 +284,13 @@ contract VaultAdmin is VaultStorage {
     function withdrawAllFromStrategies() external onlyGovernorOrStrategist {
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
-            strategy.withdrawAll();
+            strategy.liquidateAll();
         }
     }
 
     /*************************************
               Startegies Weights
     *************************************/
-    /**
-     * @dev Sort the StrategyWithWeight[] by weight property
-     * @param weights Array of StrategyWithWeight structs to sort to
-     * @return sorted Sorted array by weight of StrategyWithWeight structs
-     */
-    function sortWeightsByTarget(StrategyWithWeight[] memory weights) internal pure returns (StrategyWithWeight[] memory) {
-        uint256[] memory targets = new uint256[](weights.length);
-        for (uint256 i = 0; i < weights.length; i++) {
-            targets[i] = weights[i].targetWeight;
-        }
-        uint256[] memory indices = new uint256[](targets.length);
-        for (uint256 z = 0; z < indices.length; z++) {
-            indices[z] = z;
-        }
-        Array.quickSort(targets, 0, int256(targets.length - 1), indices);
-        StrategyWithWeight[] memory sorted = new StrategyWithWeight[](targets.length);
-        for (uint256 z = 0; z < indices.length; z++) {
-            sorted[z] = weights[indices[z]];
-        }
-        return sorted;
-    }
-
     /**
      * @dev Set the Weight against each strategy
      * @param _strategyWithWeights Array of StrategyWithWeight structs to set
@@ -492,6 +374,14 @@ contract VaultAdmin is VaultStorage {
      */
     function getAllStrategyWithWeights() public view returns (StrategyWithWeight[] memory) {
         return strategyWithWeights;
+    }
+
+    function getStrategiesFromWeights() public view returns (address[] memory) {
+        address[] memory _strategies = new address[](strategyWithWeights.length);
+        for (uint8 i = 0; i < strategyWithWeights.length; i++) {
+            _strategies[i] = strategyWithWeights[i].strategy;
+        }
+        return _strategies;
     }
 
     /***********************************
@@ -647,10 +537,22 @@ contract VaultAdmin is VaultStorage {
         require(_rebaseHandler != address(0));
         rebaseHandler = _rebaseHandler;
     }
-
+    /**
+     * @dev Set Daily Expected Yield
+     * @param _dailyExpectedYieldBps 1 bps = 0.01%
+     */
     function setDailyExpectedYieldBps(uint256 _dailyExpectedYieldBps) external onlyGovernor {
         dailyExpectedYieldBps = _dailyExpectedYieldBps;
     }
+    /**
+     * @dev Stop and start payout/rebase during depeg
+     * @param _dontRebaseDuringDepeg true to enable checking for depeg
+     */
+    function setDontRebaseDuringDepeg(bool _dontRebaseDuringDepeg) external onlyGovernor {
+        dontRebaseDuringDepeg = _dontRebaseDuringDepeg;
+    }
+
+
 
     /***************************
               PAYOUT
@@ -670,19 +572,18 @@ contract VaultAdmin is VaultStorage {
             return;
         }
 
-        // Check if the QD is present for PS (USDC)
-        require(assetDefaultStrategies[primaryStableAddress] != address(0), "!QD");
-        IERC20 _ps = IERC20(primaryStableAddress);
-        address _qd = assetDefaultStrategies[primaryStableAddress];
+        if (dontRebaseDuringDepeg) {
+            for(uint8 i = 0; i < allAssets.length; i++) {
+                IVaultCore(address(this)).validateAssetPeg(allAssets[i], 200);
+            }
+        }
 
         // log Initial State of vault
         uint256 _t = cash.totalSupply();
         uint256 _nav = IVaultCore(address(this)).nav();
-        uint256 _initCash = _t;
-        uint256 _rawPS = _ps.balanceOf(address(this));
-        console.log("I-TS: %s NAV: %s", _t, _nav);
+        uint256 _initNav  = _nav;
 
-        // Take yield from all strategies and put it to dripper via Harvester
+        console.log("I-TS: %s NAV: %s", _t, _nav);
         IHarvester(harvesterAddress).harvestAndDistribute();
 
         // Log state after Harvest and Distribute
@@ -691,36 +592,51 @@ contract VaultAdmin is VaultStorage {
         console.log("H-TS: %s, NAV: %s", _t, _nav);
 
         // Collect yield from Dripper and perform rebase
-        IDripper(dripperAddress).collectAndRebase();
+        IDripper(dripperAddress).collect();
 
         // Log state
         _t = cash.totalSupply();
         _nav = IVaultCore(address(this)).nav();
-        console.log("R-TS: %s, NAV: %s", _t, _nav);
+        console.log("COLL-TS: %s, NAV: %s", _t, _nav);
 
-        // Calculate how much did dripper sent to Vault
-        _rawPS = _ps.balanceOf(address(this)) - _rawPS; // Reusing old variable
-        if (_rawPS > 0) {
-            // We sent the yield sent by Dripper to its USDC's QD
-            _ps.safeTransfer(_qd, _rawPS);
-            IStrategy(_qd).deposit(address(_ps), _rawPS);
-            emit AssetAllocated(address(_ps), _qd, _rawPS);
-        }
+        // Balance the Vault
+        _balance();
 
         // Log the state
         _t = cash.totalSupply();
         _nav = IVaultCore(address(this)).nav();
-        console.log("QD-TS: %s, NAV: %s", _t, _nav);
+        console.log("R-TS: %s, NAV: %s", _t, _nav);
 
-        // Check if we got dailyExpectedYieldBps yield in the whole txn, if not revert
-        uint256 _finalCash = cash.totalSupply();
-        require((_finalCash - _initCash) > (_initCash * dailyExpectedYieldBps) / (1000000), Strings.toString(_finalCash - _initCash));
+        uint256 _navDiff = _nav.subOrZero(_initNav);
+        if (_navDiff > 0) {
+            uint256 _extraCASH = _navDiff.scaleBy(18, 8) / (IVaultCore(address(this)).price());
+            cash.changeSupply(cash.totalSupply() + _extraCASH);
+            IRebaseHandler(rebaseHandler).process();
+        }
 
-        emit Payout(_rawPS);
+        emit Payout(_navDiff);
         // update next payout time. Cycle for preventing gaps
         for (; block.timestamp >= nextPayoutTime - payoutTimeRange; ) {
             nextPayoutTime = nextPayoutTime + payoutPeriod;
         }
+    }
+
+    /**
+     * @dev Function to get the index of most stable asset using Oracle
+     */
+    function getMostStableAssetIndex() view internal returns (uint256) {
+        // Loop through all assets and find the one with price most close to 100000
+        uint256 _mostStableAssetIndex = 0;
+        uint256 _leastDifference = 1000000000; // 10 USD - Stable coin max cannot reach $10
+        uint256 _mostStableAssetPrice = 100000;
+        for (uint8 i; i < allAssets.length; i++) {
+            uint256 _price = IOracle(priceProvider).price(allAssets[i]);
+            if (_price.subFromBigger(_mostStableAssetPrice) < _leastDifference) {
+                _mostStableAssetIndex = i;
+                _mostStableAssetPrice = _price;
+            }
+        }
+        return _mostStableAssetIndex;
     }
 
     /***************************
@@ -738,28 +654,28 @@ contract VaultAdmin is VaultStorage {
      * @dev Balance the Vault with predefined weights
      */
     function _balance() internal {
-        IERC20 asset = IERC20(primaryStableAddress);
         require(strategyWithWeights.length > 0, "!WGT");
-        require(primaryStableAddress != address(0), "!PS");
+
 
         // 1. calc total USDC equivalent
-        uint256 totalAssetInStrat = 0;
         uint256 totalWeight = 0;
         for (uint8 i; i < strategyWithWeights.length; i++) {
             if (!strategyWithWeights[i].enabled) {
-                // Skip if strategy is not enabled
                 continue;
             }
 
-            // UnstakeFull from strategyWithWeights with targetWeight == 0
             if (strategyWithWeights[i].targetWeight == 0) {
-                IStrategy(strategyWithWeights[i].strategy).withdrawAll();
+                // console.log("LIQUIDATE_ALL: ", strategyWithWeights[i].strategy);
+                IStrategy(strategyWithWeights[i].strategy).liquidateAll();
             } else {
-                totalAssetInStrat += IStrategy(strategyWithWeights[i].strategy).checkBalance();
+                IStrategy(strategyWithWeights[i].strategy).withdrawStrayAssets();
                 totalWeight += strategyWithWeights[i].targetWeight;
             }
         }
-        uint256 totalAsset = totalAssetInStrat + asset.balanceOf(address(this));
+
+        uint256 _nav = IVaultCore(address(this)).nav();
+        // console.log("RBL : INIT_NAV :", _nav);
+
 
         // 3. calc diffs for strategyWithWeights liquidity
         Order[] memory stakeOrders = new Order[](strategyWithWeights.length);
@@ -775,39 +691,95 @@ contract VaultAdmin is VaultStorage {
             if (strategyWithWeights[i].targetWeight == 0) {
                 targetLiquidity = 0;
             } else {
-                targetLiquidity = (totalAsset * strategyWithWeights[i].targetWeight) / totalWeight;
+                targetLiquidity = (_nav * strategyWithWeights[i].targetWeight) / totalWeight;
             }
 
-            uint256 currentLiquidity = IStrategy(strategyWithWeights[i].strategy).checkBalance();
+            uint256 currentLiquidity = IStrategy(strategyWithWeights[i].strategy).netAssetValue();
             if (targetLiquidity == currentLiquidity) {
-                // skip already at target strategyWithWeights
                 continue;
             }
 
             if (targetLiquidity < currentLiquidity) {
-                // unstake now
-                IStrategy(strategyWithWeights[i].strategy).withdraw(address(this), address(asset), currentLiquidity - targetLiquidity);
+                IStrategy(strategyWithWeights[i].strategy).withdrawUsd(currentLiquidity - targetLiquidity);
             } else {
-                // save to stake later
                 stakeOrders[stakeOrdersCount] = Order(true, strategyWithWeights[i].strategy, targetLiquidity - currentLiquidity);
                 stakeOrdersCount++;
                 stakeRequirement += targetLiquidity - currentLiquidity;
             }
         }
-        console.log("RBL: AV: %s", asset.balanceOf(address(this)));
+        console.log("RBL: AV: %s", IVaultCore(address(this)).vaultNav());
         console.log("RBL: RQ: %s", stakeRequirement);
-        // 4.  make staking
-        for (uint8 i; i < stakeOrdersCount; i++) {
-            address strategy = stakeOrders[i].strategy;
-            uint256 amount = stakeOrders[i].amount;
 
-            uint256 currentBalance = asset.balanceOf(address(this));
+        IStrategy _strategy;
+        address _token0;
+        uint256[] memory _neededAmounts  = new uint256[](3);
+        // 4.  Try to make staking without swapping
+        for (uint8 i; i < stakeOrdersCount; i++) {
+            _strategy = IStrategy(stakeOrders[i].strategy);
+            _token0 = _strategy.token0();
+            // Converting USD to _token0
+            uint256 amount = (stakeOrders[i].amount * (10**Helpers.getDecimals(_token0)))/ (IOracle(priceProvider).price(_token0));
+            stakeOrders[i].amount = amount; 
+            uint256 currentBalance = IERC20(_token0).balanceOf(address(this));
+            if (amount >  currentBalance) {
+                for(uint8 j=0; j < allAssets.length; j++) {
+                    if (allAssets[j] == _token0) {
+                        _neededAmounts[j] += amount - currentBalance;
+                        break;
+                    }
+                }
+            }
+            if (currentBalance == 0) {
+                continue;
+            }
             if (currentBalance < amount) {
                 amount = currentBalance;
             }
-            asset.transfer(strategy, amount);
+            IERC20(_token0).safeTransfer(address(_strategy), amount);
+            stakeOrders[i].amount -= amount;
+        }
 
-            IStrategy(strategy).deposit(address(asset), amount);
+        if (_neededAmounts[0] == 0 && _neededAmounts[1] == 0 && _neededAmounts[2] == 0) {
+            return;
+        }
+
+        // Ensuring everything is in Most Stable Asset
+        address _swapTo = allAssets[getMostStableAssetIndex()];
+        for(uint8 i=0; i < allAssets.length; i++) {
+            if (allAssets[i] == _swapTo  || IERC20(allAssets[i]).balanceOf(address(this)) == 0)  {
+                continue;
+            }
+            IVaultCore(address(this)).swapAsset(allAssets[i], _swapTo, IERC20(allAssets[i]).balanceOf(address(this)));
+        }
+
+        // Calculating proportions
+        uint256 _stableAssetBalance = IERC20(_swapTo).balanceOf(address(this));
+        uint256[] memory _proportionsOfMSA = new uint256[](3);
+        uint256 _total = _neededAmounts[0] + _neededAmounts[1].scaleBy(18, 6) + _neededAmounts[2].scaleBy(18, 6);
+        for(uint8 i=0; i < allAssets.length; i++) {
+            _proportionsOfMSA[i] = (_stableAssetBalance * _neededAmounts[i].scaleBy(18, Helpers.getDecimals(allAssets[i])) / _total); // Amount of MSA, that will be used for ith Asset
+        }
+
+        for (uint8 i; i < stakeOrdersCount; i++) {
+            _strategy = IStrategy(stakeOrders[i].strategy);
+            _token0 = _strategy.token0();
+            uint256 _tIndex = IVaultCore(address(this)).getAssetIndex(_token0);
+            // Converted in previous step
+            uint256 amount = stakeOrders[i].amount;
+            if (amount == 0) {
+                continue;
+            }
+            // Calculate proportion of MSA to use for _amount
+            uint256 _amountToTransfer = IERC20(_token0).balanceOf(address(this));
+            IVaultCore(address(this)).swapAsset(_swapTo, _token0, (amount * _proportionsOfMSA[_tIndex]) / _neededAmounts[_tIndex]);
+            _amountToTransfer = IERC20(_token0).balanceOf(address(this)) - _amountToTransfer;
+            IERC20(_token0).safeTransfer(address(_strategy), _amountToTransfer);
+        }
+        // Direct-deposit all at once, GAS savings
+        for(uint8 i=0; i < strategyWithWeights.length; i++) {
+            if (IERC20(IStrategy(strategyWithWeights[i].strategy).token0()).balanceOf(strategyWithWeights[i].strategy) > 0) {
+                IStrategy(strategyWithWeights[i].strategy).directDeposit();
+            }
         }
     }
 }

@@ -7,5 +7,5 @@ interface IMiniVault {
     function priceProvider() external view returns (address);
     function swappingPool() external view returns (address);
     function poolBalanceCheckExponent() external view returns (uint256);
-
+    function getSupportedAssets() external view returns (address[] memory);
 }

@@ -135,7 +135,7 @@ contract StargateStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
         return howMuchToSwap(curvePool, address(token0), address(primaryStable), _psAmount);
     }
 
-    function deposit(address _asset, uint256 _amount) external override onlyVault nonReentrant {
+    function deposit(address _asset, uint256 _amount) external  onlyVault nonReentrant {
         require(_asset == address(primaryStable), "Token not supported.");
         require(_amount > 0, "Must deposit something");
         _swapPrimaryStableToToken0();
@@ -153,7 +153,7 @@ contract StargateStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
         chef.deposit(poolId, lpBal);
     }
 
-    function depositAll() public override onlyVault nonReentrant {
+    function depositAll() public  onlyVault nonReentrant {
         _stake(token0.balanceOf(address(this)));
     }
 
@@ -161,7 +161,7 @@ contract StargateStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
         address _beneficiary,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant {
+    ) external  onlyVault nonReentrant {
         require(_asset == address(primaryStable), "Token not supported.");
         uint256 _eq = _equivalentInToken0(_amount);
         uint256 numberOfShares = (_eq.addBasisPoints(40) * lpToken.totalSupply()) / lpToken.totalLiquidity() / lpToken.convertRate();
@@ -188,7 +188,7 @@ contract StargateStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function withdrawAll() external override onlyVault nonReentrant {
+    function withdrawAll() external  onlyVault nonReentrant {
         _withdrawAll();
         _swapAssetToPrimaryStable();
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
@@ -238,7 +238,7 @@ contract StargateStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
         }
     }
 
-    function checkBalance() external view override returns (uint256) {
+    function checkBalance() external view  returns (uint256) {
         uint256 balanceWithInvestments = (lpBalance() * lpToken.convertRate() * lpToken.totalLiquidity()) / lpToken.totalSupply();
 
         // swap to PrimaryStable
@@ -304,13 +304,4 @@ contract StargateStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
             swap(curvePool, address(primaryStable), address(token0), primaryStableBalance, oracleRouter);
         }
     }
-
-    function supportsAsset(address _asset) external view override returns (bool) {
-        return _asset == address(primaryStable);
-    }
-
-    /* NOT NEEDED */
-    function safeApproveAllTokens() external override {}
-
-    function _abstractSetPToken(address _asset, address _cToken) internal override {}
 }

@@ -185,7 +185,7 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Cu
         address _asset,
         uint256 _amount
     )   external
-        override
+        
         onlyVault
         nonReentrant {
 
@@ -193,7 +193,7 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Cu
         _deposit(_asset, _amount);
     }
 
-    function depositAll() external override onlyVault nonReentrant {
+    function depositAll() external  onlyVault nonReentrant {
         _deposit(address(primaryStable), primaryStable.balanceOf(address(this)));
     }
     function _lpToWithdraw(uint256 _amount0ToSwap, uint256 _amount1ToSwap, uint256 _totalLP, uint256 _r0, uint256 _r1) internal pure returns (uint256) {
@@ -206,7 +206,7 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Cu
         address _beneficiary,
         address _asset,
         uint256 _amount
-    ) external override onlyVaultOrGovernor nonReentrant  {
+    ) external  onlyVaultOrGovernor nonReentrant  {
 
         require(_asset == address(primaryStable), "Token not supported.");
         (uint256 reserve0, uint256 reserve1) = getReserves();
@@ -247,7 +247,7 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Cu
        
     }
 
-    function withdrawAll() external override onlyVault nonReentrant  {
+    function withdrawAll() external onlyVault nonReentrant  {
         (uint256 reserve0, uint256 reserve1) = getReserves();
         _withdrawFromDystopiaAndStakeToPenrose();
         // Fetch amount of penPool LP currently staked
@@ -285,7 +285,6 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Cu
     function checkBalance()
         external
         view
-        override
         returns (uint256 balance)
     {
         // uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
@@ -452,40 +451,5 @@ contract DystopiaStrategy is InitializableAbstractStrategy, DystopiaExchange, Cu
         minThresholds = _minThresholds;
     }
 
-     /**
-     * @dev Retuns bool indicating whether asset is supported by strategy
-     * @param _asset Address of the asset
-     */
-    function supportsAsset(address _asset)
-        external
-        view
-        override
-        returns (bool)
-    {
-        return _asset == address(primaryStable);
-    }
-
-    /**
-     * @dev Approve the spending of all assets by their corresponding cToken,
-     *      if for some reason is it necessary.
-     */
-    function safeApproveAllTokens() external override {
-        // NOT NEEDED
-    }
-
-    
-
-    /**
-     * @dev Internal method to respond to the addition of new asset / cTokens
-     *      We need to approve the cToken and give it permission to spend the asset
-     * @param _asset Address of the asset to approve
-     * @param _cToken The cToken for the approval
-     */
-    function _abstractSetPToken(address _asset, address _cToken)
-        internal
-        override
-    {
-        // NOT NEEDED
-    }
    
 }

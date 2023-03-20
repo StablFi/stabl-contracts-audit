@@ -12,11 +12,11 @@ contract VaultValueChecker {
     }
 
     function takeSnapshot() external {
-        snapshotValue = vault.totalValue();
+        snapshotValue = vault.nav();
     }
 
     function checkLoss(int256 maxLoss) external {
-        uint256 currentValue = vault.totalValue();
+        uint256 currentValue = vault.nav();
         int256 actualLoss = int256(snapshotValue) - int256(currentValue);
         require(actualLoss < maxLoss, "Max loss exceeded");
     }

@@ -76,6 +76,9 @@ async function defaultFixture() {
 
   const oracleRouter = await ethers.getContract("OracleRouter");
 
+  const swapperProxy = await ethers.getContract("SwapperProxy");
+  const swapper = await ethers.getContractAt("Swapper", swapperProxy.address);
+
   try {
     await fundAccounts();
   } catch(error) {
@@ -551,6 +554,9 @@ async function defaultFixture() {
       gainsDAIStrategy: cGainsDAIStrategy
       
     };
+    await runStrategyLogic(governor, "Tetu Strategy", cTetuUsdcStrategyProxy.address); // require whitelisting first.
+    await runStrategyLogic(governor, "Tetu Strategy", cTetuUsdtStrategyProxy.address); // require whitelisting first.
+    await runStrategyLogic(governor, "Tetu Strategy", cTetuDaiStrategyProxy.address); // require whitelisting first.
     
   } else {
     const cMeshSwapStrategyUSDCProxy = await ethers.getContract(
@@ -575,8 +581,8 @@ async function defaultFixture() {
   }*/
   
   let contracts = { cash, vault, vaultAdmin, vaultCore, harvester, dripper, governorContract, wcash, oracleRouter, chainlinkOracleFeedDAI, chainlinkOracleFeedUSDT, chainlinkOracleFeedUSDC, 
-                chainlinkOracleFeedETH, rebaseToNonEoaHandler, uniswapV2PairCASHUSDC};
-  let assets = {usdt, dai, tusd, usdc, primaryStable, wmatic, nonStandardToken, mockNonRebasing, mockNonRebasingTwo};
+                chainlinkOracleFeedETH, rebaseToNonEoaHandler, uniswapV2PairCASHUSDC, swapper};
+  let assets = {usdt, dai, tusd, usdc, tetu, primaryStable, wmatic, nonStandardToken, mockNonRebasing, mockNonRebasingTwo};
   let abis = {erc20Abi};
   let accounts = { matt, josh, rio, anna, governor, strategist, adjuster};
   let feeCollectors = {Labs, Team};

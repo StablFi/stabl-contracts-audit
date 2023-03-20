@@ -91,6 +91,9 @@ function quickUnits(amount) {
 function usdcUnitsFormat(amount) {
   return formatUnits(amount, 6);
 }
+function usdUnitsFormat(amount) {
+  return formatUnits(amount, 8);
+}
 
 function tusdUnits(amount) {
   return parseUnits(amount, 18);
@@ -410,7 +413,6 @@ const getAssetAddresses = async (deployments) => {
       balancerAmUsdtToken: addresses.polygon.balancerAmUsdtToken, // token: am-usdt
       balancerAmUsdcToken: addresses.polygon.balancerAmUsdcToken, // token: am-usdc
 
-
       redeemFeeBps: addresses.polygon.redeemFeeBps,
       mintFeeBps: addresses.polygon.mintFeeBps,
       Labs: addresses.polygon.Labs,
@@ -612,5 +614,6 @@ module.exports = {
   isMainnetButNotFork,
   isVerificationRequired,
   forceStorageLayoutCheck,
-  isPolygonStaging
+  isPolygonStaging,
+  usdUnitsFormat
 };

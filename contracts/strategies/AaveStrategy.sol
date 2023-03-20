@@ -132,7 +132,6 @@ contract AaveStrategy is InitializableAbstractStrategy, BalancerExchange {
      */
     function deposit(address _asset, uint256 _amount)
         external
-        override
         onlyVault
         nonReentrant
     {
@@ -158,7 +157,7 @@ contract AaveStrategy is InitializableAbstractStrategy, BalancerExchange {
     /**
      * @dev Deposit the entire balance of any supported asset into Aave
      */
-    function depositAll() external override onlyVault nonReentrant {
+    function depositAll() external  onlyVault nonReentrant {
         // // console.log("Depositing All");
 
         // for (uint256 i = 0; i < assetsMapped.length; i++) {
@@ -270,14 +269,14 @@ contract AaveStrategy is InitializableAbstractStrategy, BalancerExchange {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant {
+    ) external  onlyVault nonReentrant {
         // _withdraw(_recipient, _asset, _amount);
     }
 
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
+    function withdrawAll() external  onlyVaultOrGovernor nonReentrant {
         // console.log("Withdrawing All");
         // _withdraw(vaultAddress, address(token),_tokenBalance().add(_checkBalance(address(token))));
     }
@@ -289,7 +288,6 @@ contract AaveStrategy is InitializableAbstractStrategy, BalancerExchange {
     function checkBalance()
         external
         view
-        override
         returns (uint256 balance)
     {
         // Balance is always with token aToken decimals
@@ -305,57 +303,7 @@ contract AaveStrategy is InitializableAbstractStrategy, BalancerExchange {
         // balance = IERC20(aToken).balanceOf(address(this));
     }
 
-    /**
-     * @dev Returns bool indicating whether asset is supported by strategy
-     * @param _asset Address of the asset
-     */
-    function supportsAsset(address _asset)
-        external
-        view
-        override
-        returns (bool)
-    {
-        return assetToPToken[_asset] != address(0);
-    }
-
-    /**
-     * @dev Approve the spending of all assets by their corresponding aToken,
-     *      if for some reason is it necessary.
-     */
-    function safeApproveAllTokens()
-        external
-        override
-        onlyGovernor
-        nonReentrant
-    {
-        // approve the pool to spend the Asset
-        for (uint256 i = 0; i < assetsMapped.length; i++) {
-            address asset = assetsMapped[i];
-            // Safe approval
-            IERC20(asset).safeApprove(address(pool), 0);
-            IERC20(asset).safeApprove(address(pool), type(uint256).max);
-            IERC20(asset).safeApprove(address(incentivesController), 0);
-            IERC20(asset).safeApprove(address(incentivesController), type(uint256).max);
-            IERC20(_getATokenFor(asset)).safeApprove(address(incentivesController), 0);
-            IERC20(_getATokenFor(asset)).safeApprove(address(incentivesController), type(uint256).max);
-        }
-    }
-
-    /**
-     * @dev Internal method to respond to the addition of new asset / aTokens
-            We need to give the AAVE lending pool approval to transfer the
-            asset.
-     * @param _asset Address of the asset to approve
-     * @param _aToken Address of the aToken
-     */
-    function _abstractSetPToken(address _asset, address _aToken)
-        internal
-        override
-    {
-        IERC20(_asset).safeApprove(address(pool), 0);
-        IERC20(_asset).safeApprove(address(pool), type(uint256).max);
-
-    }
+    
 
     /**
      * @dev Get the aToken wrapped in the IERC20 interface for this asset.

@@ -122,21 +122,21 @@ contract GainsStrategy is InitializableAbstractStrategy, CurveExchange   {
         address _asset,
         uint256 _amount
     )   external
-        override
+        
         onlyVault
         nonReentrant {
         require(_asset == address(primaryStable), "Token not compatible.");
         _deposit(_asset, _amount);
     }
 
-    function depositAll() external override onlyVault nonReentrant {
+    function depositAll() external  onlyVault nonReentrant {
         _deposit(address(token0), token0.balanceOf(address(this)));
     }
     function withdraw(
         address _beneficiary,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant  {
+    ) external  onlyVault nonReentrant  {
         require(_asset == address(primaryStable), "Token not compatible.");
         uint256 token0Amount = _oraclePrimaryStableToToken0(_amount);
         if (token0Amount < minThresholds[1]) {
@@ -151,7 +151,7 @@ contract GainsStrategy is InitializableAbstractStrategy, CurveExchange   {
         primaryStable.safeTransfer(_beneficiary, primaryStableBalance);
     }
 
-    function withdrawAll() external override onlyVault nonReentrant  {
+    function withdrawAll() external  onlyVault nonReentrant  {
         uint256 token0DepositedAmount = gainsVault.users(address(this)).daiDeposited;
         if (token0DepositedAmount < minThresholds[1]) {
             console.log("Unstakable token0/LP token amount is too low to be withdrawn: ", token0DepositedAmount);
@@ -185,7 +185,6 @@ contract GainsStrategy is InitializableAbstractStrategy, CurveExchange   {
     function checkBalance()
         external
         view
-        override
         returns (uint256)
     {
         uint256 _psBalance = primaryStable.balanceOf(address(this));
@@ -324,40 +323,7 @@ contract GainsStrategy is InitializableAbstractStrategy, CurveExchange   {
 
 
 
-     /**
-     * @dev Retuns bool indicating whether asset is supported by strategy
-     * @param _asset Address of the asset
-     */
-    function supportsAsset(address _asset)
-        external
-        view
-        override
-        returns (bool)
-    {
-        return _asset == address(primaryStable);
-    }
-
-    /**
-     * @dev Approve the spending of all assets by their corresponding cToken,
-     *      if for some reason is it necessary.
-     */
-    function safeApproveAllTokens() external override {
-        // Not needed
-    }
-
-    /**
-     * @dev Internal method to respond to the addition of new asset / cTokens
-     *      We need to approve the cToken and give it permission to spend the asset
-     * @param _asset Address of the asset to approve
-     * @param _cToken The cToken for the approval
-     */
-    function _abstractSetPToken(address _asset, address _cToken)
-        internal
-        override
-    {
-        // Not needed
-    }
-    
+     
     /**
      * @dev Get the index of the coin
      */

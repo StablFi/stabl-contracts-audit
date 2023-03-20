@@ -83,7 +83,7 @@ async function main() {
     });
     const governorSigner = await ethers.provider.getSigner(governor);
     // await upgradeCASH(governorSigner, cash.address);
-    await upgradeRebaseHandler(governorSigner,  await vault.rebaseHandler());
+    // await upgradeRebaseHandler(governorSigner,  await vault.rebaseHandler());
 
     let cashTotalSupply = await cash.totalSupply();
     let vaultCheckBalance = await vault.checkBalance();
@@ -100,7 +100,7 @@ async function main() {
     console.log("Current time: ",  new Date( (await ethers.provider.getBlock(blockNumber)).timestamp * 1000) )
     await network.provider.send("hardhat_setBalance", [governor, "0x90000000000000000"]);
     await dripper.connect(governorSigner).setDripDuration(7*24*60*60)
-    // await mintUSDC(governor, usdcUnits("100000"));
+    await mintUSDC(governor, usdcUnits("100000"));
     let total = 0;
     let dateJson = {};
     // Deposit 2 USDC each hours in dripper
@@ -117,7 +117,7 @@ async function main() {
         await usdc.connect(governorSigner).transfer(vault.address, usdcUnits("100"));
         console.log("Vault.rebase()");
         await  vault.connect(governorSigner).rebase();
-        console.log("Time travel to 6 hour")
+        // console.log("Time travel to 6 hour")
         // await advanceTime(6*60*60)
         // await advanceBlocks(42000/4);
 

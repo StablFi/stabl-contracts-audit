@@ -25,8 +25,7 @@ const {
     advanceBlocks,
   } = require("../../test/helpers");
 
-
-const whale = "0xF977814e90dA44bFA03b6295A0616a897441aceC" // Make sure address have USDC & MATIC  both
+const whale = "0xe7804c37c13166fF0b37F5aE0BB07A3aEbb6e245" // Make sure address have USDC & MATIC  both
 const mintUSDC = async (recipiet, amount) => {
       await hre.network.provider.request({
           method: "hardhat_impersonateAccount",
@@ -67,9 +66,10 @@ async function main() {
     console.log("Strategy count: ", (await vault.getStrategyCount()).toString())
     console.log("Current time: ",  toUTC(new Date( (await ethers.provider.getBlock(blockNumber)).timestamp * 1000)) )
     await dripper.connect(governorSigner).setDripDuration(7*24*60*60)
-    await mintUSDC(governor, usdcUnits("100000"));
+    await mintUSDC("0x930D1F949631FC8aAEBAf174e286a3ECf5093C46", usdcUnits("100000"));
+    console.log("Dripper USDC Balance: ", usdcUnitsFormat(await usdc.balanceOf("0x930D1F949631FC8aAEBAf174e286a3ECf5093C46")))
+    return;
 
- 
     console.log("Starting simulation")
     let total = 0;
     let dateJson = {};
@@ -81,9 +81,6 @@ async function main() {
         let blockNumber = await ethers.provider.getBlockNumber();
         console.log("Block number: ", blockNumber);
         console.log("Current time (UTC): ",  toUTC(new Date( (await ethers.provider.getBlock(blockNumber)).timestamp * 1000)) )
-
-
-
 
         console.log("Transferring 50 USDC to dripper");
         await usdc.connect(governorSigner).transfer(dripper.address, usdcUnits("50"));
@@ -101,8 +98,6 @@ async function main() {
         console.log("Time travel to 9 AM next day")
         await advanceTime(timeDiff/1000);
         console.log("After moving, now time: ",  new Date( (await ethers.provider.getBlock(blockNumber)).timestamp * 1000) )
-
-
 
         _beforeDripperUsdcBalance = await usdc.balanceOf(dripper.address);
         console.log("Dripper.collectAndRebase()");

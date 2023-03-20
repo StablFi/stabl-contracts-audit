@@ -123,20 +123,20 @@ contract DodoStrategy is InitializableAbstractStrategy, BalancerExchange, DodoEx
     }
     function deposit(address _asset, uint256 _amount)
         external
-        override
+        
         onlyVault
         nonReentrant
     {
         _deposit(_asset, _amount);
     }
-    function depositAll() external override onlyVault nonReentrant {
+    function depositAll() external  onlyVault nonReentrant {
         _deposit(address(primaryStable), primaryStable.balanceOf(address(this)));
     }
     function withdraw(
         address _beneficiary,
         address _asset,
         uint256 _amount
-    ) external override onlyVault nonReentrant  {
+    ) external  onlyVault nonReentrant  {
         require(( (_asset == address(primaryStable)) && (_asset == assetsMapped[0] ) ), "Token not supported.");
         // console.log("Starting withdrawing from DODO of",_asset, _amount);
         uint256 amountToUnstake = StrategyDodoLibrary._getAmountIn(_amount, dodoV1UsdcUsdtPool);
@@ -166,7 +166,7 @@ contract DodoStrategy is InitializableAbstractStrategy, BalancerExchange, DodoEx
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function withdrawAll() external override onlyVault nonReentrant {
+    function withdrawAll() external  onlyVault nonReentrant {
         // get all lp tokens
         uint256 userLPBalance = dodoMine.balanceOf(address(this));
         if (userLPBalance == 0) {
@@ -269,7 +269,7 @@ contract DodoStrategy is InitializableAbstractStrategy, BalancerExchange, DodoEx
     function checkBalance()
         external
         view
-        override
+        
         returns (uint256 balance)
     {
 
@@ -288,15 +288,5 @@ contract DodoStrategy is InitializableAbstractStrategy, BalancerExchange, DodoEx
         }
         return primaryStableBalance;
     }
-    function supportsAsset(address _asset)
-        external
-        view
-        override
-        returns (bool)
-    {
-        return ( (_asset == address(primaryStable)) && (_asset == assetsMapped[0] ) );
-    }
-    /* NOT NEEDED */
-    function safeApproveAllTokens() external override  {}
-    function _abstractSetPToken(address _asset, address _cToken)internal override {}
+    
 }

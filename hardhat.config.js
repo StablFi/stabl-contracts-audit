@@ -73,7 +73,7 @@ const MAINNET_DEPLOYER = process.env.MAINNET_DEPLOYER;
 const MAINNET_GOVERNOR = process.env.MAINNET_DEPLOYER;
 var MAINNET_DEPLOYER_GATEPASS = "afdfd9c3d2095ef696114f6cedcae59e72dcd697e2a7521b1578140422a4f890"; // Public Sample - should not to used anywhere
 try {
-  MAINNET_DEPLOYER_GATEPASS = decryptr.decrypt(process.env.MAINNET_DEPLOYER_PK)
+  MAINNET_DEPLOYER_GATEPASS = decryptr.decrypt(process.env.MAINNET_DEPLOYER_PK).trim()
 } catch (error) {
   console.error("No valid MAINNET_DEPLOYER_PK found.");
 }
@@ -143,7 +143,7 @@ task("balance", "Get CASH balance of an account")
 // Vault tasks.
 task("allocate", "Call allocate() on the Vault", allocate);
 task("rebalance", "Call rebalance() on the Vault", rebalance);
-task("capital", "Set the Vault's pauseCapital flag", capital);
+task("capital", "Set the Vault's pauseCapital flag", capital).addParam("pause", "");
 task("harvest", "Call harvest() on Vault", harvest);
 task("rebase", "Call rebase() on the Vault", rebase);
 task("payout", "Call payout() on the Vault", payout);
@@ -190,8 +190,6 @@ task("set_performance_fee", "Set Fee Bps for Harvester")
   .addParam("labsbps", "Labs BPS")
   .addParam("teambps", "Team BPS")
   .setAction(setPerformanceFee);
-
-
 
 task("vault_remove_strategy", "Removed strategy from Vault")
   .addParam("strategy", "The strategy's address")
@@ -289,8 +287,9 @@ module.exports = {
       url: `${process.env.PROVIDER_URL}`,
       accounts: [MAINNET_DEPLOYER_GATEPASS],
       gasMultiplier: 3.5,
-      gasPrice: 80e9,
-      // blockGasLimit: 24000000
+      gasPrice: 700e9,
+      gas: 6000000,
+      blockGasLimit: 2400000000
     },
     polygon_staging: {
       url: `${process.env.PROVIDER_URL}`,

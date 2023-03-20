@@ -28,7 +28,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      */
     function deposit(address _asset, uint256 _amount)
         external
-        override
+        
         virtual
         onlyVault
         nonReentrant
@@ -59,7 +59,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     /**
      * @dev Deposit the entire balance of any supported asset into the Curve 3pool
      */
-    function depositAll() external override virtual onlyVault nonReentrant {
+    function depositAll() external  virtual onlyVault nonReentrant {
         uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
         uint256 depositValue = 0;
         ICurvePool curvePool = ICurvePool(platformAddress);
@@ -106,7 +106,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external override virtual onlyVault nonReentrant {
+    ) external  virtual onlyVault nonReentrant {
         require(_amount > 0, "Invalid amount");
 
         emit Withdrawal(_asset, address(assetToPToken[_asset]), _amount);
@@ -143,7 +143,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function withdrawAll() external override virtual onlyVaultOrGovernor nonReentrant {
+    function withdrawAll() external  virtual onlyVaultOrGovernor nonReentrant {
         // Withdraw all from Gauge
         (, uint256 gaugePTokens, uint256 totalPTokens) = _getTotalPTokens();
         _lpWithdraw(gaugePTokens);
@@ -173,7 +173,6 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         public
         view
         virtual
-        override
         returns (uint256 balance)
     {
         
@@ -186,7 +185,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     function supportsAsset(address _asset)
         external
         view
-        override
+        
         returns (bool)
     {
         return assetToPToken[_asset] != address(0);
@@ -198,7 +197,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      */
     function safeApproveAllTokens()
         external
-        override
+        
         onlyGovernor
         nonReentrant
     {
@@ -227,16 +226,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
             uint256 totalPTokens
         );
 
-    /**
-     * @dev Call the necessary approvals for the Curve pool and gauge
-     * @param _asset Address of the asset
-     */
-    function _abstractSetPToken(address _asset, address _pToken)
-        internal
-        override
-    {
-        _approveAsset(_asset);
-    }
+    
 
     function _approveAsset(address _asset) internal {
         IERC20 asset = IERC20(_asset);

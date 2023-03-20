@@ -98,21 +98,21 @@ contract ClearpoolStrategy is InitializableAbstractStrategy, CurveExchange   {
         address _asset,
         uint256 _amount
     )   external
-        override
+        
         onlyVault
         nonReentrant {
         require(_asset == address(primaryStable), "Token not compatible.");
         _deposit(_asset, _amount);
     }
 
-    function depositAll() external override onlyVault nonReentrant {
+    function depositAll() external  onlyVault nonReentrant {
         _deposit(address(token0), token0.balanceOf(address(this)));
     }
     function withdraw(
         address _beneficiary,
         address _asset,
         uint256 _amount
-    ) external override onlyVaultOrGovernor nonReentrant  {
+    ) external  onlyVaultOrGovernor nonReentrant  {
         require(_asset == address(primaryStable), "Token not compatible.");
         // add 10 to unstake more than requested _amount
         uint256 lpTokenAmount = (_amount + 10) * 1e18 / poolBase.getCurrentExchangeRate();
@@ -128,7 +128,7 @@ contract ClearpoolStrategy is InitializableAbstractStrategy, CurveExchange   {
         primaryStable.safeTransfer(_beneficiary, primaryStableBalance);
     }
 
-    function withdrawAll() external override onlyVaultOrGovernor nonReentrant  {
+    function withdrawAll() external  onlyVaultOrGovernor nonReentrant  {
         uint256 lpTokenAmount = poolBase.balanceOf(address(this));
         console.log("Withdrawing all LP tokens", lpTokenAmount);
         if (lpTokenAmount < minThresholds[1]) {
@@ -144,7 +144,6 @@ contract ClearpoolStrategy is InitializableAbstractStrategy, CurveExchange   {
     function checkBalance()
         external
         view
-        override
         returns (uint256)
     {
         return (poolBase.balanceOf(address(this)) * poolBase.getCurrentExchangeRate() / 1e18) + primaryStable.balanceOf(address(this));
@@ -204,39 +203,4 @@ contract ClearpoolStrategy is InitializableAbstractStrategy, CurveExchange   {
             );
         }
     }
-
-     /**
-     * @dev Retuns bool indicating whether asset is supported by strategy
-     * @param _asset Address of the asset
-     */
-    function supportsAsset(address _asset)
-        external
-        view
-        override
-        returns (bool)
-    {
-        return _asset == address(primaryStable);
-    }
-
-    /**
-     * @dev Approve the spending of all assets by their corresponding cToken,
-     *      if for some reason is it necessary.
-     */
-    function safeApproveAllTokens() external override {
-        // Not needed
-    }
-
-    /**
-     * @dev Internal method to respond to the addition of new asset / cTokens
-     *      We need to approve the cToken and give it permission to spend the asset
-     * @param _asset Address of the asset to approve
-     * @param _cToken The cToken for the approval
-     */
-    function _abstractSetPToken(address _asset, address _cToken)
-        internal
-        override
-    {
-        // Not needed
-    }
-   
 }

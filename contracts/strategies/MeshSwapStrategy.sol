@@ -62,7 +62,6 @@ contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
         meshToken = IERC20(_platformAddress);
         meshSwapToken0 = IMeshSwapLP(_pTokens[0]);
         _setUniswapRouter(_router);
-        _abstractSetPToken(_assets[0],_pTokens[0]);
 
         super._initialize(
             _platformAddress,
@@ -96,14 +95,14 @@ contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
         address _asset,
         uint256 _amount
     )   external
-        override
+        
         onlyVault
         nonReentrant {
         require(_asset == address(primaryStable), "Token not compatible.");
         _deposit(_asset, _amount);
     }
 
-    function depositAll() external override onlyVault nonReentrant {
+    function depositAll() external  onlyVault nonReentrant {
         _deposit(address(token0), token0.balanceOf(address(this)));
     }
 
@@ -112,7 +111,7 @@ contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
         address _beneficiary,
         address _asset,
         uint256 _amount
-    ) external override onlyVaultOrGovernor nonReentrant  {
+    ) external  onlyVaultOrGovernor nonReentrant  {
         require(_asset == address(primaryStable), "Token not compatible.");
         meshSwapToken0.withdrawToken(_amount);
         console.log("MeshSwapStrategy - withdraw - token0: ", token0.balanceOf(address(this)));
@@ -123,7 +122,7 @@ contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
         primaryStable.safeTransfer(_beneficiary, primaryStableBalance);
     }
 
-    function withdrawAll() external override onlyVaultOrGovernor nonReentrant  {
+    function withdrawAll() external  onlyVaultOrGovernor nonReentrant  {
         meshSwapToken0.withdrawTokenByAmount(meshSwapToken0.balanceOf(address(this)));
         _swapAssetToPrimaryStable();
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
@@ -133,7 +132,7 @@ contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
     function checkBalance()
         external
         view
-        override
+        
         returns (uint256)
     {
         uint256 primaryStableBalance = primaryStable.balanceOf(address(this));
@@ -229,39 +228,4 @@ contract MeshSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, C
             );
         }
     }
-
-     /**
-     * @dev Retuns bool indicating whether asset is supported by strategy
-     * @param _asset Address of the asset
-     */
-    function supportsAsset(address _asset)
-        external
-        view
-        override
-        returns (bool)
-    {
-        return _asset == address(primaryStable);
-    }
-
-    /**
-     * @dev Approve the spending of all assets by their corresponding cToken,
-     *      if for some reason is it necessary.
-     */
-    function safeApproveAllTokens() external override {
-        // Not needed
-    }
-
-    /**
-     * @dev Internal method to respond to the addition of new asset / cTokens
-     *      We need to approve the cToken and give it permission to spend the asset
-     * @param _asset Address of the asset to approve
-     * @param _cToken The cToken for the approval
-     */
-    function _abstractSetPToken(address _asset, address _cToken)
-        internal
-        override
-    {
-        // Not needed
-    }
-   
 }

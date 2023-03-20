@@ -279,94 +279,94 @@ module.exports = deploymentWithProposal(
 
     // BALANCER STRATEGY:
     // balancer-usdc
-    const cBalancerUsdcStrategyProxy = await ethers.getContract(
-      "BalancerStrategyUSDCProxy"
-    );
-    const cBalancerStrategyUsdc = await ethers.getContractAt(
-      "BalancerStrategy",
-      cBalancerUsdcStrategyProxy.address
-    );
-    console.log(
-      "cBalancerUsdcStrategyProxy.address",
-      cBalancerUsdcStrategyProxy.address
-    );
+    // const cBalancerUsdcStrategyProxy = await ethers.getContract(
+    //   "BalancerStrategyUSDCProxy"
+    // );
+    // const cBalancerStrategyUsdc = await ethers.getContractAt(
+    //   "BalancerStrategy",
+    //   cBalancerUsdcStrategyProxy.address
+    // );
+    // console.log(
+    //   "cBalancerUsdcStrategyProxy.address",
+    //   cBalancerUsdcStrategyProxy.address
+    // );
 
-    // balancer-usdt
-    const cBalancerUsdtStrategyProxy = await ethers.getContract(
-      "BalancerStrategyUSDTProxy"
-    );
-    const cBalancerStrategyUsdt = await ethers.getContractAt(
-      "BalancerStrategy",
-      cBalancerUsdtStrategyProxy.address
-    );
-    console.log(
-      "cBalancerUsdtStrategyProxy.address",
-      cBalancerUsdtStrategyProxy.address
-    );
+    // // balancer-usdt
+    // const cBalancerUsdtStrategyProxy = await ethers.getContract(
+    //   "BalancerStrategyUSDTProxy"
+    // );
+    // const cBalancerStrategyUsdt = await ethers.getContractAt(
+    //   "BalancerStrategy",
+    //   cBalancerUsdtStrategyProxy.address
+    // );
+    // console.log(
+    //   "cBalancerUsdtStrategyProxy.address",
+    //   cBalancerUsdtStrategyProxy.address
+    // );
 
-    // balancer-dai
-    const cBalancerDaiStrategyProxy = await ethers.getContract(
-      "BalancerStrategyDAIProxy"
-    );
-    const cBalancerStrategyDai = await ethers.getContractAt(
-      "BalancerStrategy",
-      cBalancerDaiStrategyProxy.address
-    );
-    console.log(
-      "cBalancerDaiStrategyProxy.address",
-      cBalancerDaiStrategyProxy.address
-    );
+    // // balancer-dai
+    // const cBalancerDaiStrategyProxy = await ethers.getContract(
+    //   "BalancerStrategyDAIProxy"
+    // );
+    // const cBalancerStrategyDai = await ethers.getContractAt(
+    //   "BalancerStrategy",
+    //   cBalancerDaiStrategyProxy.address
+    // );
+    // console.log(
+    //   "cBalancerDaiStrategyProxy.address",
+    //   cBalancerDaiStrategyProxy.address
+    // );
 
-    // stargate-usdc
-    const cStargateUsdcStrategyProxy = await ethers.getContract(
-      "StargateStrategyUSDCProxy"
-    );
-    const cStargateStrategyUsdc = await ethers.getContractAt(
-      "StargateStrategy",
-      cStargateUsdcStrategyProxy.address
-    );
-    console.log(
-      "cStargateUsdcStrategyProxy.address",
-      cStargateUsdcStrategyProxy.address
-    );
+    // // stargate-usdc
+    // const cStargateUsdcStrategyProxy = await ethers.getContract(
+    //   "StargateStrategyUSDCProxy"
+    // );
+    // const cStargateStrategyUsdc = await ethers.getContractAt(
+    //   "StargateStrategy",
+    //   cStargateUsdcStrategyProxy.address
+    // );
+    // console.log(
+    //   "cStargateUsdcStrategyProxy.address",
+    //   cStargateUsdcStrategyProxy.address
+    // );
 
-    // aave-usdt
-    const cAaveSupplyUsdtStrategyProxy = await ethers.getContract(
-      "AaveSupplyStrategyUSDTProxy"
-    );
-    const cAaveSupplyStrategyUsdt = await ethers.getContractAt(
-      "AaveSupplyStrategy",
-      cAaveSupplyUsdtStrategyProxy.address
-    );
-    console.log(
-      "cAaveSupplyUsdtStrategyProxy.address",
-      cAaveSupplyUsdtStrategyProxy.address
-    );
+    // // aave-usdt
+    // const cAaveSupplyUsdtStrategyProxy = await ethers.getContract(
+    //   "AaveSupplyStrategyUSDTProxy"
+    // );
+    // const cAaveSupplyStrategyUsdt = await ethers.getContractAt(
+    //   "AaveSupplyStrategy",
+    //   cAaveSupplyUsdtStrategyProxy.address
+    // );
+    // console.log(
+    //   "cAaveSupplyUsdtStrategyProxy.address",
+    //   cAaveSupplyUsdtStrategyProxy.address
+    // );
 
-    const cAaveSupplyUsdcStrategyProxy = await ethers.getContract(
-      "AaveSupplyStrategyUSDCProxy"
-    );
-    const cAaveSupplyStrategyUsdc = await ethers.getContractAt(
-      "AaveSupplyStrategy",
-      cAaveSupplyUsdcStrategyProxy.address
-    );
-    console.log(
-      "cAaveSupplyUsdcStrategyProxy.address",
-      cAaveSupplyUsdcStrategyProxy.address
-    );
+    // const cAaveSupplyUsdcStrategyProxy = await ethers.getContract(
+    //   "AaveSupplyStrategyUSDCProxy"
+    // );
+    // const cAaveSupplyStrategyUsdc = await ethers.getContractAt(
+    //   "AaveSupplyStrategy",
+    //   cAaveSupplyUsdcStrategyProxy.address
+    // );
+    // console.log(
+    //   "cAaveSupplyUsdcStrategyProxy.address",
+    //   cAaveSupplyUsdcStrategyProxy.address
+    // );
 
 
-    const cAaveSupplyDaiStrategyProxy = await ethers.getContract(
-      "AaveSupplyStrategyDAIProxy"
-    );
-    const cAaveSupplyStrategyDai = await ethers.getContractAt(
-      "AaveSupplyStrategy",
-      cAaveSupplyDaiStrategyProxy.address
-    );
-    console.log(
-      "cAaveSupplyDaiStrategyProxy.address",
-      cAaveSupplyDaiStrategyProxy.address
-    );
+    // const cAaveSupplyDaiStrategyProxy = await ethers.getContract(
+    //   "AaveSupplyStrategyDAIProxy"
+    // );
+    // const cAaveSupplyStrategyDai = await ethers.getContractAt(
+    //   "AaveSupplyStrategy",
+    //   cAaveSupplyDaiStrategyProxy.address
+    // );
+    // console.log(
+    //   "cAaveSupplyDaiStrategyProxy.address",
+    //   cAaveSupplyDaiStrategyProxy.address
+    // );
 
 
     let weights = [
@@ -531,36 +531,36 @@ module.exports = deploymentWithProposal(
       //   enabled: true,
       //   enabledReward: true,
       // },
-      // {
-      //   strategy: cTetuStrategyDai.address,
-      //   contract: "TetuStrategy",
-      //   name: "TetuStrategy - DAI",
-      //   minWeight: 0,
-      //   targetWeight: 20,
-      //   maxWeight: 100,
-      //   enabled: true,
-      //   enabledReward: true,
-      // },
-      // {
-      //   strategy: cTetuStrategyUsdt.address,
-      //   contract: "TetuStrategy",
-      //   name: "TetuStrategy - USDT",
-      //   minWeight: 0,
-      //   targetWeight: 20,
-      //   maxWeight: 100,
-      //   enabled: true,
-      //   enabledReward: true,
-      // },
-      // {
-      //   strategy: cTetuStrategyUsdc.address,
-      //   contract: "TetuStrategy",
-      //   name: "TetuStrategy - USDC",
-      //   minWeight: 0,
-      //   targetWeight: 20,
-      //   maxWeight: 100,
-      //   enabled: true,
-      //   enabledReward: true,
-      // },
+      {
+        strategy: cTetuStrategyDai.address,
+        contract: "TetuStrategy",
+        name: "TetuStrategy - DAI",
+        minWeight: 0,
+        targetWeight: 30,
+        maxWeight: 100,
+        enabled: true,
+        enabledReward: true,
+      },
+      {
+        strategy: cTetuStrategyUsdt.address,
+        contract: "TetuStrategy",
+        name: "TetuStrategy - USDT",
+        minWeight: 0,
+        targetWeight: 25,
+        maxWeight: 100,
+        enabled: true,
+        enabledReward: true,
+      },
+      {
+        strategy: cTetuStrategyUsdc.address,
+        contract: "TetuStrategy",
+        name: "TetuStrategy - USDC",
+        minWeight: 0,
+        targetWeight: 45,
+        maxWeight: 100,
+        enabled: true,
+        enabledReward: true,
+      },
       // {
       //   strategy: cBalancerStrategyUsdc.address,
       //   contract: "BalancerStrategy",
@@ -601,36 +601,36 @@ module.exports = deploymentWithProposal(
       //   enabled: true,
       //   enabledReward: true,
       // },
-      {
-        strategy: cAaveSupplyStrategyUsdt.address,
-        contract: "AaveSupplyStrategy",
-        name: "AaveSupplyStrategy - USDT",
-        minWeight: 0,
-        targetWeight: 30,
-        maxWeight: 100,
-        enabled: true,
-        enabledReward: true,
-      },
-      {
-        strategy: cAaveSupplyStrategyDai.address,
-        contract: "AaveSupplyStrategy",
-        name: "AaveSupplyStrategy - DAI",
-        minWeight: 0,
-        targetWeight: 30,
-        maxWeight: 100,
-        enabled: true,
-        enabledReward: true,
-      },
-      {
-        strategy: cAaveSupplyStrategyUsdc.address,
-        contract: "AaveSupplyStrategy",
-        name: "AaveSupplyStrategy - USDC",
-        minWeight: 0,
-        targetWeight: 40,
-        maxWeight: 100,
-        enabled: true,
-        enabledReward: true,
-      },
+      // {
+      //   strategy: cAaveSupplyStrategyUsdt.address,
+      //   contract: "AaveSupplyStrategy",
+      //   name: "AaveSupplyStrategy - USDT",
+      //   minWeight: 0,
+      //   targetWeight: 30,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
+      // {
+      //   strategy: cAaveSupplyStrategyDai.address,
+      //   contract: "AaveSupplyStrategy",
+      //   name: "AaveSupplyStrategy - DAI",
+      //   minWeight: 0,
+      //   targetWeight: 30,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
+      // {
+      //   strategy: cAaveSupplyStrategyUsdc.address,
+      //   contract: "AaveSupplyStrategy",
+      //   name: "AaveSupplyStrategy - USDC",
+      //   minWeight: 0,
+      //   targetWeight: 40,
+      //   maxWeight: 100,
+      //   enabled: true,
+      //   enabledReward: true,
+      // },
       
     ];
 
@@ -668,6 +668,7 @@ module.exports = deploymentWithProposal(
 
       return value;
     });
+    console.log(weights);
 
     // Governance proposal
     return {
