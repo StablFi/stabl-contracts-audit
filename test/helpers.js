@@ -95,6 +95,10 @@ function usdUnitsFormat(amount) {
   return formatUnits(amount, 8);
 }
 
+function usdUnits(amount) {
+  return parseUnits(amount, 8);
+}
+
 function tusdUnits(amount) {
   return parseUnits(amount, 18);
 }
@@ -615,5 +619,6 @@ module.exports = {
   isVerificationRequired,
   forceStorageLayoutCheck,
   isPolygonStaging,
-  usdUnitsFormat
+  usdUnitsFormat,
+  usdUnits
 };

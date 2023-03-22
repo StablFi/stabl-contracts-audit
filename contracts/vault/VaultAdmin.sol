@@ -608,8 +608,10 @@ contract VaultAdmin is VaultStorage {
         console.log("R-TS: %s, NAV: %s", _t, _nav);
 
         uint256 _navDiff = _nav.subOrZero(_initNav);
+        console.log("NAV_DIFF: ", _navDiff);
         if (_navDiff > 0) {
-            uint256 _extraCASH = _navDiff.scaleBy(18, 8) / (IVaultCore(address(this)).price());
+            uint256 _extraCASH = (_navDiff.scaleBy(18, 8) * 10**18 ) / (IVaultCore(address(this)).price());
+            console.log("EXTRA_CASH: ", _extraCASH);
             cash.changeSupply(cash.totalSupply() + _extraCASH);
             IRebaseHandler(rebaseHandler).process();
         }
@@ -771,8 +773,12 @@ contract VaultAdmin is VaultStorage {
             }
             // Calculate proportion of MSA to use for _amount
             uint256 _amountToTransfer = IERC20(_token0).balanceOf(address(this));
-            IVaultCore(address(this)).swapAsset(_swapTo, _token0, (amount * _proportionsOfMSA[_tIndex]) / _neededAmounts[_tIndex]);
-            _amountToTransfer = IERC20(_token0).balanceOf(address(this)) - _amountToTransfer;
+            if (_swapTo != _token0) {
+                IVaultCore(address(this)).swapAsset(_swapTo, _token0, (amount * _proportionsOfMSA[_tIndex]) / _neededAmounts[_tIndex]);
+                _amountToTransfer = IERC20(_token0).balanceOf(address(this)) - _amountToTransfer;
+            } else {
+                _amountToTransfer = (amount * _proportionsOfMSA[_tIndex]) / _neededAmounts[_tIndex];
+            }
             IERC20(_token0).safeTransfer(address(_strategy), _amountToTransfer);
         }
         // Direct-deposit all at once, GAS savings
@@ -781,5 +787,11 @@ contract VaultAdmin is VaultStorage {
                 IStrategy(strategyWithWeights[i].strategy).directDeposit();
             }
         }
+        // Loop through allAssets and print balance
+        for(uint8 i=0; i < allAssets.length; i++) {
+            // Not allowing more than 10^(decimal - 3) of any currency in the vault after rebalance
+            require(IERC20(allAssets[i]).balanceOf(address(this)) < 10^(Helpers.getDecimals(allAssets[i]) - 3), "RBL_NOT_GOOD");
+        }
+
     }
 }

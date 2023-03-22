@@ -178,10 +178,11 @@ contract VaultCore is VaultStorage, MiniCurveExchange {
         for (uint256 i = 0; i < allAssets.length; i++) {
             if (_amounts[i] > 0) {
                 uint256 _dec = Helpers.getDecimals(allAssets[i]);
+                uint256 _a = _amounts[i];
                 if (_dec > 6) {
-                    _amounts[i]  = _amounts[i].scaleBy(6, _dec);
+                    _a  = _a.scaleBy(6, _dec);
                 }
-                _worth = _worth.add(IOracle(priceProvider).price(allAssets[i]) * _amounts[i]);
+                _worth = _worth.add(IOracle(priceProvider).price(allAssets[i]) * _a);
             }
         }
         return _worth.scaleBy(8, 6); // USD is 8 decimals

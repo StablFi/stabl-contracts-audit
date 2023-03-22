@@ -16,6 +16,7 @@ const {
   isFork,
   expectApproxSupply,
   advanceTime,
+  advanceBlocks,
 } = require("../helpers");
 
 describe("Vault Redeem", function () {
@@ -77,7 +78,7 @@ describe("Vault Redeem", function () {
 
         return value;
     })
-    await vault.setStrategyWithWeights(weights);
+    // await vault.setStrategyWithWeights(weights);
 
     console.log(
       "MATT CASH Balance: ",
@@ -102,22 +103,29 @@ describe("Vault Redeem", function () {
 
     console.log("Setting the Josh as a Rebase Manager");
     await vault.connect(governor).addRebaseManager(josh.address);
+    console.log("Price Before Payout: ", daiUnitsFormat(await vault.price()));
+
+    // console.log("Performing payout...");
+    // await vault.connect(josh).payout();
+
+    // let wait = 100 * 24 * 60;
+    // console.log(
+    //   "Simulating wait for " +
+    //     wait +
+    //     " minutes - Started at: " +
+    //     new Date().toLocaleString()
+    // );
+    // await advanceTime(wait * 60 * 1000);
+    // await advanceBlocks(42000);
+
+    // Send USDC to dripper as yield
+    await usdc.connect(matt).transfer(dripper.address, usdcUnits("100.0"));
+    await dripper.setDripDuration(1);
 
     console.log("Performing payout...");
     await vault.connect(josh).payout();
-
-    let wait = 24 * 60;
-    console.log(
-      "Simulating wait for " +
-        wait +
-        " minutes - Started at: " +
-        new Date().toLocaleString()
-    );
-    await advanceTime(wait * 60 * 1000);
-
-    console.log("Performing payout...");
-    await vault.connect(josh).payout();
-
+    
+    console.log("Price After Payout: ", daiUnitsFormat(await vault.price()));
     console.log(
       "MATT CASH Balance: ",
       cashUnitsFormat((await cash.balanceOf(matt.address)).toString())
