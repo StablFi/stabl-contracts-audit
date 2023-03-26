@@ -173,6 +173,7 @@ contract VaultStorage is Initializable, Governable {
     address public rebaseHandler;
     uint256 public poolBalanceCheckExponent;
     uint256 public dailyExpectedYieldBps; // 1%  = 10000
+    uint256 public depegMargin; // 1% = 100
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it

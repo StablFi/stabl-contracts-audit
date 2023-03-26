@@ -286,10 +286,7 @@ module.exports = {
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
       accounts: [MAINNET_DEPLOYER_GATEPASS],
-      gasMultiplier: 3.5,
-      gasPrice: 700e9,
-      gas: 6000000,
-      blockGasLimit: 2400000000
+      gasPrice: 350e9,
     },
     polygon_staging: {
       url: `${process.env.PROVIDER_URL}`,

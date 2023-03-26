@@ -78,7 +78,10 @@ contract VaultCore is VaultStorage, MiniCurveExchange {
     ) internal {
         require(assets[_asset].isSupported, "NS");
         require(_amount > 0, ">0");
-        validateAssetPeg(_asset, 200); // 2% tolerance
+        
+        for(uint256 i = 0; i < allAssets.length; i++) {
+            validateAssetPeg(allAssets[i], depegMargin); // 1% = 100
+        }
 
         // Prequisites
         IERC20 _assetToken = IERC20(_asset);
@@ -138,7 +141,19 @@ contract VaultCore is VaultStorage, MiniCurveExchange {
         require(block.number > lastMints[msg.sender], "WAIT_AFTER_MINT");
 
         uint256 _initNav = nav();
-        IVaultAdmin(address(this)).balance();
+
+        bool doRebalance = true;
+        for(uint256 i = 0; i < allAssets.length; i++) {
+            uint256 _price = IOracle(priceProvider).price(allAssets[i]);
+            if (_price > (10**8 * (10000-depegMargin))/10000) {
+                doRebalance = false;
+                break;
+            }
+        }
+        if (doRebalance) {
+            IVaultAdmin(address(this)).balance();
+        }
+
         uint256 _deficitDueToRebalance = _initNav.subOrZero(nav()).scaleBy(18, 8).div(price());
         uint256 _worthInUsd = (_amount.sub(_deficitDueToRebalance)).mul(price()).div(10**18).scaleBy(8, 18); // USD is 8 decimals
         if (_worthInUsd.scaleBy(18, 8) > _amount) {
@@ -216,6 +231,7 @@ contract VaultCore is VaultStorage, MiniCurveExchange {
     function validateAssetPeg(address _asset, uint256 bps) public view returns (uint256) {
         uint256 _price = IOracle(priceProvider).price(_asset);
         require(_price > (10**8 * (10000-bps))/10000, "ASSET_BELOW_PEG");
+        require(_price < (10**8 * (10000+bps))/10000, "ASSET_ABOVE_PEG");
         return _price;
     }
 
@@ -290,6 +306,7 @@ contract VaultCore is VaultStorage, MiniCurveExchange {
             if (strategies[ strategyWithWeights[i].strategy].isSupported == false) {
                 continue;
             }
+            require(strategyWithWeights[i].enabled == true, "DIS_WGT");
             try IStrategy(strategyWithWeights[i].strategy).netAssetValue() returns (uint256 _bal) {
                 _balance = _balance.add(_bal);
 
@@ -378,9 +395,9 @@ contract VaultCore is VaultStorage, MiniCurveExchange {
     /**
      * @dev Return the price of 1 CASH by dividing net asset vault by CASH total supply.
      */
-    function price() public view returns (uint256 price) {
+    function price2() public view returns (uint256) {
         uint256 _totalUsd = 0;
-    
+        uint256 _price = 0;
         uint256[] memory _amounts = new uint256[](allAssets.length);
         for(uint8 i = 0; i < strategyWithWeights.length; i++) {
             (uint256 _a0, uint256 _a1, uint256 _a2) = IStrategy(strategyWithWeights[i].strategy).assetsInUsd();
@@ -393,9 +410,17 @@ contract VaultCore is VaultStorage, MiniCurveExchange {
             return 10**18;
         }
         for (uint8 i = 0; i < allAssets.length; i++) {
-            price += (_amounts[i] * IOracle(priceProvider).price(allAssets[i])) / _totalUsd;
+            _price += (_amounts[i] * IOracle(priceProvider).price(allAssets[i])) / _totalUsd;
         }
-        price = price.scaleBy(18, 8);
+        _price = _price.scaleBy(18, 8);
+        return _price;
+    }
+
+    function price() public view returns (uint256) {
+        if (ncs() == 0) {
+            return 10**18;
+        }
+        return nav().scaleBy(18,8) * 10**18 / ncs() ;
     }
 
     function getAssetIndex(address _asset) public view returns (uint256) {

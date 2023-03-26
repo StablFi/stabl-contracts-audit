@@ -548,10 +548,10 @@ contract VaultAdmin is VaultStorage {
      * @dev Stop and start payout/rebase during depeg
      * @param _dontRebaseDuringDepeg true to enable checking for depeg
      */
-    function setDontRebaseDuringDepeg(bool _dontRebaseDuringDepeg) external onlyGovernor {
+    function setDepegParams(bool _dontRebaseDuringDepeg, uint256 _depegMargin) external onlyGovernor {
         dontRebaseDuringDepeg = _dontRebaseDuringDepeg;
+        depegMargin = _depegMargin;
     }
-
 
 
     /***************************
@@ -574,7 +574,7 @@ contract VaultAdmin is VaultStorage {
 
         if (dontRebaseDuringDepeg) {
             for(uint8 i = 0; i < allAssets.length; i++) {
-                IVaultCore(address(this)).validateAssetPeg(allAssets[i], 200);
+                IVaultCore(address(this)).validateAssetPeg(allAssets[i], depegMargin); // 100 = 1% tolerance
             }
         }
 
@@ -591,7 +591,7 @@ contract VaultAdmin is VaultStorage {
         _nav = IVaultCore(address(this)).nav();
         console.log("H-TS: %s, NAV: %s", _t, _nav);
 
-        // Collect yield from Dripper and perform rebase
+        // Collect yield from Dripper
         IDripper(dripperAddress).collect();
 
         // Log state
