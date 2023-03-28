@@ -153,8 +153,7 @@ contract VaultCore is VaultStorage, MiniCurveExchange {
         if (doRebalance) {
             IVaultAdmin(address(this)).balance();
         }
-
-        uint256 _deficitDueToRebalance = _initNav.subOrZero(nav()).scaleBy(18, 8).div(price());
+        uint256 _deficitDueToRebalance = _initNav.subOrZero(nav()).scaleBy(18, 8).mul(10**18).div(price()); // 18 decimals
         uint256 _worthInUsd = (_amount.sub(_deficitDueToRebalance)).mul(price()).div(10**18).scaleBy(8, 18); // USD is 8 decimals
         if (_worthInUsd.scaleBy(18, 8) > _amount) {
             _worthInUsd = _amount.scaleBy(8, 18);
@@ -166,7 +165,7 @@ contract VaultCore is VaultStorage, MiniCurveExchange {
         (returnAssetAmounts[0], returnAssetAmounts[1], returnAssetAmounts[2]) = _arrangeUsd(_worthInUsd); // DAI, USDT, USDC amounts
         
         uint256 _checkWorthInUSD = _calculateWorth(returnAssetAmounts); 
-        require(_checkWorthInUSD >= _worthInUsd.mul(995).div(1000) || _checkWorthInUSD <= _worthInUsd.mul(995).div(1000), "WORTH_NOT_MET"); // 0.5% tolerance
+        require(_checkWorthInUSD >= _worthInUsd.mul(995).div(1000) || _checkWorthInUSD <= _worthInUsd.mul(1005).div(1000), "WORTH_NOT_MET"); // 0.5% tolerance
 
         // Loop through all assets and transfer to user and treasury
         for (uint256 i = 0; i < allAssets.length; i++) {
@@ -399,6 +398,8 @@ contract VaultCore is VaultStorage, MiniCurveExchange {
         uint256 _totalUsd = 0;
         uint256 _price = 0;
         uint256[] memory _amounts = new uint256[](allAssets.length);
+
+        // Here we are only calculating the dynamic weight allocation of the funds across strats
         for(uint8 i = 0; i < strategyWithWeights.length; i++) {
             (uint256 _a0, uint256 _a1, uint256 _a2) = IStrategy(strategyWithWeights[i].strategy).assetsInUsd();
             _amounts[0] += _a0;
@@ -409,6 +410,8 @@ contract VaultCore is VaultStorage, MiniCurveExchange {
         if (_totalUsd == 0) {
             return 10**18;
         }
+        // As now we have dynamic weights ( _amounts[i]/_totalUsd ), we can multiply by the asset price
+        // to get price2()
         for (uint8 i = 0; i < allAssets.length; i++) {
             _price += (_amounts[i] * IOracle(priceProvider).price(allAssets[i])) / _totalUsd;
         }

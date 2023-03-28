@@ -151,11 +151,6 @@ contract VaultStorage is Initializable, Governable {
     // period between payouts in seconds, need to calc nextPayoutTime
     uint256 public payoutPeriod;
 
-    // range of time for starting near next payout time at seconds
-    // if time in [nextPayoutTime-payoutTimeRange;nextPayoutTime+payoutTimeRange]
-    //    then payouts can be started by payout() method anyone
-    // else if time more than nextPayoutTime+payoutTimeRange
-    //    then payouts started by any next buy/redeem
     uint256 public payoutTimeRange;
 
     mapping(address => bool) public rebaseManagers;

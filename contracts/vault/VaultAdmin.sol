@@ -613,7 +613,10 @@ contract VaultAdmin is VaultStorage {
             uint256 _extraCASH = (_navDiff.scaleBy(18, 8) * 10**18 ) / (IVaultCore(address(this)).price());
             console.log("EXTRA_CASH: ", _extraCASH);
             cash.changeSupply(cash.totalSupply() + _extraCASH);
-            IRebaseHandler(rebaseHandler).process();
+            
+            if (rebaseHandler != address(0)) {
+                IRebaseHandler(rebaseHandler).process();
+            }
         }
 
         emit Payout(_navDiff);
@@ -627,15 +630,16 @@ contract VaultAdmin is VaultStorage {
      * @dev Function to get the index of most stable asset using Oracle
      */
     function getMostStableAssetIndex() view internal returns (uint256) {
-        // Loop through all assets and find the one with price most close to 100000
+        // Loop through all assets and find the one with price most close to 10**8
         uint256 _mostStableAssetIndex = 0;
         uint256 _leastDifference = 1000000000; // 10 USD - Stable coin max cannot reach $10
-        uint256 _mostStableAssetPrice = 100000;
+        uint256 _mostStableAssetPrice = 10**8;
         for (uint8 i; i < allAssets.length; i++) {
             uint256 _price = IOracle(priceProvider).price(allAssets[i]);
-            if (_price.subFromBigger(_mostStableAssetPrice) < _leastDifference) {
+            uint256 _diff = _price.subFromBigger(_mostStableAssetPrice);
+            if (_diff < _leastDifference) {
                 _mostStableAssetIndex = i;
-                _mostStableAssetPrice = _price;
+                _leastDifference = _diff;
             }
         }
         return _mostStableAssetIndex;
@@ -744,10 +748,12 @@ contract VaultAdmin is VaultStorage {
         if (_neededAmounts[0] == 0 && _neededAmounts[1] == 0 && _neededAmounts[2] == 0) {
             return;
         }
-
+        
+        uint256 _totalNeededAmounts = 0;
         // Ensuring everything is in Most Stable Asset
         address _swapTo = allAssets[getMostStableAssetIndex()];
         for(uint8 i=0; i < allAssets.length; i++) {
+            _totalNeededAmounts += _neededAmounts[i].scaleBy(18, Helpers.getDecimals(allAssets[i]));
             if (allAssets[i] == _swapTo  || IERC20(allAssets[i]).balanceOf(address(this)) == 0)  {
                 continue;
             }
@@ -757,9 +763,8 @@ contract VaultAdmin is VaultStorage {
         // Calculating proportions
         uint256 _stableAssetBalance = IERC20(_swapTo).balanceOf(address(this));
         uint256[] memory _proportionsOfMSA = new uint256[](3);
-        uint256 _total = _neededAmounts[0] + _neededAmounts[1].scaleBy(18, 6) + _neededAmounts[2].scaleBy(18, 6);
         for(uint8 i=0; i < allAssets.length; i++) {
-            _proportionsOfMSA[i] = (_stableAssetBalance * _neededAmounts[i].scaleBy(18, Helpers.getDecimals(allAssets[i])) / _total); // Amount of MSA, that will be used for ith Asset
+            _proportionsOfMSA[i] = (_stableAssetBalance * _neededAmounts[i].scaleBy(18, Helpers.getDecimals(allAssets[i])) / _totalNeededAmounts); // Amount of MSA, that will be used for ith Asset
         }
 
         for (uint8 i; i < stakeOrdersCount; i++) {
