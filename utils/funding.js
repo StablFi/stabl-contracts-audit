@@ -133,9 +133,9 @@ const fundAccounts = async () => {
       let daiBalance = await dai.balanceOf(await signers[i].getAddress());
       let usdtBalance = await usdt.balanceOf(await signers[i].getAddress());
 
-      let toAddUsdc = (usdcUnits("50000").sub(usdcBalance) > 0) ? usdcUnits("50000").sub(usdcBalance) : "1";
-      let toAddDai = (daiUnits("50000").sub(daiBalance) > 0) ? daiUnits("50000").sub(daiBalance) : "1";
-      let toAddUsdt = (usdtUnits("50000").sub(usdtBalance) > 0) ? usdtUnits("50000").sub(usdtBalance) : "1";
+      let toAddUsdc = (usdcUnits("1000000").sub(usdcBalance) > 0) ? usdcUnits("1000000").sub(usdcBalance) : "1";
+      let toAddDai = (daiUnits("1000000").sub(daiBalance) > 0) ? daiUnits("1000000").sub(daiBalance) : "1";
+      let toAddUsdt = (usdtUnits("1000000").sub(usdtBalance) > 0) ? usdtUnits("1000000").sub(usdtBalance) : "1";
 
       let usdcWhale = await findBestMainnetTokenHolder(usdc, hre);
       console.log("Adding ",usdcUnitsFormat(toAddUsdc), "USDC to ", await signers[i].getAddress(), " from ", usdcWhale._address);

@@ -209,6 +209,9 @@ contract RebaseToNonEoaHandler is Initializable, Governable {
                     console.log("No CASH to Skim: ", _contractAddress);
                     continue;
                 }
+                if (_contractInfo.is4pool == true) {
+                    I4Pool(_contractAddress).withdrawAdminFees();
+                }
                 IUniswapV2Pair(_contractAddress).skim(address(this));
 
                 if (_contractInfo.gauge == address(0)) {

@@ -36,7 +36,7 @@ async function upgradeVault(signer) {
 
   const cVaultProxy = await ethers.getContractAt(
     "VaultProxy",
-    "0xa6c6E539167e8efa5BE0525E1F16c51e57dF896E"
+    "0xd1bb7d35db39954d43e16f65F09DD0766A772cFF"
   );
   const cVaultCore = await ethers.getContract("VaultCore");
   const cVaultAdmin = await ethers.getContract("VaultAdmin");
@@ -48,10 +48,15 @@ async function upgradeVault(signer) {
 }
 async function upgradeTetu(signer) {
   const upgradable = "TetuStrategy";
+  // const toUpgrade = [
+  //   "0x21a5683b28D732479958A16f32485ff8474138EC", // USDC
+  //   "0xC87A68d140Dba5BEF1B4fa1acDb89FD4C2547d40", // USDT
+  //   "0x0B76799f1Fe8859E03EE84E2AD8F7D8950b3a8d6", // DAI
+  // ];
   const toUpgrade = [
-    "0x21a5683b28D732479958A16f32485ff8474138EC",
-    "0xC87A68d140Dba5BEF1B4fa1acDb89FD4C2547d40",
-    "0x0B76799f1Fe8859E03EE84E2AD8F7D8950b3a8d6",
+    "0x9D7416C2Ce07CB7a71335fbcdE2f89A30B262064", // USDC
+    "0x407889eD44bEe744907675d52ae4d996e8425be2", // USDT
+    "0x58D85fAb1aE932244643E133e267b1952217E81a",  // DAI
   ];
   await deployWithConfirmation(upgradable);
   const USDC = await ethers.getContractAt("TetuStrategyUSDCProxy", toUpgrade[0]);
@@ -66,7 +71,7 @@ async function upgradeTetu(signer) {
 async function upgradeDripper(signer) {
   const upgradable = "Dripper";
   const toUpgrade = [
-    "0x4b2b1dC2ecc46551D88389f7F06ef2BEde77b4E1",
+    "0x4b2b1dc2ecc46551d88389f7f06ef2bede77b4e1",
   ];
   await deployWithConfirmation(upgradable);
   const USDC = await ethers.getContractAt("DripperProxy", toUpgrade[0]);
@@ -78,7 +83,7 @@ async function upgradeDripper(signer) {
 async function upgradeHarvester(signer) {
   const upgradable = "Harvester";
   const toUpgrade = [
-    "0xb659Cbde75D7aaB10490c86170b50fb0364Bd573",
+    "0xdbb57b33583fa86d4b31e88cf951caf6fd561ffe",
   ];
   await deployWithConfirmation(upgradable);
   const USDC = await ethers.getContractAt("HarvesterProxy", toUpgrade[0]);
@@ -92,7 +97,7 @@ async function main() {
   let dai = await ethers.getContractAt(erc20Abi, addresses.polygon.DAI);
   let usdt = await ethers.getContractAt(erc20Abi, addresses.polygon.USDT);
 
-  let staging = true;
+  let staging = false;
   let cash = await hre.ethers.getContractAt("CASH", "0x80487b4f8f70e793A81a42367c225ee0B94315DF");
   let vault = await hre.ethers.getContractAt("VaultCore", "0xd1bb7d35db39954d43e16f65F09DD0766A772cFF");
   let vaultAdmin = await hre.ethers.getContractAt("VaultAdmin", "0xd1bb7d35db39954d43e16f65F09DD0766A772cFF");
@@ -120,11 +125,12 @@ async function main() {
   // await upgradeDripper(signer);
 
   let cashTotalSupply = await cash.totalSupply();
-  let vaultCheckBalance = await vault.checkBalance();
+  let nav = await vault.nav();
   // Print block number
   console.log("Block number: ", await ethers.provider.getBlockNumber());
   console.log("CASH.totalSupply() : ", cashUnitsFormat(cashTotalSupply))
-  console.log("Vault.checkBalance() : ", usdcUnitsFormat(vaultCheckBalance))
+  console.log("Vault.nav() : ", usdUnitsFormat(nav))
+  console.log("Vault.price() : ", daiUnitsFormat(await vault.price()));
   console.log("Dripper USDC Balance: ", usdcUnitsFormat(await usdc.balanceOf(dripper.address)))
   console.log("Harvester USDC Balance: ", usdcUnitsFormat(await usdc.balanceOf(harvester.address)))
   console.log("Strategy count: ", (await vault.getStrategyCount()).toString())
@@ -163,7 +169,8 @@ async function main() {
   console.log("Setting new weights");
 
   const weights = [{
-    strategy: "0x0B76799f1Fe8859E03EE84E2AD8F7D8950b3a8d6",
+    // strategy: "0x0B76799f1Fe8859E03EE84E2AD8F7D8950b3a8d6", // DAI
+    strategy: "0x58D85fAb1aE932244643E133e267b1952217E81a", // DAI
     contract: "TetuStrategy",
     minWeight: 0,
     targetWeight: 30000,
@@ -172,19 +179,21 @@ async function main() {
     enabledReward: true,
   },
   {
-    strategy: "0xC87A68d140Dba5BEF1B4fa1acDb89FD4C2547d40",
+    // strategy: "0xC87A68d140Dba5BEF1B4fa1acDb89FD4C2547d40", // USDT
+    strategy: "0x407889eD44bEe744907675d52ae4d996e8425be2", // USDT
     contract: "TetuStrategy",
     minWeight: 0,
-    targetWeight: 45000,
+    targetWeight: 25000,
     maxWeight: 100000,
     enabled: true,
     enabledReward: true,
   },
   {
-    strategy: "0x21a5683b28D732479958A16f32485ff8474138EC",
+    // strategy: "0x21a5683b28D732479958A16f32485ff8474138EC", // USDC
+    strategy: "0x9D7416C2Ce07CB7a71335fbcdE2f89A30B262064", // USDC
     contract: "TetuStrategy",
     minWeight: 0,
-    targetWeight: 25000,
+    targetWeight: 45000,
     maxWeight: 100000,
     enabled: true,
     enabledReward: true,
@@ -211,11 +220,12 @@ async function main() {
   await vaultAdmin.connect(signer).payout();
 
   cashTotalSupply = await cash.totalSupply();
-  vaultCheckBalance = await vault.checkBalance();
+  nav = await vault.nav();
   // Print block number
   console.log("Block number: ", await ethers.provider.getBlockNumber());
   console.log("CASH.totalSupply() : ", cashUnitsFormat(cashTotalSupply))
-  console.log("Vault.checkBalance() : ", usdcUnitsFormat(vaultCheckBalance))
+  console.log("Vault.nav() : ", usdUnitsFormat(nav))
+  console.log("Vault.price() : ", daiUnitsFormat(await vault.price()));
   console.log("Dripper USDC Balance: ", usdcUnitsFormat(await usdc.balanceOf(dripper.address)))
   console.log("Harvester USDC Balance: ", usdcUnitsFormat(await usdc.balanceOf(harvester.address)))
   console.log("Strategy count: ", (await vault.getStrategyCount()).toString())

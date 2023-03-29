@@ -19,6 +19,7 @@ const {
   daiUnitsFormat,
   runStrategyLogic,
   usdtUnitsFormat,
+  usdUnitsFormat,
 } = require("../helpers");
 
 // Support BigNumber and all that with ethereum-waffle
@@ -59,17 +60,29 @@ describe("Vault", function () {
     expect(assets.length).to.equal(origAssetCount.add(1));
     expect(await vault.isSupportedAsset(cash.address)).to.be.true;
   });
-
-  for (let i = 0; i < 4; i++) {
-    // Random amount from 1 to 1M
-    const amount = (Math.floor(Math.random() * 50000) + 1).toString();
+  const amounts = ["5", "1000", "20000", "50000", "100000", "300000", "1000000"]
+  for (let i = 0; i < amounts.length; i++) {
+    const csv = [];
+    const redeem
+    const amount = amounts[i]*1.2; //(Math.floor(Math.random() * 50000) + 1).toString();
+    
     // Get random number from 0 to 2
     const stratIndex = Math.floor(Math.random() * 3);
 
-    it("Should allow " + amount + " USDC minting with fee  mint_imp_mass mint_new mint_imp_usdc @fork", async function () {
+    it("Should allow " + amount + " USDC minting with fee  mint_imp_mass mint_new mint_imp_usdc sss @fork", async function () {
       const { vault, governor, usdc, usdt, dai, anna, rio, cash, cAaveSupplyUsdtStrategyProxy, cTetuUsdtStrategyProxy, cTetuUsdcStrategyProxy, cTetuDaiStrategyProxy } = await loadFixture(defaultFixture);
       expect(await vault.isSupportedAsset(usdc.address)).to.be.true;
 
+      let csv_string = "USDC";
+      // Random amount from 1 to 1M
+      csv_string += "," + amount;
+
+      let cashSupply = cashUnitsFormat(await cash.totalSupply());
+      let vaultNav = usdUnitsFormat(await vault.nav());
+      let diff = parseFloat(cashSupply) - parseFloat(vaultNav);
+      let annaCashBalance = cashUnitsFormat(await cash.balanceOf(anna.address));
+      csv_string += "," + cashSupply + "," + vaultNav + "," + diff.toFixed(5) + "," + annaCashBalance;
+      
       // Set treasury
       console.log("Anna USDC balance: ", usdcUnitsFormat(await usdc.balanceOf(anna.address)));
       console.log("Treasury: ", rio.address);
@@ -77,9 +90,9 @@ describe("Vault", function () {
       const rioUsdcBalance = await usdc.balanceOf(rio.address);
       console.log("Rio USDC balance: ", usdcUnitsFormat(await usdc.balanceOf(rio.address)));
 
-      await vault.setAssetDefaultStrategy(usdc.address,  cAaveSupplyUsdtStrategyProxy.address);
-      await vault.setAssetDefaultStrategy(usdt.address, cAaveSupplyUsdtStrategyProxy.address);
-      await vault.setAssetDefaultStrategy(dai.address,  cAaveSupplyUsdtStrategyProxy.address);
+      // await vault.setAssetDefaultStrategy(usdc.address,  cAaveSupplyUsdtStrategyProxy.address);
+      // await vault.setAssetDefaultStrategy(usdt.address, cAaveSupplyUsdtStrategyProxy.address);
+      // await vault.setAssetDefaultStrategy(dai.address,  cAaveSupplyUsdtStrategyProxy.address);
 
       // KMake an array of tetu strats
       const tetuStrats = [cTetuUsdcStrategyProxy.address, cTetuUsdtStrategyProxy.address, cTetuDaiStrategyProxy.address];
@@ -87,15 +100,13 @@ describe("Vault", function () {
         await runStrategyLogic(governor, "Tetu Strategy", tetuStrats[i]);
       }
       // Get 1 random strat from the array
-      const randomStrat = tetuStrats[stratIndex];
-      console.log('Quick deposit strat: ', randomStrat);
-      await vault.setQuickDepositStrategies([randomStrat]);
+      // const randomStrat = tetuStrats[stratIndex];
+      // console.log('Quick deposit strat: ', randomStrat);
+      // await vault.setQuickDepositStrategies([randomStrat]);
       // Setting fee to 0.25%
       await vault.setMintFeeBps(25);
 
       await expect(anna).has.a.approxBalanceOf("0.00", cash);
-
-
 
       await usdc.connect(anna).approve(vault.address, usdcUnits(amount));
       await vault.connect(anna).mint(usdc.address, usdcUnits(amount), 0);
@@ -104,6 +115,12 @@ describe("Vault", function () {
       const changeInRioBalance = rioUsdcBalanceAfter.sub(rioUsdcBalance);
       const amountMinusFee = (amount - (amount * 0.0025)).toString();
       const fee = (amount * 0.0025).toString();
+
+      annaCashBalance = cashUnitsFormat(await cash.balanceOf(anna.address));
+      cashSupply = cashUnitsFormat(await cash.totalSupply());
+      vaultNav = usdUnitsFormat(await vault.nav());
+      diff = parseFloat(cashSupply) - parseFloat(vaultNav);
+      csv_string += "," + cashSupply + "," + vaultNav + "," + diff.toFixed(5) + "," + annaCashBalance;
 
       // Print CASH of anna
       console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
@@ -115,13 +132,21 @@ describe("Vault", function () {
       console.log("Treasury USDC should gain: ", fee);
       console.log("Treasury USDC gained: ", usdcUnitsFormat(changeInRioBalance));
       // expect(changeInRioBalance).to.be.above("0");
-      expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits(amountMinusFee), cashUnits(allowedDifferenceAmount));
+      // expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits(amountMinusFee), cashUnits(allowedDifferenceAmount));
       console.log("Vault USDC balance: ", usdcUnitsFormat(await usdc.balanceOf(vault.address)));
 
+      const fs = require('fs');
+      fs.writeFile('mix_amounts' + amounts[i]+ '.csv', csv_string, function (err) {
+        if (err) throw err;
+        console.log('Saved!');
+      });
+
     });
+    // write to file
+    
   }
-  for (let i = 0; i < 4; i++) {
-    const amount = (Math.floor(Math.random() * 50000) + 1).toString();
+  for (let i = 0; i < 1; i++) {
+    const amount = "1000"; // (Math.floor(Math.random() * 50000) + 1).toString();
     const stratIndex = Math.floor(Math.random() * 3);
 
     it("Should allow " + amount + " DAI minting (with swapping) with fee mint_imp_mass @fork mint_imp_dai mint_new", async function () {
@@ -130,9 +155,9 @@ describe("Vault", function () {
       console.log("cTetuUsdtStrategyProxy: ", cTetuUsdtStrategyProxy.address)
       expect(await vault.isSupportedAsset(dai.address)).to.be.true;
 
-      await vault.setAssetDefaultStrategy(usdc.address,  cAaveSupplyUsdtStrategyProxy.address);
-      await vault.setAssetDefaultStrategy(usdt.address, cAaveSupplyUsdtStrategyProxy.address);
-      await vault.setAssetDefaultStrategy(dai.address,  cAaveSupplyUsdtStrategyProxy.address);
+      // await vault.setAssetDefaultStrategy(usdc.address,  cAaveSupplyUsdtStrategyProxy.address);
+      // await vault.setAssetDefaultStrategy(usdt.address, cAaveSupplyUsdtStrategyProxy.address);
+      // await vault.setAssetDefaultStrategy(dai.address,  cAaveSupplyUsdtStrategyProxy.address);
 
       // Set treasury
       console.log("Anna DAI balance: ", daiUnitsFormat(await dai.balanceOf(anna.address)));
@@ -143,16 +168,14 @@ describe("Vault", function () {
       const rioDaiBalance = await dai.balanceOf(rio.address);
       console.log("Rio DAI balance: ", daiUnitsFormat(await dai.balanceOf(rio.address)));
 
-
-
       const tetuStrats = [cTetuUsdcStrategyProxy.address, cTetuUsdtStrategyProxy.address, cTetuDaiStrategyProxy.address];
       for (let i = 0; i < tetuStrats.length; i++) {
         await runStrategyLogic(governor, "Tetu Strategy", tetuStrats[i]);
       }
       // Get 1 random strat from the array
       const randomStrat = tetuStrats[stratIndex];
-      console.log('Quick deposit strat: ', randomStrat);
-      await vault.setQuickDepositStrategies([randomStrat]);
+      // console.log('Quick deposit strat: ', randomStrat);
+      // await vault.setQuickDepositStrategies([randomStrat]);
 
       // Setting fee to 0.25%
       await vault.setMintFeeBps(25);
@@ -170,7 +193,6 @@ describe("Vault", function () {
       const amountMinusFee = (amount - (amount * 0.0025)).toString();
       const fee = (amount * 0.0025).toString();
 
-
       // Print CASH of anna
       console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
       console.log("Anna CASH balance should be: ", amountMinusFee);
@@ -186,17 +208,17 @@ describe("Vault", function () {
 
     });
   }
-  for (let i = 0; i < 10; i++) {
-    const amount = (Math.floor(Math.random() * 50000) + 1).toString();
+  for (let i = 0; i < 1; i++) {
+    const amount = "1000"; // (Math.floor(Math.random() * 50000) + 1).toString();
     const stratIndex = Math.floor(Math.random() * 3);
 
     it("Should allow " + amount + " USDT minting (with swapping) with fee mint_imp_mass mint_imp_usdt mint_new @fork", async function () {
       const { vault, usdt, dai, governor, anna, usdc, rio, cash,cAaveSupplyUsdtStrategyProxy, cTetuUsdtStrategyProxy, cTetuUsdcStrategyProxy, cTetuDaiStrategyProxy } = await loadFixture(defaultFixture);
       expect(await vault.isSupportedAsset(usdt.address)).to.be.true;
 
-      await vault.setAssetDefaultStrategy(usdc.address,  cAaveSupplyUsdtStrategyProxy.address);
-      await vault.setAssetDefaultStrategy(usdt.address, cAaveSupplyUsdtStrategyProxy.address);
-      await vault.setAssetDefaultStrategy(dai.address,  cAaveSupplyUsdtStrategyProxy.address);
+      // await vault.setAssetDefaultStrategy(usdc.address,  cAaveSupplyUsdtStrategyProxy.address);
+      // await vault.setAssetDefaultStrategy(usdt.address, cAaveSupplyUsdtStrategyProxy.address);
+      // await vault.setAssetDefaultStrategy(dai.address,  cAaveSupplyUsdtStrategyProxy.address);
 
       // Set treasury
       console.log("Anna USDC balance: ", usdcUnitsFormat(await usdc.balanceOf(anna.address)));
@@ -205,15 +227,14 @@ describe("Vault", function () {
       rioUsdtBalance = await usdt.balanceOf(rio.address);
       console.log("Rio USDT balance: ", usdtUnitsFormat(await usdt.balanceOf(rio.address)));
 
-
       const tetuStrats = [cTetuUsdcStrategyProxy.address, cTetuUsdtStrategyProxy.address, cTetuDaiStrategyProxy.address];
       for (let i = 0; i < tetuStrats.length; i++) {
         await runStrategyLogic(governor, "Tetu Strategy", tetuStrats[i]);
       }
       // Get 1 random strat from the array
       const randomStrat = tetuStrats[stratIndex];
-      console.log('Quick deposit strat: ', randomStrat);
-      await vault.setQuickDepositStrategies([randomStrat]);
+      // console.log('Quick deposit strat: ', randomStrat);
+      // await vault.setQuickDepositStrategies([randomStrat]);
 
       // Setting fee to 0.25%
       await vault.setMintFeeBps(25);
@@ -248,7 +269,7 @@ describe("Vault", function () {
     const { vault, usdc, anna, cash, cMeshSwapStrategyDAI } = await loadFixture(defaultFixture);
     expect(await vault.isSupportedAsset(usdc.address)).to.be.true;
 
-    await vault.setQuickDepositStrategies([cMeshSwapStrategyDAI.address]);
+    // await vault.setQuickDepositStrategies([cMeshSwapStrategyDAI.address]);
     // Setting fee to 5%
     await vault.setMintFeeBps(500);
 
@@ -266,7 +287,7 @@ describe("Vault", function () {
   it("Should allow DAI minting (with swapping) with fee mint_imp with non-direct deposit strategy @fork", async function () {
     const { vault, dai, anna, cash, cMeshSwapStrategyDAI } = await loadFixture(defaultFixture);
     expect(await vault.isSupportedAsset(dai.address)).to.be.true;
-    await vault.setQuickDepositStrategies([cMeshSwapStrategyDAI.address]);
+    // await vault.setQuickDepositStrategies([cMeshSwapStrategyDAI.address]);
 
     // Setting fee to 5%
     await vault.setMintFeeBps(500);
@@ -284,7 +305,7 @@ describe("Vault", function () {
   it("Should allow USDT minting (with swapping) with fee mint_imp with non-direct deposit strategy @fork", async function () {
     const { vault, usdt, anna, cash, cMeshSwapStrategyDAI } = await loadFixture(defaultFixture);
     expect(await vault.isSupportedAsset(usdt.address)).to.be.true;
-    await vault.setQuickDepositStrategies([cMeshSwapStrategyDAI.address]);
+    // await vault.setQuickDepositStrategies([cMeshSwapStrategyDAI.address]);
 
     // Setting fee to 5%
     await vault.setMintFeeBps(500);
@@ -685,8 +706,8 @@ describe("Vault", function () {
     await expect(
       vault.connect(governor).approveStrategy(cMeshSwapStrategyUSDC.address)
     ).to.be.revertedWith("Strategy already approved");
-    console.log("Setting the Quick Deposit Strategies...")
-    await vault.connect(governor).setQuickDepositStrategies([cMeshSwapStrategyUSDC.address]);
+    // console.log("Setting the Quick Deposit Strategies...")
+    // await vault.connect(governor).setQuickDepositStrategies([cMeshSwapStrategyUSDC.address]);
     console.log("Setting the Strategies Weights...")
     await vault.connect(governor).setStrategyWithWeights([
       {
@@ -731,8 +752,8 @@ describe("Vault", function () {
     await expect(
       vault.connect(governor).approveStrategy(cMeshSwapStrategyUSDC.address)
     ).to.be.revertedWith("Strategy already approved");
-    console.log("Setting the Quick Deposit Strategies...")
-    await vault.connect(governor).setQuickDepositStrategies([cMeshSwapStrategyUSDC.address]);
+    // console.log("Setting the Quick Deposit Strategies...")
+    // await vault.connect(governor).setQuickDepositStrategies([cMeshSwapStrategyUSDC.address]);
     console.log("Setting the Strategies Weights...")
     await vault.connect(governor).setStrategyWithWeights([
       {

@@ -48,7 +48,7 @@ async function upgradeVault(signer) {
 
   const cVaultProxy = await ethers.getContractAt(
     "VaultProxy",
-    "0xa6c6E539167e8efa5BE0525E1F16c51e57dF896E"
+    "0xd1bb7d35db39954d43e16f65F09DD0766A772cFF"
   );
   const cVaultCore = await ethers.getContract("VaultCore");
   const cVaultAdmin = await ethers.getContract("VaultAdmin");
@@ -61,9 +61,9 @@ async function upgradeVault(signer) {
 async function upgradeTetu(signer) {
   const upgradable = "TetuStrategy";
   const toUpgrade = [
-    "0x21a5683b28D732479958A16f32485ff8474138EC",
-    "0xC87A68d140Dba5BEF1B4fa1acDb89FD4C2547d40",
-    "0x0B76799f1Fe8859E03EE84E2AD8F7D8950b3a8d6",
+    "0x9D7416C2Ce07CB7a71335fbcdE2f89A30B262064", // USDC
+    "0x407889eD44bEe744907675d52ae4d996e8425be2", // USDT
+    "0x58D85fAb1aE932244643E133e267b1952217E81a",  // DAI
   ];
   await deployWithConfirmation(upgradable);
   const USDC = await ethers.getContractAt("TetuStrategyUSDCProxy", toUpgrade[0]);
@@ -76,14 +76,14 @@ async function upgradeTetu(signer) {
 
 }
 async function main() {
-  let staging = true;
+  let staging = false;
   let usdc = await ethers.getContractAt(erc20Abi, addresses.polygon.USDC);
   let cash = await hre.ethers.getContractAt("CASH", "0x80487b4f8f70e793A81a42367c225ee0B94315DF");
   let vault = await hre.ethers.getContractAt("VaultCore", "0xd1bb7d35db39954d43e16f65F09DD0766A772cFF");
   let vaultAdmin = await hre.ethers.getContractAt("VaultAdmin", "0xd1bb7d35db39954d43e16f65F09DD0766A772cFF");
   let dripper = await hre.ethers.getContractAt("Dripper", "0x4b2b1dc2ecc46551d88389f7f06ef2bede77b4e1");
   let harvester = await hre.ethers.getContractAt("Harvester", "0xdbb57b33583fa86d4b31e88cf951caf6fd561ffe");
-  let cashWhale = "0x0b07cfdf4772cc7d6110621e9114ce527f41bb66";
+  let cashWhale = "0x9c4927530b1719e063d7e181c6c2e56353204e64";
 
   if (staging) {
     cash = await hre.ethers.getContractAt("CASH", "0xACFDeCB377e7A8b26ce033BDb01cb7630Ef07809");
@@ -125,8 +125,8 @@ async function main() {
   console.log("Difference in Value & Supply : ", cashUnitsFormat(cashTotalSupply.sub(BigNumber.from(cashUnits(usdcUnitsFormat(vaultCheckBalance))))))
   console.log("CASH Balance of cashWhale: ", cashUnitsFormat(await cash.balanceOf(cashWhale)))
 
-  console.log("Redeeming 100 CASH...")
-  await vault.connect(cashWhaleSigner).redeem(cashUnits("100"), "0")
+  console.log("Redeeming 100000 CASH...")
+  await vault.connect(cashWhaleSigner).redeem(cashUnits("100000"), "0")
 
   cashTotalSupply = await cash.totalSupply();
   vaultCheckBalance = await vault.checkBalance();

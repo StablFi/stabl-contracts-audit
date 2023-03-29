@@ -39,9 +39,6 @@ interface IHarvester {
 
     function harvestAndDistribute(address _strategyAddr, address _rewardTo) external;
 
-    function distributeFees() external;
-
-    function distributeProceeds() external;
 
     function setSupportedStrategy(address _strategyAddress, bool _isSupported)
         external;

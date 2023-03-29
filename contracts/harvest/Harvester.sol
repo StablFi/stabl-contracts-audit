@@ -172,9 +172,7 @@ contract Harvester is Initializable, Governable {
             teamfees
         );
     }
-    function distributeFees() external onlyGovernor {
-        _distributeFees(IERC20(primaryStableAddress).balanceOf(address(this)));
-    }
+
     function _distributeProceeds(uint256 _amount) internal {
         require(
             _amount > 0,
@@ -186,9 +184,7 @@ contract Harvester is Initializable, Governable {
             _amount
         );
     }
-    function distributeProceeds() external onlyGovernor {
-        _distributeProceeds(IERC20(primaryStableAddress).balanceOf(address(this)));
-    }
+ 
     /**
      * @dev Transfer token to governor. Intended for recovering tokens stuck in
      *      contract, i.e. mistaken sends.

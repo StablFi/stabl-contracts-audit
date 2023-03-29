@@ -7,4 +7,6 @@ interface I4Pool {
     function getTokenBalance(uint8 index) external view  returns (uint256);
 
     function skim(address _to) external payable ;
+
+    function withdrawAdminFees() external;
 }
