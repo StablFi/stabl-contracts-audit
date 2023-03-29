@@ -162,6 +162,8 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
 
         (test1Min, test1Max) = IUniProxy(uniProxy).getDepositAmount(hyperVisor, address(token0), IERC20(token0).balanceOf(address(this)));
         console.log("divide token: After swap, test1Min, test1Max, token1Amount", test1Min, test1Max, IERC20(token1).balanceOf(address(this)));
+
+        stakeLPToMasterchef();
     }
 
     function unstakeLP(uint256 _amount) internal {
