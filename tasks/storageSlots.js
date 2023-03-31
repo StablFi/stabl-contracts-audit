@@ -2,13 +2,7 @@ const path = require("path");
 const { promises, existsSync, mkdirSync } = require("fs");
 const _ = require("lodash");
 
-const {
-  getStorageLayout,
-  getVersion,
-  getUnlinkedBytecode,
-  isCurrentValidationData,
-  assertStorageUpgradeSafe,
-} = require("@openzeppelin/upgrades-core");
+const { getStorageLayout, getVersion, getUnlinkedBytecode, isCurrentValidationData, assertStorageUpgradeSafe } = require("@openzeppelin/upgrades-core");
 const isFork = process.env.FORK === "true";
 
 const getStorageFileLocation = (hre, contractName) => {
@@ -24,7 +18,7 @@ const getStorageFileLocation = (hre, contractName) => {
 
   const layoutFolder = `./storageLayout/${folder}/`;
   if (!existsSync(layoutFolder)) {
-    mkdirSync(layoutFolder);
+    mkdirSync(layoutFolder, { recursive: true });
   }
 
   return `${layoutFolder}${contractName}.json`;
@@ -33,10 +27,7 @@ const getStorageFileLocation = (hre, contractName) => {
 const getStorageLayoutForContract = async (hre, contractName) => {
   const validations = await readValidations(hre);
   const implFactory = await hre.ethers.getContractFactory(contractName);
-  const unlinkedBytecode = getUnlinkedBytecode(
-    validations,
-    implFactory.bytecode
-  );
+  const unlinkedBytecode = getUnlinkedBytecode(validations, implFactory.bytecode);
   const version = getVersion(unlinkedBytecode, implFactory.bytecode);
 
   return getStorageLayout(validations, version);
@@ -59,9 +50,7 @@ const storeStorageLayoutForContract = async (hre, contractName) => {
 
   // pretty print storage layout for the contract
   await promises.writeFile(storageLayoutFile, JSON.stringify(layout, null, 2));
-  console.log(
-    `Storage slots layout for ${contractName} saved to ${storageLayoutFile} `
-  );
+  console.log(`Storage slots layout for ${contractName} saved to ${storageLayoutFile} `);
 };
 
 const getAllEligibleContractNames = async (hre) => {
@@ -73,20 +62,10 @@ const getAllEligibleContractNames = async (hre) => {
 const isContractEligible = (contractName) => {
   // These contracts have been deprecated source files are no longer in repo but are still under deployments.
   // For that reason they need to be excluded.
-  const excludeContracts = [
-    "CurveUSDCStrategy",
-    "CurveUSDTStrategy",
-    "MinuteTimelock",
-    "OpenUniswapOracle",
-    "RebaseHooks",
-  ];
+  const excludeContracts = ["CurveUSDCStrategy", "CurveUSDTStrategy", "MinuteTimelock", "OpenUniswapOracle", "RebaseHooks"];
 
   // Need to exclude proxies as well since they are not upgradeable
-  return (
-    !contractName.endsWith("Proxy") &&
-    !contractName.startsWith("Mock") &&
-    !excludeContracts.includes(contractName)
-  );
+  return !contractName.endsWith("Proxy") && !contractName.startsWith("Mock") && !excludeContracts.includes(contractName);
 };
 
 const storeStorageLayoutForAllContracts = async (taskArguments, hre) => {
@@ -127,14 +106,9 @@ const assertUpgradeIsSafe = async (hre, contractName) => {
 
   const layout = await getStorageLayoutForContract(hre, contractName);
 
-  const oldLayout = await loadPreviousStorageLayoutForContract(
-    hre,
-    contractName
-  );
+  const oldLayout = await loadPreviousStorageLayoutForContract(hre, contractName);
   if (!oldLayout) {
-    console.debug(
-      `Previous storage layout for ${contractName} not found. Treating ${contractName} as a new contract.`
-    );
+    console.debug(`Previous storage layout for ${contractName} not found. Treating ${contractName} as a new contract.`);
   } else {
     // 3rd param is opts.unsafeAllowCustomTypes
     assertStorageUpgradeSafe(oldLayout, layout, false);
@@ -148,29 +122,20 @@ function getValidationsCachePath(hre) {
 
 class ValidationsCacheNotFound extends Error {
   constructor() {
-    super(
-      "Validations cache not found. Recompile with `hardhat compile --force`"
-    );
+    super("Validations cache not found. Recompile with `hardhat compile --force`");
   }
 }
 
 class ValidationsCacheOutdated extends Error {
   constructor() {
-    super(
-      "Validations cache is outdated. Recompile with `hardhat compile --force`"
-    );
+    super("Validations cache is outdated. Recompile with `hardhat compile --force`");
   }
 }
 
 const visualizeLayoutData = (layout) => {
-  const slotGroups = _.groupBy(
-    layout.storage,
-    (storageItem) => storageItem.startSlot
-  );
+  const slotGroups = _.groupBy(layout.storage, (storageItem) => storageItem.startSlot);
   const printSlot = (startSlotNumber, slotVariables) => {
-    const endSlotNumber = parseInt(
-      _.max(slotVariables.map((sv) => sv.endSlot))
-    );
+    const endSlotNumber = parseInt(_.max(slotVariables.map((sv) => sv.endSlot)));
     let title;
 
     if (parseInt(startSlotNumber) === endSlotNumber) {
@@ -180,9 +145,7 @@ const visualizeLayoutData = (layout) => {
     }
 
     const variableTexts = slotVariables.map((sv) => {
-      const text = `${sv.contract}[${sv.label}]: ${
-        layout.types[sv.type].label
-      }`;
+      const text = `${sv.contract}[${sv.label}]: ${layout.types[sv.type].label}`;
       return text;
     });
 
@@ -190,18 +153,9 @@ const visualizeLayoutData = (layout) => {
     const boxSize = maxTextLength + 4;
     const titlePadding = boxSize - title.length - 2;
 
-    console.log(
-      ` ${"".padStart(
-        Math.floor(titlePadding / 2.0),
-        "_"
-      )}${title}${"".padStart(Math.ceil(titlePadding / 2.0), "_")}`
-    );
+    console.log(` ${"".padStart(Math.floor(titlePadding / 2.0), "_")}${title}${"".padStart(Math.ceil(titlePadding / 2.0), "_")}`);
     console.log(`/${"".padStart(boxSize - 2, " ")}\\`);
-    variableTexts.forEach((varText) =>
-      console.log(
-        `| ${varText}${"".padStart(boxSize - varText.length - 4, " ")} |`
-      )
-    );
+    variableTexts.forEach((varText) => console.log(`| ${varText}${"".padStart(boxSize - varText.length - 4, " ")} |`));
     console.log(`\\${"".padStart(boxSize - 2, "_")}/`);
     console.log("");
   };
@@ -258,9 +212,7 @@ const enrichLayoutData = (layout) => {
         sItem.bits = 256;
       } else {
         const fixedArraySize = parseInt(arrayType);
-        sItem.bits = [...Array(fixedArraySize).keys()].map(
-          (_) => itemToBytesMap[itemType]
-        );
+        sItem.bits = [...Array(fixedArraySize).keys()].map((_) => itemToBytesMap[itemType]);
       }
     } else if (mappingRegex.test(sItem.type)) {
       sItem.newSlot = true;
@@ -269,15 +221,9 @@ const enrichLayoutData = (layout) => {
       // TODO verify that reference to another contract takes as many bits as address type
       sItem.bits = 160;
     } else if (structRegex.test(sItem.type)) {
-      throw new Error(
-        "\x1b[31mStructures are not yet supported. Logic needs to be updated (probably with recursion) \x1b[0m"
-      );
+      throw new Error("\x1b[31mStructures are not yet supported. Logic needs to be updated (probably with recursion) \x1b[0m");
     } else {
-      throw new Error(
-        "\x1b[31mUnexpected solidity type: ",
-        sItem.type,
-        "\x1b[0m"
-      );
+      throw new Error("\x1b[31mUnexpected solidity type: ", sItem.type, "\x1b[0m");
     }
 
     return sItem;

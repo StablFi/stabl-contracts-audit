@@ -30,7 +30,7 @@ describe("Vault", function () {
   beforeEach(async function () {
     // Send some 100 USDC, USDT, DAI  from josh to vault
     const { vault, josh, usdc, usdt, dai, cash } = await loadFixture(defaultFixture);
-    console.log("Sending 100 USDC, USDT, DAI from Josh to Vault")
+    console.log("Sending 100 USDC, USDT, DAI from Josh to Vault");
     await usdc.connect(josh).transfer(vault.address, usdcUnits("100"));
     await usdt.connect(josh).transfer(vault.address, usdtUnits("100"));
     await dai.connect(josh).transfer(vault.address, daiUnits("100"));
@@ -44,28 +44,23 @@ describe("Vault", function () {
     console.log("Vault DAI balance: ", daiUnitsFormat(await dai.balanceOf(vault.address)));
   });
   it("Should support an asset  @mock", async () => {
-    const { vault, oracleRouter, cash, governor } = await loadFixture(
-      defaultFixture
-    );
+    const { vault, oracleRouter, cash, governor } = await loadFixture(defaultFixture);
     const oracleAddresses = await getOracleAddresses(hre.deployments);
     const origAssetCount = await vault.connect(governor).getAssetCount();
     expect(await vault.isSupportedAsset(cash.address)).to.be.false;
     await oracleRouter.setFeed(cash.address, oracleAddresses.chainlink.DAI_USD);
-    await expect(vault.connect(governor).supportAsset(cash.address)).to.emit(
-      vault,
-      "AssetSupported"
-    );
+    await expect(vault.connect(governor).supportAsset(cash.address)).to.emit(vault, "AssetSupported");
     expect(await vault.getAssetCount()).to.equal(origAssetCount.add(1));
     const assets = await vault.connect(governor).getAllAssets();
     expect(assets.length).to.equal(origAssetCount.add(1));
     expect(await vault.isSupportedAsset(cash.address)).to.be.true;
   });
-  const amounts = ["5", "1000", "20000", "50000", "100000", "300000", "1000000"]
+  const amounts = ["5", "1000", "20000", "50000", "100000", "300000", "1000000"];
   for (let i = 0; i < amounts.length; i++) {
     const csv = [];
-    const redeem
-    const amount = amounts[i]*1.2; //(Math.floor(Math.random() * 50000) + 1).toString();
-    
+    // const redeem
+    const amount = amounts[i] * 1.2; //(Math.floor(Math.random() * 50000) + 1).toString();
+
     // Get random number from 0 to 2
     const stratIndex = Math.floor(Math.random() * 3);
 
@@ -82,7 +77,7 @@ describe("Vault", function () {
       let diff = parseFloat(cashSupply) - parseFloat(vaultNav);
       let annaCashBalance = cashUnitsFormat(await cash.balanceOf(anna.address));
       csv_string += "," + cashSupply + "," + vaultNav + "," + diff.toFixed(5) + "," + annaCashBalance;
-      
+
       // Set treasury
       console.log("Anna USDC balance: ", usdcUnitsFormat(await usdc.balanceOf(anna.address)));
       console.log("Treasury: ", rio.address);
@@ -113,7 +108,7 @@ describe("Vault", function () {
 
       const rioUsdcBalanceAfter = await usdc.balanceOf(rio.address);
       const changeInRioBalance = rioUsdcBalanceAfter.sub(rioUsdcBalance);
-      const amountMinusFee = (amount - (amount * 0.0025)).toString();
+      const amountMinusFee = (amount - amount * 0.0025).toString();
       const fee = (amount * 0.0025).toString();
 
       annaCashBalance = cashUnitsFormat(await cash.balanceOf(anna.address));
@@ -126,7 +121,7 @@ describe("Vault", function () {
       console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
       console.log("Anna CASH balance should be: ", amountMinusFee);
       // Calculate the 0.1% of amountMinusFee
-      const allowedDifferenceAmount = ((amountMinusFee * 0.001).toFixed(2)).toString();
+      const allowedDifferenceAmount = (amountMinusFee * 0.001).toFixed(2).toString();
 
       console.log("Strategy checkBalance: ", usdcUnitsFormat(await cTetuUsdtStrategyProxy.checkBalance()));
       console.log("Treasury USDC should gain: ", fee);
@@ -135,15 +130,13 @@ describe("Vault", function () {
       // expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits(amountMinusFee), cashUnits(allowedDifferenceAmount));
       console.log("Vault USDC balance: ", usdcUnitsFormat(await usdc.balanceOf(vault.address)));
 
-      const fs = require('fs');
-      fs.writeFile('mix_amounts' + amounts[i]+ '.csv', csv_string, function (err) {
+      const fs = require("fs");
+      fs.writeFile("mix_amounts" + amounts[i] + ".csv", csv_string, function (err) {
         if (err) throw err;
-        console.log('Saved!');
+        console.log("Saved!");
       });
-
     });
     // write to file
-    
   }
   for (let i = 0; i < 1; i++) {
     const amount = "1000"; // (Math.floor(Math.random() * 50000) + 1).toString();
@@ -151,8 +144,8 @@ describe("Vault", function () {
 
     it("Should allow " + amount + " DAI minting (with swapping) with fee mint_imp_mass @fork mint_imp_dai mint_new", async function () {
       const { vault, dai, usdt, governor, anna, rio, cash, cAaveSupplyUsdtStrategyProxy, cTetuUsdtStrategyProxy, cTetuUsdcStrategyProxy, cTetuDaiStrategyProxy, usdc } = await loadFixture(defaultFixture);
-      console.log("Vault: ", vault.address)
-      console.log("cTetuUsdtStrategyProxy: ", cTetuUsdtStrategyProxy.address)
+      console.log("Vault: ", vault.address);
+      console.log("cTetuUsdtStrategyProxy: ", cTetuUsdtStrategyProxy.address);
       expect(await vault.isSupportedAsset(dai.address)).to.be.true;
 
       // await vault.setAssetDefaultStrategy(usdc.address,  cAaveSupplyUsdtStrategyProxy.address);
@@ -190,22 +183,21 @@ describe("Vault", function () {
 
       const rioDaiBalanceAfter = await dai.balanceOf(rio.address);
       const changeInRioBalance = rioDaiBalanceAfter.sub(rioDaiBalance);
-      const amountMinusFee = (amount - (amount * 0.0025)).toString();
+      const amountMinusFee = (amount - amount * 0.0025).toString();
       const fee = (amount * 0.0025).toString();
 
       // Print CASH of anna
       console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
       console.log("Anna CASH balance should be: ", amountMinusFee);
       // Calculate the 0.1% of amountMinusFee
-      const allowedDifferenceAmount = ((amountMinusFee * 0.001).toFixed(2)).toString();
+      const allowedDifferenceAmount = (amountMinusFee * 0.001).toFixed(2).toString();
 
       console.log("Strategy checkBalance: ", usdcUnitsFormat(await cTetuUsdtStrategyProxy.checkBalance()));
       console.log("Treasury DAI should gain: ", fee);
       console.log("Treasury DAI gained: ", daiUnitsFormat(changeInRioBalance));
       // expect(changeInRioBalance).to.be.above("0");
       expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits(amountMinusFee), cashUnits(allowedDifferenceAmount));
-     console.log("Vault DAI balance: ", daiUnitsFormat(await dai.balanceOf(vault.address)));
-
+      console.log("Vault DAI balance: ", daiUnitsFormat(await dai.balanceOf(vault.address)));
     });
   }
   for (let i = 0; i < 1; i++) {
@@ -213,7 +205,7 @@ describe("Vault", function () {
     const stratIndex = Math.floor(Math.random() * 3);
 
     it("Should allow " + amount + " USDT minting (with swapping) with fee mint_imp_mass mint_imp_usdt mint_new @fork", async function () {
-      const { vault, usdt, dai, governor, anna, usdc, rio, cash,cAaveSupplyUsdtStrategyProxy, cTetuUsdtStrategyProxy, cTetuUsdcStrategyProxy, cTetuDaiStrategyProxy } = await loadFixture(defaultFixture);
+      const { vault, usdt, dai, governor, anna, usdc, rio, cash, cAaveSupplyUsdtStrategyProxy, cTetuUsdtStrategyProxy, cTetuUsdcStrategyProxy, cTetuDaiStrategyProxy } = await loadFixture(defaultFixture);
       expect(await vault.isSupportedAsset(usdt.address)).to.be.true;
 
       // await vault.setAssetDefaultStrategy(usdc.address,  cAaveSupplyUsdtStrategyProxy.address);
@@ -246,14 +238,14 @@ describe("Vault", function () {
 
       rioUsdtBalanceAfter = await usdt.balanceOf(rio.address);
       changeInRioBalance = rioUsdtBalanceAfter.sub(rioUsdtBalance);
-      amountMinusFee = (amount - (amount * 0.0025)).toString();
+      amountMinusFee = (amount - amount * 0.0025).toString();
       fee = (amount * 0.0025).toString();
 
       // Print CASH of anna
       console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
       console.log("Anna CASH balance should be: ", amountMinusFee);
       // Calculate the 0.1% of amountMinusFee
-      const allowedDifferenceAmount = ((amountMinusFee * 0.001).toFixed(2)).toString();
+      const allowedDifferenceAmount = (amountMinusFee * 0.001).toFixed(2).toString();
 
       console.log("Strategy checkBalance: ", usdcUnitsFormat(await cTetuUsdtStrategyProxy.checkBalance()));
       console.log("Treasury USDT should gain: ", fee);
@@ -261,7 +253,6 @@ describe("Vault", function () {
       // expect(changeInRioBalance).to.be.above("0");
       expect(await cash.balanceOf(anna.address)).to.be.closeTo(cashUnits(amountMinusFee), cashUnits(allowedDifferenceAmount));
       console.log("Vault USDT balance: ", usdtUnitsFormat(await usdt.balanceOf(vault.address)));
-
     });
   }
 
@@ -371,9 +362,7 @@ describe("Vault", function () {
     const initialUSDTBalance = await usdt.balanceOf(anna.address);
 
     await usdt.connect(anna).approve(vault.address, usdtUnits("100"));
-    await expect(
-      vault.connect(anna).mint(usdt.address, usdtUnits("100"), cashUnits("100"))
-    ).to.be.revertedWith("Mint amount lower than minimum");
+    await expect(vault.connect(anna).mint(usdt.address, usdtUnits("100"), cashUnits("100"))).to.be.revertedWith("Mint amount lower than minimum");
     // Print CASH of anna
     console.log("Anna USDT balance: ", usdcUnitsFormat(await usdt.balanceOf(anna.address)));
     console.log("Anna CASH balance: ", cashUnitsFormat(await cash.balanceOf(anna.address)));
@@ -383,32 +372,22 @@ describe("Vault", function () {
   it("Should revert when adding an asset that is already supported  @mock", async function () {
     const { vault, usdt, governor } = await loadFixture(defaultFixture);
     expect(await vault.isSupportedAsset(usdt.address)).to.be.true;
-    await expect(
-      vault.connect(governor).supportAsset(usdt.address)
-    ).to.be.revertedWith("Asset already supported");
+    await expect(vault.connect(governor).supportAsset(usdt.address)).to.be.revertedWith("Asset already supported");
   });
 
   it("Should revert when attempting to support an asset and not governor @mock", async function () {
     const { vault, tusd, matt } = await loadFixture(defaultFixture);
-    await expect(vault.connect(matt).supportAsset(tusd.address)).to.be.revertedWith(
-      "Caller is not the Governor"
-    );
+    await expect(vault.connect(matt).supportAsset(tusd.address)).to.be.revertedWith("Caller is not the Governor");
   });
 
   it("Should revert when adding a strategy that is already approved @mock", async function () {
-    const { vault, governor, cMeshSwapStrategyUSDC } = await loadFixture(
-      defaultFixture
-    );
-    await expect(
-      vault.connect(governor).approveStrategy(cMeshSwapStrategyUSDC.address)
-    ).to.be.revertedWith("Strategy already approved");
+    const { vault, governor, cMeshSwapStrategyUSDC } = await loadFixture(defaultFixture);
+    await expect(vault.connect(governor).approveStrategy(cMeshSwapStrategyUSDC.address)).to.be.revertedWith("Strategy already approved");
   });
 
   it("Should revert when attempting to approve a strategy and not Governor @mock", async function () {
     const { vault, josh, cMeshSwapStrategyUSDC } = await loadFixture(defaultFixture);
-    await expect(
-      vault.connect(josh).approveStrategy(cMeshSwapStrategyUSDC.address)
-    ).to.be.revertedWith("Caller is not the Governor");
+    await expect(vault.connect(josh).approveStrategy(cMeshSwapStrategyUSDC.address)).to.be.revertedWith("Caller is not the Governor");
   });
 
   it("Should correctly ratio deposited currencies of differing decimals @mock", async function () {
@@ -452,37 +431,25 @@ describe("Vault", function () {
     await expect(anna).has.a.balanceOf("0.00", cash);
     await setOracleTokenPriceUsd("USDC", "0.95");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
-    await expect(
-      vault.connect(anna).justMint(usdc.address, usdcUnits("50.0"), 0)
-    ).to.be.revertedWith("Asset price below Peg");
+    await expect(vault.connect(anna).justMint(usdc.address, usdcUnits("50.0"), 0)).to.be.revertedWith("Asset price below Peg");
   });
 
   it("Should correctly handle a deposit failure of Non-Standard ERC20 Token @mock", async function () {
-    const { cash, vault, anna, nonStandardToken, governor } = await loadFixture(
-      defaultFixture
-    );
+    const { cash, vault, anna, nonStandardToken, governor } = await loadFixture(defaultFixture);
 
     await vault.connect(governor).supportAsset(nonStandardToken.address);
 
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
     await setOracleTokenPriceUsd("NonStandardToken", "1.30");
-    await nonStandardToken
-      .connect(anna)
-      .approve(vault.address, usdtUnits("1500.0"));
+    await nonStandardToken.connect(anna).approve(vault.address, usdtUnits("1500.0"));
 
     // Anna has a balance of 1000 tokens and she is trying to
     // transfer 1500 tokens. The contract doesn't throw but
     // fails silently, so Anna's CASH balance should be zero.
     try {
-      await vault
-        .connect(anna)
-        .mint(nonStandardToken.address, usdtUnits("1500.0"), 0);
+      await vault.connect(anna).mint(nonStandardToken.address, usdtUnits("1500.0"), 0);
     } catch (err) {
-      expect(
-        /reverted with reason string 'SafeERC20: ERC20 operation did not succeed/gi.test(
-          err.message
-        )
-      ).to.be.true;
+      expect(/reverted with reason string 'SafeERC20: ERC20 operation did not succeed/gi.test(err.message)).to.be.true;
     } finally {
       // Make sure nothing got affected
       await expect(anna).has.a.balanceOf("0.00", cash);
@@ -491,20 +458,14 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a deposit of Non-Standard ERC20 Token @mock", async function () {
-    const { cash, vault, anna, nonStandardToken, governor } = await loadFixture(
-      defaultFixture
-    );
+    const { cash, vault, anna, nonStandardToken, governor } = await loadFixture(defaultFixture);
     await vault.connect(governor).supportAsset(nonStandardToken.address);
 
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
     await setOracleTokenPriceUsd("NonStandardToken", "1.00");
 
-    await nonStandardToken
-      .connect(anna)
-      .approve(vault.address, usdtUnits("100.0"));
-    await vault
-      .connect(anna)
-      .justMint(nonStandardToken.address, usdtUnits("100.0"), 0);
+    await nonStandardToken.connect(anna).approve(vault.address, usdtUnits("100.0"));
+    await vault.connect(anna).justMint(nonStandardToken.address, usdtUnits("100.0"), 0);
     await expect(anna).has.a.balanceOf("100.00", cash);
     await expect(anna).has.a.balanceOf("900.00", nonStandardToken);
   });
@@ -512,9 +473,7 @@ describe("Vault", function () {
   it("Should calculate the balance correctly with DAI @mock", async () => {
     const { vault } = await loadFixture(defaultFixture);
     // Vault already has DAI from default ficture
-    await expect(await vault.totalValue()).to.equal(
-      utils.parseUnits("200", 6)
-    );
+    await expect(await vault.totalValue()).to.equal(utils.parseUnits("200", 6));
   });
 
   it("Should calculate the balance correctly with USDC @mock", async () => {
@@ -524,9 +483,7 @@ describe("Vault", function () {
     await usdc.connect(matt).approve(vault.address, usdcUnits("2.0"));
     await vault.connect(matt).justMint(usdc.address, usdcUnits("2.0"), 0);
     // Fixture loads 200 DAI, so result should be 202
-    await expect(await vault.totalValue()).to.equal(
-      utils.parseUnits("202", 6)
-    );
+    await expect(await vault.totalValue()).to.equal(utils.parseUnits("202", 6));
   });
 
   it("Should calculate the balance correctly with DAI, USDC, USDT, TUSD @mock", async () => {
@@ -543,17 +500,13 @@ describe("Vault", function () {
     // Matt deposits TUSD, 18 decimals
     await tusd.connect(matt).approve(vault.address, tusdUnits("9.0"));
     await vault.connect(matt).justMint(tusd.address, tusdUnits("9.0"), 0);
-    // Fixture loads 200 USDC and Vault should not report 
+    // Fixture loads 200 USDC and Vault should not report
     // asset other than USDC balance, so result should be 208
-    await expect(await vault.totalValue()).to.equal(
-      utils.parseUnits("208", 6)
-    );
+    await expect(await vault.totalValue()).to.equal(utils.parseUnits("208", 6));
   });
 
   it("Should allow transfer of arbitrary token by Governor @mock", async () => {
-    const { vault, cash, usdc, matt, governor } = await loadFixture(
-      defaultFixture
-    );
+    const { vault, cash, usdc, matt, governor } = await loadFixture(defaultFixture);
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
     await vault.connect(matt).justMint(usdc.address, usdcUnits("8.0"), 0);
@@ -567,9 +520,7 @@ describe("Vault", function () {
   it("Should not allow transfer of arbitrary token by non-Governor @mock", async () => {
     const { vault, cash, matt } = await loadFixture(defaultFixture);
     // Naughty Matt
-    await expect(
-      vault.connect(matt).transferToken(cash.address, cashUnits("8.0"))
-    ).to.be.revertedWith("Caller is not the Governor");
+    await expect(vault.connect(matt).transferToken(cash.address, cashUnits("8.0"))).to.be.revertedWith("Caller is not the Governor");
   });
 
   it("Should not allow transfer of supported token by governor @mock", async () => {
@@ -577,9 +528,7 @@ describe("Vault", function () {
     // Matt puts USDC in vault
     await usdc.transfer(vault.address, usdcUnits("8.0"));
     // Governor cannot move USDC because it is a supported token.
-    await expect(
-      vault.connect(governor).transferToken(usdc.address, cashUnits("8.0"))
-    ).to.be.revertedWith("Only unsupported assets");
+    await expect(vault.connect(governor).transferToken(usdc.address, cashUnits("8.0"))).to.be.revertedWith("Only unsupported assets");
   });
 
   it("Should allow Governor to add Strategy @mock", async () => {
@@ -591,9 +540,7 @@ describe("Vault", function () {
   it("Should revert when removing a Strategy that has not been added @mock", async () => {
     const { vault, governor, cash } = await loadFixture(defaultFixture);
     // Pretend CASH is a strategy and remove its address
-    await expect(
-      vault.connect(governor).removeStrategy(cash.address)
-    ).to.be.revertedWith("Strategy not approved");
+    await expect(vault.connect(governor).removeStrategy(cash.address)).to.be.revertedWith("Strategy not approved");
   });
 
   it("Should correctly handle a mint with auto rebase @mock", async function () {
@@ -613,18 +560,14 @@ describe("Vault", function () {
     await usdt.connect(matt).approve(vault.address, usdtUnits("50.0"));
     await dai.connect(matt).approve(vault.address, daiUnits("25.0"));
 
-    await expect(
-      vault.connect(matt).justMint(usdt.address, usdtUnits("50"), daiUnits("100"))
-    ).to.be.revertedWith("Mint amount lower than minimum");
+    await expect(vault.connect(matt).justMint(usdt.address, usdtUnits("50"), daiUnits("100"))).to.be.revertedWith("Mint amount lower than minimum");
 
     await expect(matt).has.a.balanceOf("100.00", cash);
     expect(await cash.totalSupply()).to.eq(cashUnits("200.0"));
   });
 
   it("Should allow transfer of arbitrary token by Governor @mock", async () => {
-    const { vault, cash, usdc, matt, governor } = await loadFixture(
-      defaultFixture
-    );
+    const { vault, cash, usdc, matt, governor } = await loadFixture(defaultFixture);
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
     await vault.connect(matt).justMint(usdc.address, usdcUnits("8.0"), 0);
@@ -638,9 +581,7 @@ describe("Vault", function () {
   it("Should not allow transfer of arbitrary token by non-Governor @mock", async () => {
     const { vault, cash, matt } = await loadFixture(defaultFixture);
     // Naughty Matt
-    await expect(
-      vault.connect(matt).transferToken(cash.address, cashUnits("8.0"))
-    ).to.be.revertedWith("Caller is not the Governor");
+    await expect(vault.connect(matt).transferToken(cash.address, cashUnits("8.0"))).to.be.revertedWith("Caller is not the Governor");
   });
 
   it("Should allow governor to change rebase threshold @mock", async () => {
@@ -650,9 +591,7 @@ describe("Vault", function () {
 
   it("Should not allow non-governor to change rebase threshold @mock", async () => {
     const { vault } = await loadFixture(defaultFixture);
-    expect(vault.setRebaseThreshold(cashUnits("400"))).to.be.revertedWith(
-      "Caller is not the Governor"
-    );
+    expect(vault.setRebaseThreshold(cashUnits("400"))).to.be.revertedWith("Caller is not the Governor");
   });
 
   it("Should allow governor to change Strategist address @mock", async () => {
@@ -662,9 +601,7 @@ describe("Vault", function () {
 
   it("Should not allow non-governor to change Strategist address @mock", async () => {
     const { vault, josh, matt } = await loadFixture(defaultFixture);
-    await expect(
-      vault.connect(matt).setStrategistAddr(await josh.getAddress())
-    ).to.be.revertedWith("Caller is not the Governor");
+    await expect(vault.connect(matt).setStrategistAddr(await josh.getAddress())).to.be.revertedWith("Caller is not the Governor");
   });
 
   it("Should not allow non-Governor and non-Strategist to call reallocate @mock", async () => {
@@ -688,42 +625,36 @@ describe("Vault", function () {
 
   it("Should not allow other to set vaultBuffer @mock", async () => {
     const { vault, josh } = await loadFixture(defaultFixture);
-    await expect(
-      vault.connect(josh).setVaultBuffer(utils.parseUnits("2", 19))
-    ).to.be.revertedWith("Caller is not the Strategist or Governor");
+    await expect(vault.connect(josh).setVaultBuffer(utils.parseUnits("2", 19))).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 
   it("Should not allow setting a vaultBuffer > 1e18 @mock", async () => {
     const { vault, governor } = await loadFixture(defaultFixture);
-    await expect(
-      vault.connect(governor).setVaultBuffer(utils.parseUnits("2", 19))
-    ).to.be.revertedWith("Invalid value");
+    await expect(vault.connect(governor).setVaultBuffer(utils.parseUnits("2", 19))).to.be.revertedWith("Invalid value");
   });
 
   it("Should remove strategy from all points @removeStrategy  @fork", async () => {
     const { vault, governor, cMeshSwapStrategyUSDC } = await loadFixture(defaultFixture);
 
-    await expect(
-      vault.connect(governor).approveStrategy(cMeshSwapStrategyUSDC.address)
-    ).to.be.revertedWith("Strategy already approved");
+    await expect(vault.connect(governor).approveStrategy(cMeshSwapStrategyUSDC.address)).to.be.revertedWith("Strategy already approved");
     // console.log("Setting the Quick Deposit Strategies...")
     // await vault.connect(governor).setQuickDepositStrategies([cMeshSwapStrategyUSDC.address]);
-    console.log("Setting the Strategies Weights...")
+    console.log("Setting the Strategies Weights...");
     await vault.connect(governor).setStrategyWithWeights([
       {
-        "strategy": cMeshSwapStrategyUSDC.address,
-        "minWeight": 0,
-        "targetWeight": 100 * 1000,
-        "maxWeight": 100 * 1000,
-        "enabled": true,
-        "enabledReward": true
-      }
+        strategy: cMeshSwapStrategyUSDC.address,
+        minWeight: 0,
+        targetWeight: 100 * 1000,
+        maxWeight: 100 * 1000,
+        enabled: true,
+        enabledReward: true,
+      },
     ]);
 
-    console.log("Remove Strategy...")
+    console.log("Remove Strategy...");
     await vault.connect(governor).removeStrategy(cMeshSwapStrategyUSDC.address);
 
-    console.log("Pulling new strategy data...")
+    console.log("Pulling new strategy data...");
     let allStrategies = await vault.getAllStrategies();
     let allWeights = await vault.getAllStrategyWithWeights();
     let allWeightStrats = [];
@@ -742,42 +673,39 @@ describe("Vault", function () {
     expect(allQuickDeposit.includes(cMeshSwapStrategyUSDC.address)).to.be.false;
 
     // TODO: Need better way to test this, mapping deletion
-    // await expect(vault.strategyWithWeightPositions(cMeshSwapStrategyUSDC.address)).to.equal(0); 
-
+    // await expect(vault.strategyWithWeightPositions(cMeshSwapStrategyUSDC.address)).to.equal(0);
   });
 
   it("Should remove strategy from all points when two strategies are present @removeStrategy @fork", async () => {
     const { vault, governor, cMeshSwapStrategyUSDC, cSynapseStrategy } = await loadFixture(defaultFixture);
 
-    await expect(
-      vault.connect(governor).approveStrategy(cMeshSwapStrategyUSDC.address)
-    ).to.be.revertedWith("Strategy already approved");
+    await expect(vault.connect(governor).approveStrategy(cMeshSwapStrategyUSDC.address)).to.be.revertedWith("Strategy already approved");
     // console.log("Setting the Quick Deposit Strategies...")
     // await vault.connect(governor).setQuickDepositStrategies([cMeshSwapStrategyUSDC.address]);
-    console.log("Setting the Strategies Weights...")
+    console.log("Setting the Strategies Weights...");
     await vault.connect(governor).setStrategyWithWeights([
       {
-        "strategy": cSynapseStrategy.address,
-        "minWeight": 0,
-        "targetWeight": 70 * 1000,
-        "maxWeight": 100 * 1000,
-        "enabled": true,
-        "enabledReward": true
+        strategy: cSynapseStrategy.address,
+        minWeight: 0,
+        targetWeight: 70 * 1000,
+        maxWeight: 100 * 1000,
+        enabled: true,
+        enabledReward: true,
       },
       {
-        "strategy": cMeshSwapStrategyUSDC.address,
-        "minWeight": 0,
-        "targetWeight": 30 * 1000,
-        "maxWeight": 100 * 1000,
-        "enabled": true,
-        "enabledReward": true
-      }
+        strategy: cMeshSwapStrategyUSDC.address,
+        minWeight: 0,
+        targetWeight: 30 * 1000,
+        maxWeight: 100 * 1000,
+        enabled: true,
+        enabledReward: true,
+      },
     ]);
 
-    console.log("Remove Strategy...")
+    console.log("Remove Strategy...");
     await vault.connect(governor).removeStrategy(cMeshSwapStrategyUSDC.address);
 
-    console.log("Pulling new strategy data...")
+    console.log("Pulling new strategy data...");
     let allStrategies = await vault.getAllStrategies();
     let allWeights = await vault.getAllStrategyWithWeights();
     let allWeightStrats = [];
@@ -797,8 +725,7 @@ describe("Vault", function () {
     expect(allQuickDeposit.includes(cMeshSwapStrategyUSDC.address)).to.be.false;
 
     // TODO: Need better way to test this, mapping deletion
-    // await expect(vault.strategyWithWeightPositions(cMeshSwapStrategyUSDC.address)).to.equal(0); 
-
+    // await expect(vault.strategyWithWeightPositions(cMeshSwapStrategyUSDC.address)).to.equal(0);
   });
 
   it("Should allow negative changeSupply of CASH", async () => {
