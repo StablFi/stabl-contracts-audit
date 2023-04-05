@@ -31,7 +31,7 @@ const { ethers } = require("hardhat");
 
 async function defaultFixture() {
 
-  await deployments.fixture(['test']);
+  // await deployments.fixture(['test']);
 
   const { governorAddr } = await getNamedAccounts();
 
