@@ -86,10 +86,11 @@ contract CompoundStrategy is InitializableAbstractStrategy, CurveExchange {
     }
 
     function directDeposit() external onlyVault {
+        uint256 balance = token0.balanceOf(address(this));
         _swapAssetToPrimaryStable(); // Compound only supports USDC supply
         _stake(primaryStable.balanceOf(address(this)));
 
-        emit Deposit(address(token0), address(platformAddress), token0.balanceOf(address(this)));
+        emit Deposit(address(token0), address(platformAddress), balance);
     }
 
     function collectRewardTokens() external override onlyHarvester nonReentrant {
@@ -101,7 +102,7 @@ contract CompoundStrategy is InitializableAbstractStrategy, CurveExchange {
         if (interest > 0) {
             uint256 beforeBal = primaryStable.balanceOf(address(this));
 
-            Comet(cometAddress).withdraw(address(primaryStable), MAX_UINT);
+            Comet(cometAddress).withdraw(address(primaryStable), interest);
 
             uint256 afterBal = primaryStable.balanceOf(address(this)) - beforeBal;
             if (afterBal > 0) {
