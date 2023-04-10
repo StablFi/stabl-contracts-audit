@@ -3,7 +3,7 @@
 
 Deploy on Polygon Fork
 ```
-npx --no-install hardhat node --export '../dapp/network.json' --fork https://polygon-rpc.com --fork-block-number 31657239
+npx --no-install hardhat node --export '../dapp/network.json' --fork https://polygon-rpc.com --fork-block-number 40865890 // 31657239
 ```
 Debug
 ```
