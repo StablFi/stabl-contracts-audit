@@ -187,24 +187,6 @@ contract CompoundStrategy is InitializableAbstractStrategy, CurveExchange {
         }
     }
 
-    function directDepositRequirement(uint256 _psAmount) external view onlyVault returns (uint256) {
-        if (address(token0) == address(primaryStable)) {
-            return _psAmount;
-        }
-        return howMuchToSwap(curvePool, address(token0), address(primaryStable), _psAmount);
-    }
-
-    function _stake(uint256 _amount) internal {
-        primaryStable.approve(cometAddress, _amount);
-        storedPrimaryTokenBalance += _amount;
-        Comet(cometAddress).supply(address(primaryStable), _amount);
-    }
-
-    function depositAll() public onlyVault nonReentrant {
-        _swapAssetToPrimaryStable();
-        _stake(primaryStable.balanceOf(address(this)));
-    }
-
     function _withdrawAsset(address _asset, uint256 _amountInUsd) internal returns (uint256) {
         if (_amountInUsd == 0) {
             return 0;
@@ -239,6 +221,24 @@ contract CompoundStrategy is InitializableAbstractStrategy, CurveExchange {
         require(primaryStable.balanceOf(address(this)) >= numberOfPrimary, "Compound: Not enough primaryStable balance");
         _swapPrimaryStableToToken0(numberOfPrimary);
         require(token0.balanceOf(address(this)) >= _amountOfToken0, "Compound: Not enough token0 balance");
+    }
+
+    function directDepositRequirement(uint256 _psAmount) external view onlyVault returns (uint256) {
+        if (address(token0) == address(primaryStable)) {
+            return _psAmount;
+        }
+        return howMuchToSwap(curvePool, address(token0), address(primaryStable), _psAmount);
+    }
+
+    function _stake(uint256 _amount) internal {
+        primaryStable.approve(cometAddress, _amount);
+        storedPrimaryTokenBalance += _amount;
+        Comet(cometAddress).supply(address(primaryStable), _amount);
+    }
+
+    function depositAll() public onlyVault nonReentrant {
+        _swapAssetToPrimaryStable();
+        _stake(primaryStable.balanceOf(address(this)));
     }
 
     function _equivalentInPrimary(uint256 _amount) internal view returns (uint256) {
