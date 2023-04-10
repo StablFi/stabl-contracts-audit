@@ -29,24 +29,27 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
+    struct QuickSwapInfo {
+        address quickSwapMasterchef;
+        address hyperVisor;
+        address uniProxy;
+        uint256 rewardTokenCount;
+        uint256 poolId;
+    }
+    QuickSwapInfo public info;
+
     IERC20 public token0;
     IERC20 public token1;
     IERC20 public primaryStable;
     IERC20 public quickTokenNew;
-    IERC20 public quickDragon;
 
-    address public quickSwapMasterchef;
-    address public hyperVisor;
-    address public uniProxy;
-
-    uint256 public rewardTokenCount;
-    uint256 public poolId;
     uint256 public depositedLP;
 
     mapping(address => uint256) public assetToDenominator;
 
     address public swappingPool;
     uint256[] public minThresholds;
+
     address public oracleRouter;
 
     /**
@@ -59,40 +62,28 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         address _vaultAddress, // VaultProxy address
         address[] calldata _rewardTokenAddresses, // USDC - as in end USDC will be sent to Harvester
         address[] calldata _assets, // USDC + USDT
-        address[] calldata _pTokens, //  quickSwapUSDCUSDTPair
+        address[] calldata _pTokens, // quickSwapUSDCUSDTPair
         address _primaryStable, // USDC address
         address _router, // quickSwapRouter02
-        address _masterchef, // gamma quickSwap Masterchef
-        uint256 _rewardTokenCount, // masterchef reward tokens, dQUICK and WMATIC in case of USDC-USDT
-        uint256 _poolId // 11 for USDC/USDT pair
+        QuickSwapInfo calldata _info // (masterchef, hyperVisor, uniProxy, rewardCount: 2, poolId: 11)
     ) external onlyGovernor initializer {
         require(_rewardTokenAddresses[0] != address(0), "Zero address not allowed");
         require(_pTokens[0] != address(0), "Zero address not allowed");
         require(_platformAddress != address(0), "Zero address not allowed");
         require(_router != address(0), "Zero address not allowed");
-        require(_masterchef != address(0), "Zero address not allowed");
-        require(_rewardTokenCount != 0, "No reward tokens are not allowed");
-
+        require(info.quickSwapMasterchef != address(0), "Zero address not allowed");
+        require(info.rewardTokenCount != 0, "No reward tokens are not allowed");
         token0 = IERC20(_assets[0]);
         token1 = IERC20(_assets[1]);
-
-        poolId = _poolId;
-        rewardTokenCount = _rewardTokenCount;
+        info = _info;
 
         primaryStable = IERC20(_primaryStable);
         quickTokenNew = IERC20(_platformAddress);
-
         uint256 assetCount = _assets.length;
         for (uint256 i = 0; i < assetCount; i++) {
             assetToDenominator[_assets[i]] = 10 ** IERC20Metadata(_assets[i]).decimals();
         }
-
-        quickSwapMasterchef = _masterchef;
-        hyperVisor = IMasterChef(quickSwapMasterchef).lpToken(poolId);
-        uniProxy = IHyperVisor(hyperVisor).whitelistedAddress();
-
         _setUniswapRouter(_router);
-
         super._initialize(_platformAddress, _vaultAddress, _rewardTokenAddresses, _assets, _pTokens);
         for (uint8 i = 0; i < 5; i++) {
             minThresholds.push(0);
@@ -105,53 +96,56 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
     }
 
     function stakeLPToMasterchef() internal {
-        uint256 lpTokenBalance = IERC20(hyperVisor).balanceOf(address(this));
+        uint256 lpTokenBalance = IERC20(info.hyperVisor).balanceOf(address(this));
         console.log("Staking lpTokenBalance", lpTokenBalance);
 
-        IERC20(hyperVisor).approve(quickSwapMasterchef, lpTokenBalance);
-        IMasterChef(quickSwapMasterchef).deposit(poolId, lpTokenBalance, address(this));
+        IERC20(info.hyperVisor).approve(info.quickSwapMasterchef, lpTokenBalance);
+        IMasterChef(info.quickSwapMasterchef).deposit(info.poolId, lpTokenBalance, address(this));
 
         depositedLP += lpTokenBalance;
-        console.log("LP Balance staked: ", IERC20(hyperVisor).balanceOf(address(this)));
+        console.log("LP Balance staked: ", IERC20(info.hyperVisor).balanceOf(address(this)));
     }
 
-    function directDeposit() internal {
-        console.log("------------deposit------------");
+    function directDeposit() public onlyVault {
+        console.log("------------direct deposit------------");
+
+        uint256 balance = token0.balanceOf(address(this));
+        divideToken0(balance);
 
         uint256 token0Amount = IERC20(token0).balanceOf(address(this));
         uint256 token1Amount = IERC20(token1).balanceOf(address(this));
 
-        token0.approve(hyperVisor, token0Amount);
-        token1.approve(hyperVisor, token1Amount);
+        token0.approve(info.hyperVisor, token0Amount);
+        token1.approve(info.hyperVisor, token1Amount);
 
         uint256[4] memory inMin;
 
-        console.log("deposit: LP balance Before deposit", IERC20(hyperVisor).balanceOf(address(this)));
+        console.log("deposit: LP balance Before deposit", IERC20(info.hyperVisor).balanceOf(address(this)));
         console.log("deposit: USDC balance Before deposit", IERC20(token0).balanceOf(address(this)));
         console.log("deposit: USDT balance Before deposit", IERC20(token1).balanceOf(address(this)));
 
-        (uint256 test1Min, uint256 test1Max) = IUniProxy(uniProxy).getDepositAmount(hyperVisor, address(token0), token0Amount);
-
+        (uint256 test1Min, uint256 test1Max) = IUniProxy(info.uniProxy).getDepositAmount(info.hyperVisor, address(token0), token0Amount);
         console.log("deposit: test1Min, test1Max, token1Amount", test1Min, test1Max, token1Amount);
-
-        (uint256 test0Min, uint256 test0Max) = IUniProxy(uniProxy).getDepositAmount(hyperVisor, address(token1), token1Amount);
-
+        (uint256 test0Min, uint256 test0Max) = IUniProxy(info.uniProxy).getDepositAmount(info.hyperVisor, address(token1), token1Amount);
         console.log("deposit: test0Min, test0Max, token0Amount", test0Min, test0Max, token0Amount);
 
-        IUniProxy(uniProxy).deposit(token0Amount, token1Amount, address(this), hyperVisor, inMin);
+        IUniProxy(info.uniProxy).deposit(token0Amount, token1Amount, address(this), info.hyperVisor, inMin);
 
-        console.log("deposit: LP balance after deposit", IERC20(hyperVisor).balanceOf(address(this)));
+        console.log("deposit: LP balance after deposit", IERC20(info.hyperVisor).balanceOf(address(this)));
         console.log("deposit: USDC balance after deposit", IERC20(token0).balanceOf(address(this)));
         console.log("deposit: USDT balance after deposit", IERC20(token1).balanceOf(address(this)));
+
+        stakeLPToMasterchef();
     }
 
     function divideToken0(uint256 balance) internal {
         console.log("------------divide token------------");
-        (uint256 test1Min, uint256 test1Max) = IUniProxy(uniProxy).getDepositAmount(hyperVisor, address(token0), balance);
+
+        (uint256 test1Min, uint256 test1Max) = IUniProxy(info.uniProxy).getDepositAmount(info.hyperVisor, address(token0), balance);
 
         console.log("divide token: Before swap, test1Min, test1Max, token1Amount", test1Min, test1Max, IERC20(token1).balanceOf(address(this)));
-        uint256 average = (test1Min + test1Max) / 2;
-        uint256 toSwap = (balance * average) / (balance + average);
+        uint256 toSwap = (balance * test1Max) / (balance + test1Max);
+        toSwap = toSwap.addBasisPoints(40);
 
         console.log("divide token: USDC balance Before swap", IERC20(token0).balanceOf(address(this)));
         console.log("divide token: USDT balance Before swap", IERC20(token1).balanceOf(address(this)));
@@ -160,25 +154,26 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         console.log("divide token: USDC balance After swap", IERC20(token0).balanceOf(address(this)));
         console.log("divide token: USDT balance After swap", IERC20(token1).balanceOf(address(this)));
 
-        (test1Min, test1Max) = IUniProxy(uniProxy).getDepositAmount(hyperVisor, address(token0), IERC20(token0).balanceOf(address(this)));
+        (test1Min, test1Max) = IUniProxy(info.uniProxy).getDepositAmount(info.hyperVisor, address(token0), IERC20(token0).balanceOf(address(this)));
         console.log("divide token: After swap, test1Min, test1Max, token1Amount", test1Min, test1Max, IERC20(token1).balanceOf(address(this)));
-
-        stakeLPToMasterchef();
     }
 
     function unstakeLP(uint256 _amount) internal {
         console.log("Unstaking lpTokenBalance", _amount);
-        IMasterChef(quickSwapMasterchef).withdraw(poolId, _amount, address(this));
+        require(depositedLP >= _amount, "more than deposited");
+
+        IMasterChef(info.quickSwapMasterchef).withdraw(info.poolId, _amount, address(this));
         depositedLP -= _amount;
     }
 
     function _collectRewards() internal {
         // claim rewards
-        IMasterChef(quickSwapMasterchef).harvest(poolId, address(this));
+        uint256 beforeBal = primaryStable.balanceOf(address(this));
+        IMasterChef(info.quickSwapMasterchef).harvest(info.poolId, address(this));
 
         // sell rewards
         for (uint i; i < 2; ++i) {
-            address rewarder = IMasterChef(quickSwapMasterchef).getRewarder(poolId, i);
+            address rewarder = IMasterChef(info.quickSwapMasterchef).getRewarder(info.poolId, i);
             console.log("collectRewards: Rewarder Address", rewarder);
             address rewardToken = IRewarder(rewarder).rewardToken();
             console.log("collectRewards: Rewarder token", rewardToken);
@@ -189,11 +184,11 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
             console.log("collectRewards: USDC token balance after swap", primaryStable.balanceOf(address(this)));
         }
 
-        uint256 balance = primaryStable.balanceOf(address(this));
-        console.log("RewardCollection - dQUICK, WMATIC -> USDC Balance: ", balance);
-        if (balance > 0) {
-            emit RewardTokenCollected(harvesterAddress, address(primaryStable), balance);
-            primaryStable.transfer(harvesterAddress, balance);
+        uint256 afterBal = primaryStable.balanceOf(address(this)) - beforeBal;
+        console.log("RewardCollection - dQUICK, WMATIC -> USDC Balance: ", afterBal);
+        if (afterBal > 0) {
+            emit RewardTokenCollected(harvesterAddress, address(primaryStable), afterBal);
+            primaryStable.transfer(harvesterAddress, afterBal);
         }
     }
 
@@ -228,7 +223,7 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
     }
 
     function lpBalance() public view returns (uint256) {
-        return depositedLP + IERC20(hyperVisor).balanceOf(address(this));
+        return depositedLP + IERC20(info.hyperVisor).balanceOf(address(this));
     }
 
     function netAssetValue() external view returns (uint256) {
@@ -241,9 +236,16 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
     }
 
     function _getAssetAmount(address _asset) internal view returns (uint256, uint256) {
+        (uint256 totalAmount0, uint256 totalAmount1) = IHyperVisor(info.hyperVisor).getTotalAmounts();
+        uint256 lpBal = lpBalance();
+
         if (address(token0) == _asset) {
-            return (token0.balanceOf(address(this)), lpBalance());
+            return (token0.balanceOf(address(this)), (lpBal * totalAmount0) / IERC20(info.hyperVisor).totalSupply());
         }
+        if (address(token1) == _asset) {
+            return (token1.balanceOf(address(this)), (lpBal * totalAmount1) / IERC20(info.hyperVisor).totalSupply());
+        }
+
         return (IERC20(_asset).balanceOf(address(this)), 0);
     }
 
@@ -320,28 +322,31 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         console.log("------------withdraw------------");
         unstakeLP(lpBalance());
 
-        uint256 LpBalance = IERC20(hyperVisor).balanceOf(address(this));
+        uint256 LpBalance = IERC20(info.hyperVisor).balanceOf(address(this));
         console.log("withdraw: LP balance after stake", LpBalance);
 
         uint256[4] memory inMin;
 
         console.log("withdraw: USDC balance Before withdraw", IERC20(token0).balanceOf(msg.sender));
         console.log("withdraw: USDT balance Before withdraw", IERC20(token1).balanceOf(msg.sender));
-        IHyperVisor(hyperVisor).withdraw(LpBalance, msg.sender, address(this), inMin);
+        IHyperVisor(info.hyperVisor).withdraw(LpBalance, msg.sender, address(this), inMin);
 
         console.log("withdraw: USDC balance after withdraw", IERC20(token0).balanceOf(msg.sender));
         console.log("withdraw: USDT balance after withdraw", IERC20(token1).balanceOf(msg.sender));
+
+        _swapAssetsToPrimaryStable(); // swap all assets to primary
+        _swapPrimaryStableToToken0(); // swap primary token to token0
     }
 
     function _directWithdraw(uint256 _amountOfToken0) internal {
+        // withdraw all and deposit remaining amount
         _withdrawAll();
-        if (_amountOfToken0 >= primaryStable.balanceOf(address(this))) {
-            _amountOfToken0 = primaryStable.balanceOf(address(this));
+        if (_amountOfToken0 >= token0.balanceOf(address(this))) {
+            _amountOfToken0 = token0.balanceOf(address(this));
         }
 
-        primaryStable.transfer(msg.sender, _amountOfToken0);
+        token0.transfer(msg.sender, _amountOfToken0);
 
-        // withdraw all and deposit remaining amount
         directDeposit();
     }
 }
