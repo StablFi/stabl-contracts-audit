@@ -3,8 +3,9 @@ const { deploymentWithProposal, withConfirmation, deployWithConfirmation } = req
 const { MAX_UINT256 } = require("../utils/constants");
 
 module.exports = deploymentWithProposal(
-  { deployName: "071_upgrade_vault" , forceDeploy: isMainnet || isPolygonStaging , tags: ["test", "main", "upgrade_vault"],  dependencies: ["001_core"] },
+  { deployName: "071_upgrade_vault", forceDeploy: isMainnet || isPolygonStaging , tags: ["test", "main", "upgrade_vault"], dependencies: ["001_core"] },
   async ({ ethers, assetAddresses }) => {
+
 
     // Deploy a new vault core contract.
     const dVaultCore = await deployWithConfirmation("VaultCore");
@@ -15,13 +16,14 @@ module.exports = deploymentWithProposal(
 
     const cVaultProxy = await ethers.getContract("VaultProxy");
     const cVaultCoreProxy = await ethers.getContractAt(
-    "VaultCore",
-    cVaultProxy.address
+      "VaultCore",
+      cVaultProxy.address
     );
     const cVaultAdminProxy = await ethers.getContractAt(
       "VaultAdmin",
       cVaultProxy.address
-      );
+    );
+
     const cVaultCore = await ethers.getContract("VaultCore");
     const cVaultAdmin = await ethers.getContract("VaultAdmin");
 

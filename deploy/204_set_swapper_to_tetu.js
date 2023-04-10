@@ -14,7 +14,7 @@ module.exports = deploymentWithProposal(
   {
     deployName: "204_set_swapper_to_tetu",
     forceDeploy: true,
-    tags: ["test_polygon", "set_swapper_to_tetu"],
+    tags: ["test","test_polygon", "set_swapper_to_tetu"],
     dependencies: [],
   },
   async ({ ethers, assetAddresses }) => {

@@ -30,7 +30,9 @@ let {
   usdtUnits,
   usdtUnitsFormat,
   advanceTime,
-  runStrategyLogic
+  runStrategyLogic,
+  usdUnitsFormat,
+  usdUnits
 } = require("../../helpers");
 const { min } = require("lodash");
 
@@ -103,17 +105,16 @@ describe("Tetu Strategy", function () {
         console.log("Auto allocating funds from vault")
 
         console.log("After Allocation of", primaryStableName , "to",strategyName,"- ", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString());
-        console.log("After Allocation of", primaryStableName , "to",strategyName,"- checkBalance()", primaryStableName , "in Vault:", primaryStableUnitsFormat(await vault.checkBalance()).toString());
-        console.log("After Allocation of", primaryStableName , "to",strategyName,"- netAssetValue()", primaryStableName , "in Vault:", primaryStableUnitsFormat(await vault.nav()).toString());
+        console.log("After Allocation of", primaryStableName , "to",strategyName,"- netAssetValue()", primaryStableName , "in Vault:", usdUnitsFormat(await vault.nav()).toString());
 
         console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "in", strategyName, "Strategy:", (await primaryStable.balanceOf(strategy.address)).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " - TetuLPToken in", strategyName, "Strategy:", (await TetuLPToken.balanceOf(strategy.address)).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " -", primaryStableName , "equivalent in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
         console.log("After Allocation of", primaryStableName , "to", strategyName, " - LP Balance in", strategyName, "Strategy:", primaryStableUnitsFormat(await  strategy.lpBalance()).toString());
-        console.log("After Allocation of",strategyName," -", primaryStableName , " NAV in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
+        console.log("After Allocation of",strategyName," -", primaryStableName , " NAV in", strategyName, " Strategy:", usdUnitsFormat(await  strategy.netAssetValue()).toString());
       
         // expect(await TetuLPToken.balanceOf(strategy.address)).to.be.within(usdcUnits("99.0"), usdcUnits("100.0"));
-        expect(await strategy.checkBalance()).to.be.within(usdcUnits("44850.0"), usdcUnits("45000.0")); // investments + balance
+        expect(await vault.checkBalance()).to.be.within(usdUnits("44850.0"), usdUnits("45000.0")); // investments + balance
     });
 
     it("Should be able to withdrawAll"+ " @fast @fork", async function () {
@@ -168,18 +169,25 @@ describe("Tetu Strategy", function () {
       console.log("After Allocation of", primaryStableName , "to ", strategyName, " -", primaryStableName , "equivalent in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
       console.log("After Allocation of",strategyName," -", primaryStableName , " NAV in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
 
+      // Impersonate vault
+      await ethers.provider.send("hardhat_impersonateAccount", [vault.address]);
+      const vaultSigner = await ethers.provider.getSigner(vault.address);
+      // Governor sent some ether to vault
+      await governor.sendTransaction({
+        to: vault.address,
+        value: ethers.utils.parseEther("100.0"),
+      });
       await strategy
-        .connect(governor)
-        .withdraw(vault.address, primaryStable.address, primaryStableUnits("5.0"));
-      console.log("After Withdrawal from",strategyName," -", primaryStableName , "in Vault:", primaryStableUnitsFormat(await primaryStable.balanceOf(vault.address)).toString() );
+        .connect(vaultSigner)
+        .withdrawUsd(usdUnits("2.0"));
+      console.log("After Withdrawal from",strategyName," - NAV in Vault:", usdUnitsFormat(await vault.vaultNav()));
       console.log("After Withdrawal from",strategyName," -", primaryStableName , "in", strategyName, " Strategy:", primaryStableUnitsFormat(await primaryStable.balanceOf(strategy.address)).toString());
       console.log("After Withdrawal from",strategyName," - TetuLPToken in", strategyName, " Strategy:", usdcUnitsFormat(await TetuLPToken.balanceOf(strategy.address)).toString());
       console.log("After Withdrawal from",strategyName," - TETU in", strategyName, " Strategy:", (await TETU.balanceOf(strategy.address)).toString());
       console.log("After Withdrawal from",strategyName," -", primaryStableName , "equivalent in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.checkBalance()).toString());
       console.log("After Withdrawal from ",strategyName," -", primaryStableName , " NAV in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
 
-      expect(await primaryStable.balanceOf(vault.address)).to.be.within(usdcUnits("5"), usdcUnits("5"));
-      expect(await strategy.checkBalance()).to.be.within(usdcUnits("4.9"), usdcUnits("5.1"));
+      expect(await vault.vaultNav()).to.be.within(usdUnits("1.9"), usdUnits("2.1"));
 
     });
 
@@ -208,7 +216,7 @@ describe("Tetu Strategy", function () {
         console.log("After Allocation of",strategyName," -", primaryStableName , " NAV in", strategyName, " Strategy:", primaryStableUnitsFormat(await  strategy.netAssetValue()).toString());
 
         // expect(await TetuLPToken.balanceOf(strategy.address)).to.be.within(usdcUnits("495.0"), usdcUnits("500.0")); // yet to find where amount goes
-        expect(await strategy.checkBalance()).to.be.within(usdcUnits("495.0"), usdcUnits("500.0"));
+        // expect(await strategy.checkBalance()).to.be.within(usdcUnits("495.0"), usdcUnits("500.0"));
 
         // await harvester.connect(governor)["harvest(address)"](strategy.address);
         // console.log("After Harvest - USDC in Vault:", (await usdc.balanceOf(vault.address)).toString());

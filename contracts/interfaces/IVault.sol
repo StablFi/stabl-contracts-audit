@@ -256,4 +256,7 @@ interface IVault {
 
     function isRebaseManager(address _sender) external returns (bool);
     function isStrategySupported(address _addr) external view returns (bool);
+
+    function vaultNav() external view returns (uint256);
+    function price() external view returns (uint256);
 }

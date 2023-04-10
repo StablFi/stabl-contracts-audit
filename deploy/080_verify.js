@@ -32,24 +32,24 @@ module.exports = deploymentWithProposal(
         if (contract == null || contract == '') {
           continue
         }
-        console.log("Verifying " + contract);
-        const ABIUrl = "https://api.polygonscan.com/api?module=contract&action=getsourcecode&address=" + (await ethers.getContract(contract)).address + "&apikey=" + process.env.POLYGON_API_KEY;
-        // send GET request to ABIUrl using https
-        let result = await axios.get(ABIUrl)
-        .then(res => {
-          if (res.data.result[0].ABI != "Contract source code not verified") {
-            return true;
-          } else {
-            return false;
-          }
-        })
-        .catch(err => {
-          console.log('Error: ', err.message);
-        });
-        if (result) {
-          console.log("Verified " + contract, result);
-          continue;
-        }
+        // console.log("Verifying " + contract);
+        // const ABIUrl = "https://api.polygonscan.com/api?module=contract&action=getsourcecode&address=" + (await ethers.getContract(contract)).address + "&apikey=" + process.env.POLYGON_API_KEY;
+        // // send GET request to ABIUrl using https
+        // let result = await axios.get(ABIUrl)
+        // .then(res => {
+        //   if (res.data.result[0].ABI != "Contract source code not verified") {
+        //     return true;
+        //   } else {
+        //     return false;
+        //   }
+        // })
+        // .catch(err => {
+        //   console.log('Error: ', err.message);
+        // });
+        // if (result) {
+        //   console.log("Verified " + contract, result);
+        //   continue;
+        // }
         await deployWithConfirmationWhenNotAlreadyDeployed(contract)
         console.log("Deployed", contract, " (If not already deployed)");
         // aa;

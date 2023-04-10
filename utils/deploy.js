@@ -77,9 +77,9 @@ const deployWithConfirmation = async (
   // if upgrade happened on the mainnet save the new storage slot layout to the repo
   if (isMainnet || isPolygonStaging) {
     await storeStorageLayoutForContract(hre, contractName);
-    if (isVerificationRequired) {
-      await verifyContract(result, args, contract);
-    }
+    // if (isVerificationRequired) {
+      // await verifyContract(result, args, contract);
+    // }
   }
 
   log(`Deployed ${contractName}`, result);
