@@ -23,7 +23,7 @@ import { IUniProxy } from "../interfaces/quickswap-gamma/IUniProxy.sol";
 
 import "hardhat/console.sol";
 
-contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, CurveExchange {
+contract QuickSwapStrategyUpdated is InitializableAbstractStrategy, UniswapV2Exchange, CurveExchange {
     using SafeMath for uint256;
     using OvnMath for uint256;
     using StableMath for uint256;
@@ -71,8 +71,8 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         require(_pTokens[0] != address(0), "Zero address not allowed");
         require(_platformAddress != address(0), "Zero address not allowed");
         require(_router != address(0), "Zero address not allowed");
-        require(info.quickSwapMasterchef != address(0), "Zero address not allowed");
-        require(info.rewardTokenCount != 0, "No reward tokens are not allowed");
+        require(_info.quickSwapMasterchef != address(0), "Zero address not allowed");
+        require(_info.rewardTokenCount != 0, "No reward tokens are not allowed");
         token0 = IERC20(_assets[0]);
         token1 = IERC20(_assets[1]);
         info = _info;
@@ -81,7 +81,7 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         quickTokenNew = IERC20(_platformAddress);
         uint256 assetCount = _assets.length;
         for (uint256 i = 0; i < assetCount; i++) {
-            assetToDenominator[_assets[i]] = 10 ** IERC20Metadata(_assets[i]).decimals();
+            assetToDenominator[_assets[i]] = 10**IERC20Metadata(_assets[i]).decimals();
         }
         _setUniswapRouter(_router);
         super._initialize(_platformAddress, _vaultAddress, _rewardTokenAddresses, _assets, _pTokens);
@@ -172,7 +172,7 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         IMasterChef(info.quickSwapMasterchef).harvest(info.poolId, address(this));
 
         // sell rewards
-        for (uint i; i < 2; ++i) {
+        for (uint256 i; i < 2; ++i) {
             address rewarder = IMasterChef(info.quickSwapMasterchef).getRewarder(info.poolId, i);
             console.log("collectRewards: Rewarder Address", rewarder);
             address rewardToken = IRewarder(rewarder).rewardToken();
@@ -232,7 +232,7 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
     }
 
     function _inUsd(address _asset, uint256 _amount) internal view returns (uint256) {
-        return (IOracle(oracleRouter).price(_asset) * _amount) / (10 ** Helpers.getDecimals(_asset));
+        return (IOracle(oracleRouter).price(_asset) * _amount) / (10**Helpers.getDecimals(_asset));
     }
 
     function _getAssetAmount(address _asset) internal view returns (uint256, uint256) {
@@ -249,7 +249,15 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         return (IERC20(_asset).balanceOf(address(this)), 0);
     }
 
-    function assetsInUsd() public view returns (uint256, uint256, uint256) {
+    function assetsInUsd()
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
+    {
         address[] memory _assets = IMiniVault(vaultAddress).getSupportedAssets();
         uint256[] memory _assetsInUsd = new uint256[](_assets.length);
         for (uint256 i = 0; i < _assets.length; i++) {
@@ -264,7 +272,16 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         _withdrawStrayAssets();
     }
 
-    function withdrawUsd(uint256 _amountInUsd) external onlyVault nonReentrant returns (uint256, uint256, uint256) {
+    function withdrawUsd(uint256 _amountInUsd)
+        external
+        onlyVault
+        nonReentrant
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
+    {
         (uint256 _daiInUsd, uint256 _usdtInUsd, uint256 _usdcInUsd) = _calculateUsd(_amountInUsd);
         address[] memory _assets = IMiniVault(vaultAddress).getSupportedAssets();
 
@@ -276,7 +293,15 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         return (_daiInUsd, _usdtInUsd, _usdcInUsd);
     }
 
-    function _calculateUsd(uint256 _amountInUsd) internal view returns (uint256, uint256, uint256) {
+    function _calculateUsd(uint256 _amountInUsd)
+        internal
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
+    {
         (uint256 _daiInUsd, uint256 _usdtInUsd, uint256 _usdcInUsd) = assetsInUsd();
         uint256 _totalInUsd = _daiInUsd + _usdtInUsd + _usdcInUsd;
         require(_amountInUsd <= _daiInUsd + _usdtInUsd + _usdcInUsd, "TetuStrategy - LOW_BAL");
@@ -289,7 +314,15 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         return (_daiInUsd, _usdtInUsd, _usdcInUsd);
     }
 
-    function calculateUsd(uint256 _amountInUsd) external view returns (uint256, uint256, uint256) {
+    function calculateUsd(uint256 _amountInUsd)
+        external
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
+    {
         return _calculateUsd(_amountInUsd);
     }
 
@@ -308,7 +341,7 @@ contract QuickSwapStrategy is InitializableAbstractStrategy, UniswapV2Exchange, 
         if (_amountInUsd == 0) {
             return 0;
         }
-        uint256 _inTokenAmount = (_amountInUsd * (10 ** Helpers.getDecimals(_asset))) / IOracle(oracleRouter).price(_asset); // USD -> Token
+        uint256 _inTokenAmount = (_amountInUsd * (10**Helpers.getDecimals(_asset))) / IOracle(oracleRouter).price(_asset); // USD -> Token
         uint256 _toUnstakeAmount = _inTokenAmount.subOrZero(IERC20(_asset).balanceOf(address(this)));
         if (_toUnstakeAmount > 0 && address(token0) == _asset) {
             _directWithdraw(_toUnstakeAmount);
