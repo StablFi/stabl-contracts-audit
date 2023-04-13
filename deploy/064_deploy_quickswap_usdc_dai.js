@@ -2,7 +2,7 @@ const { isFork } = require("../test/helpers");
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "064_deploy_quickswap_usdc_dai", forceDeploy: isFork , tags: ["test", "main", "mainnet"],  dependencies: ["001_core"] },
+  { deployName: "064_deploy_quickswap_usdc_dai", forceDeploy: isFork, tags: ["test", "main", "mainnet"], dependencies: ["001_core"] },
   async ({
     oracleAddresses,
     assetAddresses,
@@ -53,12 +53,12 @@ module.exports = deploymentWithProposal(
     await withConfirmation(
       cQuickSwapStrategyUSDCDAIProxy
         .connect(sDeployer)
-        ["initialize(address,address,bytes)"](
-          dQuickSwapStrategyImpl.address,
-          deployerAddr,
-          [],
-          await getTxOpts()
-        )
+      ["initialize(address,address,bytes)"](
+        dQuickSwapStrategyImpl.address,
+        deployerAddr,
+        [],
+        await getTxOpts()
+      )
     );
     // 4. Init and configure new QuickSwapStrategy strategy
     console.log("4. Init and configure new QuickSwapStrategy strategy for USDC/DAI")
@@ -69,8 +69,8 @@ module.exports = deploymentWithProposal(
         assetAddresses.quickTokenNew,
         cVaultProxy.address,
         [assetAddresses.USDC],
-        [ assetAddresses.USDC, assetAddresses.DAI],
-        [assetAddresses.quickSwapUSDCDAIPair,assetAddresses.quickSwapUSDCDAIPair ],
+        [assetAddresses.USDC, assetAddresses.DAI],
+        [assetAddresses.quickSwapUSDCDAIPair, assetAddresses.quickSwapUSDCDAIPair],
         assetAddresses.USDC,
         assetAddresses.quickSwapRouter02,
         assetAddresses.quickSwapStakingReward,
@@ -86,6 +86,9 @@ module.exports = deploymentWithProposal(
       cQuickSwapStrategy.connect(sDeployer)[setOracleRouterPriceProvider](await getTxOpts())
     );
 
+    console.log("quickswap-oracle-router", await cQuickSwapStrategy.connect(sDeployer).oracleRouter());
+    console.log("quickswap-swapping-pool", await cQuickSwapStrategy.connect(sDeployer).swappingPool());
+
     console.log("5.1. Set the thresholds");
     await withConfirmation(
       cQuickSwapStrategy
@@ -100,7 +103,7 @@ module.exports = deploymentWithProposal(
           ],
           await getTxOpts())
     );
-    
+
     // 6. Transfer governance
     console.log("6. Transfer governance")
     await withConfirmation(
@@ -111,7 +114,7 @@ module.exports = deploymentWithProposal(
 
     // 7. Harvester to accept the USDC (Redundant)
     // Deploy new Harvester proxy
-    const dHarvesterProxy =  await ethers.getContract("HarvesterProxy");
+    const dHarvesterProxy = await ethers.getContract("HarvesterProxy");
     console.log(`Harvester proxy deployed at: ${dHarvesterProxy.address}`);
 
     const cHarvester = await ethers.getContractAt(
@@ -128,26 +131,26 @@ module.exports = deploymentWithProposal(
       actions: [
         // 1. Accept governance of new MeshSwapStrategyUSDC
         {
-            contract: cQuickSwapStrategy,
-            signature: "claimGovernance()",
-            args: [],
+          contract: cQuickSwapStrategy,
+          signature: "claimGovernance()",
+          args: [],
         },
         // 2. Add new MeshSwapUSDC strategy to vault
         {
-            contract: cVaultAdmin,
-            signature: "approveStrategy(address)",
-            args: [cQuickSwapStrategy.address],
+          contract: cVaultAdmin,
+          signature: "approveStrategy(address)",
+          args: [cQuickSwapStrategy.address],
         },
         // 10. Set harvester address
         {
-            contract: cQuickSwapStrategy,
-            signature: "setHarvesterAddress(address)",
-            args: [dHarvesterProxy.address],
+          contract: cQuickSwapStrategy,
+          signature: "setHarvesterAddress(address)",
+          args: [dHarvesterProxy.address],
         },
         {
-            contract: cHarvester,
-            signature: "setSupportedStrategy(address,bool)",
-            args: [cQuickSwapStrategyUSDCDAIProxy.address, true],
+          contract: cHarvester,
+          signature: "setSupportedStrategy(address,bool)",
+          args: [cQuickSwapStrategyUSDCDAIProxy.address, true],
         },
       ],
     };
